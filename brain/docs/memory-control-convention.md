@@ -1,0 +1,33 @@
+# Memory Control
+
+> Promotion → [[knowledge-escalate-convention]] · knowledge notes → [[knowledge-convention]] · sessions → [[sessions-note-convention]] · commits → [[versioning-convention]]
+
+## Handoff Format (worker → PM → scribe, maps to session Progress — Risks·Next·Ask feed To-Do-List / PM judgment)
+```
+Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask
+```
+> Workers **never write to the vault directly**. Hand off, and a `scribe` worker records it via the PM (**`scribe` = a worker given a recording brief** — a label, not a resident agent). Keep `Learned` atomic — promotion quality is governed by capture quality (GIGO).
+
+## Recall — cue-based
+- **CLAUDE.md pointers** (per project): a **thin router / hot-cache** auto-loaded every session.
+  - Rules: **pointers only, no content** (token savings). **Auto-maintained** (Dreaming/`scribe`). No hand-curation (it rots).
+- **★ `ss` recall step**: at session start (**both new sessions and resumes**), inject related memory into `## Context` — **canon: `skills/_session-shared/recall.md`** (source composition, related hops, caps, and source-path discipline are all defined only there).
+
+## Dreaming Skill (sleep consolidation)
+Keep realtime cheap; batch the hard parts. Runs periodically (scheduled).
+- **dedup / consolidation** — merge accumulated similar notes.
+- **staleness flags** — mark claims unreferenced for N months / grown stale (not deletion; flagged for review).
+- **Stage-2 promotion + graph links** — elevate cross-project recurrences to common, add missing cross-links.
+- **Recall-layer refresh** — regenerate CLAUDE.md pointers + rescan the facts inventory.
+
+**Guardrails (violate these and memory gets polluted)**:
+- **Incremental** — not the whole vault every time; only what changed or aged since the last dream.
+- **Destruction is proposed, never automatic** — only low-risk actions like dead-link fixes run automatically. Merges/deletions need PM/human approval. Never silently overwrite memory.
+
+## Governance (scribe + PM mediation)
+- **`scribe` = the vault (memory) recording worker** (spawn = the `worker` profile — spec: knowledge-promotion §Write boundary)**.** All vault writes (Progress, outputs, stage-1 promotion) are delegated by the PM as recording briefs. **Code is strictly forbidden** — code goes straight to the repo/worktree via an **implementation worker**, bypassing `scribe`. A `scribe` brief's payload is knowledge/documents only, so it stays light.
+- **`scribe` = a verbatim scribe (not a summarizer).** Records the `Learned`/`Outputs` of worker Handoffs **word for word**. PM compression belongs **only to the user-reporting channel** — the Handoff `scribe` receives is the original text (→ prevents losing the conditional nuances of Mistake/Fixed).
+- **Never force realtime dedup** — on duplicates, record both for now; merging & cleanup is Dreaming's job (batch). (fast-but-lossy capture + periodic consolidation)
+- **PM mediation**: worker Handoff → PM → `scribe`. **Direct worker→`scribe` is forbidden** — only the PM can see whether delegations overlap. Go direct, and two `scribe` workers silently overwrite the same file.
+- **Two concurrency layers**: intra-machine = **`scribe` discipline** (no locks — the PM delegates without overlap) / inter-machine = git merge. Canon → [[versioning-convention]]
+- **PM = the main session · workers = subagents.** A worker's scope is defined by **the PM's brief** (Goal, constraints, context pointers, DoD), not by a role catalog. Labels (`scribe`, `architecture`, etc.) name kinds of briefs — they are not resident agents.

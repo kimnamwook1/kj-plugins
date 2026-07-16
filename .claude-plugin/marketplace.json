@@ -1,0 +1,14 @@
+{
+  "name": "kj-plugins",
+  "description": "koreanjoker's Claude Code plugin marketplace.",
+  "owner": {
+    "name": "koreanjoker"
+  },
+  "plugins": [
+    {
+      "name": "brain",
+      "source": "./brain",
+      "description": "Memory harness for Claude Code: session capture → knowledge promotion → recall. Vault conventions, session lifecycle skills, and a PM orchestration model."
+    }
+  ]
+}

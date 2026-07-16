@@ -1,0 +1,239 @@
+# brain
+
+**A memory harness for Claude Code.** Session capture → knowledge promotion → recall, on an
+Obsidian-compatible vault, orchestrated through a PM-and-workers model.
+
+The root metaphor is the human memory system: the **hippocampus** makes fast, lossy episodic
+captures; **sleep consolidation** replays, prunes, and converts them into semantic memory; the
+**neocortex** holds that semantic long-term memory; and retrieval works by **cue-based recall**.
+brain maps each stage onto a concrete mechanism — session notes, the Dreaming skill, a layered
+knowledge vault, and a trigger-first recall step at session start.
+
+## Why
+
+Three observations drive the design:
+
+1. **Agents forget everything between sessions.** Every session starts from zero; the same
+   mistakes recur, the same environment facts get re-derived, and the same dead ends get
+   re-explored. brain makes each session leave a durable, structured trace.
+2. **Knowledge that exists but isn't retrieved doesn't exist.** Capture without recall is a
+   write-only archive. brain treats retrieval as a first-class problem: notes are written
+   trigger-first (when does this apply?), and a recall step primes every new session with the
+   knowledge and past mistakes relevant to the work at hand.
+3. **Personas are dead.** Giving agents characters ("you are a meticulous senior engineer…")
+   does not survive contact with real work. What actually survives is **context isolation,
+   runtime permissions, and the brief.** So brain ships three worker *profiles* differing only
+   in isolation and permissions, and scopes every task with a brief — not a personality.
+
+Beneath these sits one operating principle: **fast-lossy capture + periodic consolidation.**
+Real-time writing is kept cheap and imperfect — if capture is heavy, it stops happening. The
+hard work (dedup, re-layering, staleness) is deferred to a periodic batch job (Dreaming),
+exactly as the brain defers consolidation to sleep.
+
+## Architecture
+
+```
+                 ┌────────────────────────────────────────────────┐
+                 │           Vault (Obsidian-compatible)          │
+                 │                                                │
+                 │  000_common/          NNN_<project>/           │
+                 │    facts/ patterns/     knowledge/  docs/      │
+                 │    policies/                                   │
+                 │  sessions/<uid>.md    ← episodic capture       │
+                 └───────▲───────────────────────────┬────────────┘
+                         │ writes                    │ recall at session start
+                         │ (scribe briefs only)      │ (grep priming, trigger-first)
+                         │                           ▼
+  ┌──────────────┐    ┌────────────────────────────────────────────┐
+  │ CLAUDE.local │───▶│              PM (main session)             │
+  │ .md (router, │    │  decomposes → delegates → aggregates       │
+  │ PM role stmt)│    │  Handoffs → reports; commits at            │
+  └──────────────┘    │  session boundaries (git = SOT)            │
+                      └────────┬──────────────────────▲────────────┘
+                               │ briefs               │ Handoffs
+                               ▼                      │
+                      ┌────────────────────────────────────────────┐
+                      │       Workers (subagents, 3 profiles)      │
+                      │        worker  ·  coder  ·  verifier       │
+                      └────────────────────────────────────────────┘
+```
+
+Two layers, deliberately separated:
+
+| Layer | What it does | Mechanism |
+|---|---|---|
+| **Write** (accumulate, organize) | session capture → knowledge promotion → human-readable docs | the vault + PM/scribe governance |
+| **Read** (retrieve, recall) | query accumulated memory at low token cost | recall step (grep priming, trigger-first) + router pointers in `CLAUDE.local.md` |
+
+The vault is always the system of record; read-side indexing can additionally be delegated to an
+external read-only index, but nothing on the read side ever owns content.
+
+Brain-to-harness mapping (the design-consistency anchor):
+
+| Brain | This harness |
+|---|---|
+| Working memory | LLM context / the live session |
+| **Hippocampus** — fast, lossy episodic encoding | session notes + `## Progress` (Done/Mistake/Fixed/Learned/Outputs) |
+| **Sleep consolidation** — replay, pruning, episodic→semantic | **Dreaming skill** (periodic batch) |
+| **Neocortex** — semantic long-term memory | `knowledge/` (per project) + `000_common/` (patterns/facts) |
+| **Cue-based recall** | recall step at session start + router pointers (trigger-first) |
+| **Synaptic pruning** (forgetting) | Dreaming staleness flags |
+| Episodic vs semantic separation | sessions (episodic) vs knowledge (semantic); promotion = the episodic→semantic conversion |
+
+## Install & Quickstart
+
+```
+# 1. Install the plugin
+/plugin marketplace add <owner>/brain      # this repository
+/plugin install brain
+
+# 2. Structure setup (once per project)
+/brain:init      # writes CLAUDE.local.md (PM role statement + router) at the project root
+                 # and scaffolds the vault; an existing vault is adopted, not recreated
+                 # (structure diff is reported; migration only with your approval)
+
+# 3. Content setup (once per project)
+/brain:onboard   # 5-question interview (ticket system · goal · stack · regulation · deploy
+                 # target) — fills stub docs to draft for answered questions only — plus a
+                 # measured environment check that builds 000_common/facts/ tool inventories
+
+# 4. Daily loop
+/brain:ss        # start (or resume) a tracked session — recall injects relevant knowledge
+                 # and past Mistakes into the session Context
+/brain:sh        # park a session (handoff) — pending markers scanned, knowledge promoted,
+                 # status stays active so ss can resume it later
+/brain:sc        # complete a session — closing entry, status → done, promotions finalized
+
+# 5. Periodically
+/brain:dreaming  # batch consolidation — dedup proposals, staleness flags, second-stage
+                 # promotion to common/patterns, structure audits, recall-layer refresh
+```
+
+## The vault
+
+Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — summary only:
+
+```
+<vault-root>/
+  000_common/            # cross-project knowledge
+    facts/               #   environment facts, tool inventories (measured, not remembered)
+    patterns/            #   distilled cross-project lessons (promoted by Dreaming)
+    policies/            #   org-wide norms (mandatory; wins document conflicts)
+    dream-log.md         #   incremental baseline for the next Dreaming run
+  NNN_<project>/         # one folder per project (NNN = sort order, slug = identity)
+    index.md             #   project hub — pointer index + project PREFIX
+    knowledge/           #   project-scoped reusable knowledge (semantic, atomic notes)
+    docs/                #   official docs — tech-design/ · adr/ · research/ · business/
+                         #   policy/ · feature/<F>/ (FRD, TDC, diagrams, feature policies)
+  sessions/
+    <uid>.md             # one file per session (episodic); uid = PREFIX-YYYYMMDD-HHMMSS
+```
+
+The three axes of `000_common/`:
+
+| Axis | Answers | Nature |
+|---|---|---|
+| `facts/` | what is true here | environment facts — measured, dated (`verified:`) |
+| `patterns/` | what works | reusable techniques distilled across projects |
+| `policies/` | what is mandatory | norms with teeth — highest precedence in document conflicts |
+
+## Worker profiles
+
+Three profiles in `agents/`, differing only in isolation and permissions:
+
+| Profile | Enforcement | Use for |
+|---|---|---|
+| `worker` | default toolset | any brief — the default profile; scribe (recording) briefs run on it too |
+| `coder` | `isolation: worktree` | implementation briefs — TDD, official-docs-first, in an isolated git worktree |
+| `verifier` | `disallowedTools: Write, Edit, NotebookEdit` | verification/review/disproof briefs — report-only, reproduction + evidence |
+
+- **Ticket loop**: non-trivial tickets run plan → code (`coder`) → verify (`verifier`); small
+  changes go direct on a single `worker`.
+- **Nested spawning**: workers may spawn sub-workers when parallelism, isolation, or a
+  fresh-eyes verification pays off. Reports flow upward only (recursive star) — a sub-worker
+  reports to its parent, never sideways.
+- **Personas are briefs, not agents.** Labels like `scribe` name a *kind of brief*, not a
+  resident agent. Every worker is scoped by the brief it receives: Goal, constraints, context
+  pointers, DoD.
+- **Handoff format (fixed)**: `Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`.
+  Workers never write to the vault directly — deliverables travel by Handoff, and the PM
+  delegates recording to a scribe brief.
+
+## Conventions (docs/)
+
+Eight convention documents define the system; each fact has exactly one home:
+
+| Document | Defines |
+|---|---|
+| `docs/vault-tree.md` | the canonical vault tree, paths, and naming rules |
+| `docs/sessions-note-convention.md` | session note schema — file-per-session, frontmatter, the 3-value `status` |
+| `docs/knowledge-convention.md` | the atomic, trigger-first knowledge note format |
+| `docs/knowledge-escalate-convention.md` | the 3-stage promotion topology (episodic → semantic) |
+| `docs/memory-control-convention.md` | Handoff format, recall, Dreaming, and scribe governance |
+| `docs/versioning-convention.md` | git = SOT, commit-only lifecycle, push only on explicit request |
+| `docs/project-docs-convention.md` | doc frontmatter standard, stub rules, policy system, ID minting, conflict precedence |
+| `docs/doc-catalog.md` | which document to create when — grade, trigger, owner label |
+
+### Single-Source Map (anti-drift)
+
+When the same fact is restated in several documents, changing one desynchronizes the rest —
+the number-one failure mode of documentation systems. Rule: each fact below is **defined in
+exactly one canonical place**; every other document points at it ("canonical: X") instead of
+restating it. The Dreaming drift-lint periodically scans for restatements and contradictions
+against this map.
+
+| Fact | Canonical (defined only here) | Pointers only (no restating) |
+|---|---|---|
+| Session schema (file-per-session · frontmatter · 3-value status) | `docs/sessions-note-convention.md` | root index · `skills/ss` · dreaming |
+| Vault tree, paths, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
+| External ticket system = canonical work queue | PM role statement (`CLAUDE.local.md`, written by `/brain:init`) | sessions-note-convention |
+| Promotion score gate (sum ≥ 3 · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
+| Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss` · memory-control-convention |
+| git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
+| Session lifecycle (start/handoff/complete) | `skills/ss`·`sh`·`sc` | sessions-note-convention · dreaming |
+| Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |
+| Stub pre-creation and stub rules | `docs/project-docs-convention.md` | doc-catalog · `/brain:init` |
+| Policy system (identification · IDs · promotion) | `docs/project-docs-convention.md` | doc-catalog · dreaming |
+| ID minting (`<PREFIX>-<TYPE>-0000N` · next_id) | `docs/project-docs-convention.md` | PM role statement · dreaming |
+| API_SPEC mirror rule (sole exception to "repo = code only") | `docs/project-docs-convention.md` | doc-catalog · dreaming |
+| Document conflict precedence | `docs/project-docs-convention.md` | PM role statement · all workers |
+| Doc selection by kind (grade · trigger · owner) | `docs/doc-catalog.md` | `/brain:init` · PM role statement |
+
+## Design principles
+
+- **One canonical source + pointers.** Facts live in one place; everything else links. Drift
+  is a lint failure, not a fact of life.
+- **Trigger-first.** Recall is symptom-driven, so notes lead with *when they apply* (the
+  trigger), not with what they conclude.
+- **Small docs.** Large documents don't get read — by humans or by agents with token budgets.
+  Split by concern, keep each unit loadable.
+- **stub = no information.** A `status: stub` document must never be cited as evidence — an
+  empty heading means "not written yet", not "there is none". Filling it flips it to `draft`.
+- **Measurements over memory.** Environment facts come from commands (`command -v`, live
+  checks), carry a `verified:` date, and are never asserted from recollection.
+- **Fail-visible over fail-silent.** Rejected knowledge promotions go to a reject-log instead
+  of vanishing; Dreaming proposes destructive changes instead of silently applying them;
+  blocked hooks explain themselves.
+
+## FAQ / Notes
+
+- **Why `CLAUDE.local.md`?** It is gitignored (machine-local values like `vault-root` don't
+  belong in the repo), it is loaded on every session, and it is the only reliable path for
+  handing the PM its router and role statement each time. `/brain:init` manages only its own
+  marker-delimited block, so your other local notes survive.
+- **Existing vault? Team-shared vault?** `/brain:init` detects an existing directory and
+  switches to adopt mode: it diffs the structure against the canonical tree, reports
+  mismatches, and migrates only with explicit approval. Cross-machine sync is a git merge
+  layer; within a machine, concurrency is scribe discipline — no locks, the PM serializes
+  delegation.
+- **The force-delegate hook is opt-in.** Wire `hooks/force-delegate.sh` into PreToolUse
+  (matcher `Edit|Write`) only if you want the "PM doesn't write files" rule enforced by
+  machinery instead of discipline. Escape hatch: `FORCE_DELEGATE_OFF=1`.
+- **Language.** Generated artifacts (docs, notes, scaffolds) default to English. Skill
+  descriptions carry Korean trigger phrases alongside English so invocation works naturally
+  in both languages; agent profiles are English-only (they are spawned by the PM, not by
+  user phrasing).
+
+## License
+
+TBD.

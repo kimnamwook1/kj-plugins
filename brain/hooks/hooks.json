@@ -1,0 +1,16 @@
+{
+  "description": "Keeps ~/.claude/brain-docs pointed at this plugin's docs, so CLAUDE.local.md Router paths survive version bumps and repo moves.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ln -sfn \"${CLAUDE_PLUGIN_ROOT}/docs\" \"$HOME/.claude/brain-docs\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
