@@ -63,7 +63,14 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 
    **0 matches** → go straight to creating a new session (step 4).
 
-   **1+ matches** → present them and ask. List each candidate's `## Goal` · uid (date) · a one-line summary of the **latest (topmost) Progress entry**:
+   **1+ matches** → present them and ask. **Extract each candidate with `awk` — never Read a session file whole.** Sessions accrete Progress entries and reach 90 KB+; the extract is ~6 KB:
+   ```bash
+   # `## Goal` + `## To-Do-List` + the newest Progress entry only.
+   # Section-scoped on purpose: `### Recall` lives under `## Context`, so a bare `grep '^### '`
+   # would grab it instead of the newest Progress entry.
+   awk '/^## /{s=$0;n=0} s~/^## (Goal|To-Do-List)$/{print;next} s=="## Progress"{if(/^### /)n++; if(n<=1)print}' "$f"
+   ```
+   List each candidate's `## Goal` · uid (date) · a one-line summary of the **latest (topmost) Progress entry**:
    > This project (`<project>`) has N sessions in progress:
    > 1. `<goal summary>` (`<uid>`) — <latest Progress one-liner>
    >
@@ -72,7 +79,7 @@ Creates a session in the vault as a **single file**. A session is a self-contain
    - **Resume (number picked)** → step 3. **Do not create a new file.**
    - **New** → step 4.
 
-3. **Resume — adopt the existing session** — adopt the chosen session as the current work session. No new file. Summarize its `## Goal` + **latest Progress entry** + `## To-Do-List` and announce "resuming from here". `status` stays `active`. Then:
+3. **Resume — adopt the existing session** — adopt the chosen session as the current work session. No new file. Summarize its `## Goal` + **latest Progress entry** + `## To-Do-List` **from the step-2 awk extract — do not Read the file again**, and announce "resuming from here". `status` stays `active`. Then:
    - **PM (read)** — collect the current CC session id **if obtainable** (if the harness exposes no value, treat it as absent).
    - **Delegate the frontmatter update to `scribe`** — writing brief:
      - Target: the adopted `<VAULT>/sessions/<uid>.md`.
