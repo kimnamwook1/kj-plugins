@@ -61,7 +61,7 @@
           SEQUENCE.md
           STATE_DIAGRAM.md
           policy/                    # rules that apply to this feature only (scope: feature)
-  sessions/
+  sessions/                          # local-only: gitignored — the team shares NNN_*/ + 000_common only
     index.md                         # session table of contents
     <uid>.md                         # session = one file (episodic). uid = PROJECT_PREFIX-YYYYMMDD-HHMMSS
     assets/                          # (optional) shared raw images & video

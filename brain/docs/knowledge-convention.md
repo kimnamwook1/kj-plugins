@@ -11,7 +11,7 @@ title: <title containing the trigger>
 uid: <anchor; same generator as session uids>
 created / updated
 projects: [x, y]            # tags, not folders (cross-membership allowed)
-source_sessions: [uid...]   # vertical backlink: source sessions (required)
+source_sessions: [uid...]   # vertical backlink: source sessions (required). Plain uid strings — sessions/ is local-only (gitignored), so never `[[wikilink]]` a session from a knowledge note (body included); it dangles for teammates
 related: [[note-a]], [[note-b]]   # horizontal links: topical neighbor Knowledge (planted by the scribe worker at promotion)
 status: fresh | stale?      # flagged by Dreaming
 ---

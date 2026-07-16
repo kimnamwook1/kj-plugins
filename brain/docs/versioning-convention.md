@@ -3,6 +3,7 @@
 > Document conventions → [[project-docs-convention]] · tree → [[vault-tree]]
 
 - **git = SOT + version control** — history, diff, revert, blame, **rollback**: all git.
+- **Share scope** — the team-shared surface is project trees (`NNN_*/`) + `000_common/`. **`sessions/` is gitignored** — a personal episodic log, never pushed. Shared notes therefore reference sessions as **plain uid text, never `[[wikilink]]`** (a session wikilink dangles in every teammate's vault).
 - **Cross-device sync uses a single channel only** — if two systems both sync across devices, conflicts follow (`git pull` = dirty/merge conflicts).
 - **Two concurrency layers**: within a machine = `scribe` discipline (no locks — the PM delegates without overlap) / between machines = git merge (member integration).
 - **Committer = the PM**, timing = the session lifecycle (handoff · complete). `scribe` never commits — a commit swallows the whole repo, sweeping in other `scribe` workers' unfinished work.
