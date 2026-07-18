@@ -51,9 +51,12 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
 7. **git commit (vault snapshot — commit-only, executor = PM)** — the PM commits directly **after** the step-3·4 `scribe` writes are done (**record → commit order** — committing first leaves the park entry out of the snapshot). The canon for commit executor·timing is versioning-convention — `scribe` never commits (a commit swallows the whole repo, sweeping in other `scribe` workers' unfinished work too — only the PM, who sees the whole, is safe).
 
-   - **Command**: `git -C "$VAULT" add -A && git -C "$VAULT" commit -q -m "<message>"`
-     - `add -A` stages the **entire vault** — intentionally, so the step-3 knowledge promotion lands in the same commit (session boundary = 1 commit).
-     - If there are no changes, **do not commit** (no empty commits). If the vault is not a git repo, skip quietly and mention it in step 8.
+   - **Command**: `git -C "$VAULT" add -- <paths…> && git -C "$VAULT" commit -q -m "<message>"`
+     - **Stage only the paths this session wrote — `git add -A` is forbidden.** One vault is shared by concurrent sessions of other projects; `-A` sweeps their in-flight work into this session's commit under this session's message.
+     - **The pathspec = what the scribes returned** — the step-4 session file `<VAULT>/sessions/<uid>.md` + the step-3 promoted note paths + `<project>/knowledge/index.md`·`0.rejected.md` when touched. If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
+     - **Leave every other dirty file dirty** — do not stage, stash, or revert anything outside that list, however unrelated-looking the diff. It is another session's unfinished work.
+     - **Read `git -C "$VAULT" status --porcelain` before staging.** If dirty files reach beyond this session's own paths, say so in step 8 (`N files dirty across M directories — staged only this session's`) and stage from the pathspec anyway. A report, not a gate — never block the park on it.
+     - If none of those paths changed, **do not commit** (no empty commits). If the vault is not a git repo, skip quietly and mention it in step 8.
    - **`git push` is forbidden — commit-only.** No automatic push under any circumstances (only on the user's explicit request). The vault carries repo names·commit SHAs·infra topology·operator metadata (writer·cc_session_ids) verbatim — remote exposure is the user's call.
    - **Message convention — no guessing.** **Before** committing, check **that vault's existing convention** with `git -C "$VAULT" log --oneline -10` and follow it (format·language·prefix differ per vault). Fallback only when no convention is readable: `session <uid>: parked — <one-line gist>`.
    - **Scope is `$VAULT` only** — pinned via `git -C`. Do not touch other repos or paths outside the vault.

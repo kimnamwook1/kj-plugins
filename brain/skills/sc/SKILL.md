@@ -81,8 +81,12 @@ The PM commits the vault directly **after** the ④·⑤·⑥ `scribe` writes ar
 
 - **Check the message convention before committing (no guessing)** — read **that vault's existing convention first** with `git -C "$VAULT" log --oneline -10` and follow it (conventions differ per vault). The following is only the shape used when no convention exists, not a mandated format:
   ```bash
-  git -C "$VAULT" add -A && git -C "$VAULT" commit -q -m "session <uid>: completed — <one-line gist>"
+  git -C "$VAULT" add -- <paths…> && git -C "$VAULT" commit -q -m "session <uid>: completed — <one-line gist>"
   ```
+- **Stage only the paths this session wrote — `git add -A` is forbidden.** One vault is shared by concurrent sessions of other projects; `-A` sweeps their in-flight work into this session's commit under this session's message.
+- **The pathspec = what the scribes returned** — the ⑤·⑥ session file `<VAULT>/sessions/<uid>.md` + the ④ promoted note paths + `<project>/knowledge/index.md`·`0.rejected.md` when touched. If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
+- **Leave every other dirty file dirty** — do not stage, stash, or revert anything outside that list, however unrelated-looking the diff. It is another session's unfinished work.
+- **Read `git -C "$VAULT" status --porcelain` before staging.** If dirty files reach beyond this session's own paths, say so in ⑧ (`N files dirty across M directories — staged only this session's`) and stage from the pathspec anyway. A report, not a gate — never block the closure on it.
 - **commit-only — `git push` is forbidden.** The vault carries session raw text (repo names·SHAs·infra topology·secret candidates) verbatim. Local commit is where this skill's job ends; **remote exposure is the user's call** — even on an explicit user request this skill does not push automatically.
 - **On "nothing to commit", move on quietly** (not a failure). Same if the vault is not a git repo — just mention it in ⑧.
 - **Scope is `$VAULT` only** — pinned via `git -C "$VAULT"`. Do not touch other repos or paths outside the vault.
@@ -97,6 +101,6 @@ Session closed: <VAULT>/sessions/<uid>.md (status: done) · vault committed
 
 ## Hard rules
 
-- **`obsidian create` / `obsidian-cli create` CLI is absolutely forbidden** — Write tool only (duplicate-file bug). The party doing that Write is the `scribe` worker.
+- **`obsidian create` / `obsidian-cli create` CLI is absolutely forbidden** — `Write`/`Edit` tools only (duplicate-file bug). **An existing file is changed with `Edit`; `Write` is for creating a file that does not exist yet** — `Edit`'s `old_string` is a compare-and-swap, so if a concurrent session moved the anchor the edit fails loudly instead of silently swallowing their work. The party doing that write is the `scribe` worker.
 - Touch only **the paths under `vault-root` in `CLAUDE.local.md` + the `<project>/knowledge/` that `scribe` writes during promotion**. All other folders·other vaults are off-limits.
 - **The `status` vocabulary is exactly** `active` / `done` / `cancel`. Pending-verification·blocked go in tags/`## To-Do-List` open items, not in status.
