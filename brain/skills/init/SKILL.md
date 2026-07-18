@@ -13,7 +13,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
 
 1. **Collect values** — pin down the 4 values via AskUserQuestion (or conversation). No guessing:
    - `org` — business slug
-   - `vault-root` — absolute path of the vault. Default suggestion = `~/Documents/Obsidian/second-brain/<org>/`
+   - `vault-root` — absolute path of the vault. Default suggestion = `~/Documents/Obsidian/second-brain/<org>` — **no trailing slash.** Strip any trailing `/` from what the user supplies before writing it: `vault-root` is compared as a **string prefix** when skills enforce write boundaries (`ss` "Write only under the vault-root", `sc` "Touch only the paths under vault-root"), and `<root>` vs `<root>/` are different strings.
    - `project` — project slug
    - `PREFIX` — 2–4 uppercase letters for uid/ID issuance (suggested default = an uppercase abbreviation of the project slug)
 
