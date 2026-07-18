@@ -109,6 +109,44 @@ Brain-to-harness mapping (the design-consistency anchor):
                  # promotion to common/patterns, structure audits, recall-layer refresh
 ```
 
+## Schema check (`scripts/validate.sh`)
+
+The conventions are enforced by documented discipline; this script is the machine-checkable
+subset. Runs on macOS stock bash 3.2 with only POSIX userland — `awk` and `find` do the work,
+plus `mktemp` `basename` `sort` `wc` `tr` `cat` `rm`. No python/jq/yq, no associative arrays,
+no `mapfile`, no `find -printf`, no `grep -P`.
+
+```
+scripts/validate.sh <vault-root>            # warn report — findings do not fail the run
+scripts/validate.sh <vault-root> --strict   # exits 1 on any finding (CI / pre-commit)
+```
+
+Exit codes: `0` clean or warn-only · `1` findings under `--strict` · `2` usage error
+(missing/unknown argument, root not a directory, `mktemp` failure). `2` is a *broken run*,
+not a clean one — CI should treat it as failure in both modes.
+
+What it checks — **sessions** (`sessions/*.md`, top level only; `index.md` and the
+`sample-session.md` schema placeholder excluded, since neither is a session): the six required
+frontmatter keys (`uid` `project` `created` `updated` `status` `writer`), `uid` matching
+`<PREFIX>-YYYYMMDD-HHMMSS` **and** the filename, and `status` being exactly one of
+`active|done|cancel` (a document status such as `draft` leaking into a session note is called
+out specifically). **Knowledge notes** — the top level of each `NNN_<project>/knowledge/` and
+of `000_common/{facts,patterns,policies}/`: `title:` present. Subdirectories are not scanned
+(so `facts/machines/` is out of scope), matching the flat scan in
+`skills/_session-shared/recall.md`, which also supplies the `index.md` + `0.*` meta exclusion.
+
+Every run prints the scanned file counts (`OK — no issues (22 sessions, 271 knowledge)`) so a
+collapsed scan is visibly different from a clean vault — "OK" alone cannot distinguish the two.
+Unreadable files are reported as findings rather than skipped, so `--strict` cannot pass a file
+it never read. Output is `file:line: message`, so editors and terminals can jump straight to it.
+
+`scripts/validate-selftest.sh` builds a throwaway vault of deliberately broken fixtures and
+asserts the rules fire — run it after touching the validator. Its assert set is mutation-tested:
+each scope boundary is pinned by a *positive* fixture, because a lone "no finding here" assert
+cannot distinguish "scanned and clean" from "never scanned". Known limits are recorded as
+`ponytail:` comments in the validator (duplicate keys are last-wins, the uid check is shape-only,
+symlinks are skipped) — they are accepted, not unnoticed.
+
 ## The vault
 
 Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — summary only:
@@ -188,6 +226,8 @@ against this map.
 | Vault tree, paths, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
 | External ticket system = canonical work queue | PM role statement (`CLAUDE.local.md`, written by `/brain:init`) | sessions-note-convention |
 | Promotion score gate (sum ≥ 3 · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
+| Human sign-off gate for `common/policies/` (agents draft, the user signs) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sh`·`sc` · dreaming |
+| Third-time test (reject-log recurrence → rule) | `skills/dreaming/SKILL.md` §3 | knowledge-promotion |
 | Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss` · memory-control-convention |
 | git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
 | Session lifecycle (start/handoff/complete) | `skills/ss`·`sh`·`sc` | sessions-note-convention · dreaming |
