@@ -212,6 +212,36 @@ Eight convention documents define the system; each fact has exactly one home:
 | `docs/project-docs-convention.md` | doc frontmatter standard, stub rules, policy system, ID minting, conflict precedence |
 | `docs/doc-catalog.md` | which document to create when — grade, trigger, owner label |
 
+### Ownership boundary — plugin vs vault
+
+The plugin owns **rules**; a vault owns **content**. One plugin serves every vault; the vaults
+themselves stay separate on purpose — git, dev, and ops strategy legitimately differ per vault,
+so merging them is not a fix for anything.
+
+| Layer | What | Owner | Shared across vaults |
+|---|---|---|---|
+| **Rules** | session schema · promotion gate · the 3 `status` values · doc frontmatter · conflict precedence | `brain/` (this plugin) | yes — one copy for all vaults |
+| **Content** | git/dev/ops strategy · infra facts · knowledge notes · policies · session records | vault `000_common/` + `NNN_<project>/` | no — per vault |
+
+Rule: **a vault `index.md` points at a rule, it never restates one.** An index that repeats a
+threshold, a status set, or a naming rule is a fork waiting to happen — the copy ages, and the
+work downstream follows the aged copy rather than the canon.
+
+Pointer form, as used in `000_common/policies/index.md`:
+
+```
+> canonical (identification · IDs · promotion · precedence) =
+>   <home>/.claude/brain-docs/project-docs-convention.md — do not copy here (it drifts).
+```
+
+Point at the stable `~/.claude/brain-docs/` symlink, never at the plugin install path
+(`skills/init/SKILL.md`) — the install path dies on the next version bump.
+
+The reverse direction is already clean: no org slug, infra host, domain, or account-specific CLI
+wrapper appears anywhere under `brain/` (only the plugin manifest's `author` field names a
+person). Content does not leak into the rules — only rules leak into vaults, which is exactly
+what the pointer rule above closes.
+
 ### Single-Source Map (anti-drift)
 
 When the same fact is restated in several documents, changing one desynchronizes the rest —
@@ -219,6 +249,11 @@ the number-one failure mode of documentation systems. Rule: each fact below is *
 exactly one canonical place**; every other document points at it ("canonical: X") instead of
 restating it. The Dreaming drift-lint periodically scans for restatements and contradictions
 against this map.
+
+**Scope: this map binds vault scaffolds too** — `index.md` files and any other generated vault
+text are documents for drift-lint purposes. Every canonical home below is a plugin doc, and per
+the ownership boundary no vault path can become one; a vault file restating a value in this
+table is a finding, not a convenience.
 
 | Fact | Canonical (defined only here) | Pointers only (no restating) |
 |---|---|---|
