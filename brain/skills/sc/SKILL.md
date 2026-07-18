@@ -45,6 +45,8 @@ Judge done/cancel from the session's open To-Dos and the user's stated closure i
 ### ④ Knowledge promotion (finalize mode, `scribe` delegation)
 Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and execute it. **Delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the score gate, no approval asked). Same as park (`sh`) — closure adds no approval gate (automatic; dedup is Dreaming's job).
 
+**Policy signature batch** — the one exception: if `scribe` returns `common-policy candidates`, present **the whole list once** here (knowledge-promotion Step 4) and hand only the approved ones to a follow-up `scribe` brief writing `000_common/policies/`. `common/policies/` is the sole tier no agent may write on its own — **agents draft, the user signs** (`${CLAUDE_SKILL_DIR}/../../docs/knowledge-escalate-convention.md`). No candidates → no prompt; **never ask per item.**
+
 Writing the promoted notes · appending one line to `knowledge/index.md` · logging non-promoted items to `0.rejected.md` are **all done by `scribe`** (the skill passes only the raw Learned lines plus `vault-root`·`project`·`uid`·today's date). Use the **promoted note titles** `scribe` returns in ⑤'s `→ promoted: [[…]]` links — so the links point to notes that actually exist.
 
 ### ⑤·⑥ Closing entry + frontmatter transition (`scribe` delegation — together in one call)

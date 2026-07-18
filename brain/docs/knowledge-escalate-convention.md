@@ -22,9 +22,11 @@ environment facts  ──(direct / auto-derived)──▶  common/facts/
 
 ## common/policies/ Promotion
 ```
-laws · regulations · certifications  ──(direct / user decision)──▶  common/policies/
+laws · regulations · certifications  ──(draft=agent / signature=user)──▶  common/policies/
 ```
-- **Policies**: **not** promotion — derived directly from external mandates (laws, regulators). **They never rise out of patterns** — accumulated advice (patterns) does not become obligation (policies).
+- **Policies**: **not** promotion **on the patterns/knowledge axis** — accumulated advice (patterns) does not become obligation (policies). They are derived directly from external mandates (laws, regulators); the transcription path from such a mandate is the next item.
+- **Human sign-off gate (canon: this section)** — **no agent writes `common/policies/` on its own. Agents draft; the user signs.** A candidate that reads as obligation is still recorded on its normal tier (project `knowledge/` — nothing is lost) and **additionally returned as a `common-policy candidates` list**; the calling skill presents the list **in one batch** at the promotion point (`skills/sh`·`sc` · dreaming §7), and only approved items get a follow-up `scribe` brief writing to `000_common/policies/`. **Never interrupt per item.**
+- **Why only policies**: they sit at the top of Document Conflict Precedence (`docs/project-docs-convention.md`), so one wrong entry silently overrides every other document. Project `knowledge/` · `facts/` · `patterns/` keep the **automatic** score gate unchanged (`skills/_session-shared/knowledge-promotion.md`).
 
 ## docs/adr/
 ```
