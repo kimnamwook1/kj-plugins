@@ -84,7 +84,7 @@ Brain-to-harness mapping (the design-consistency anchor):
 
 ```
 # 1. Install the plugin
-/plugin marketplace add <owner>/brain      # this repository
+/plugin marketplace add kimnamwook1/kj-plugins   # the marketplace repo
 /plugin install brain
 
 # 2. Structure setup (once per project)
