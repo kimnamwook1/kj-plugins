@@ -7,7 +7,7 @@ description: Set up the brain harness structure — creates the project CLAUDE.l
 
 Sets up the brain harness in a project — **mechanical structure only** (collect values → `CLAUDE.local.md` → vault scaffold). Content (filling documents) is `/brain:onboard`'s job. Canonical tree & naming = `${CLAUDE_SKILL_DIR}/../../docs/vault-tree.md` · canonical document list = `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md`.
 
-> **Executor = PM (main session).** `CLAUDE.local.md` lives outside the vault (project root), so the PM writes it directly. **The vault scaffold (step 3) is delegated to a `scribe` worker** — the PM does not write vault content directly (canonical governance: `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`).
+> **Executor = PM (main session).** `CLAUDE.local.md` lives outside the vault (project root), so the PM writes it directly. **The vault scaffold (step 4) is delegated to a `scribe` worker** — the PM does not write vault content directly (canonical governance: `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`).
 
 ## Steps
 
@@ -20,7 +20,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    **Branch — adopt-existing-vault mode**: if `vault-root` is an **already-existing directory**, proceed as adopting an existing vault rather than creating a new one (e.g. a shared company vault the team already uses):
    1. **Structure diff (read-only)** — compare reality against the canonical tree in `${CLAUDE_SKILL_DIR}/../../docs/vault-tree.md`: presence of `sessions/` (lowercase) · presence of `000_common/{facts,patterns,policies}` · project folder naming (`NNN_<project>`) · `docs/tech-design/` structure.
    2. **Mismatches are report-only** — present them as a table (e.g. `Sessions/ uppercase — canonical is sessions/`). 🔴 **Migration (rename/move) only after user approval** — a shared vault may be in use by other people. Without approval, leave the existing structure as is, and make the vault paths in the step 2 router point to the **actual paths** (not the canonical tree).
-   3. The scaffold (step 3) is idempotent anyway — skip existing entries and create **only what is missing** (anything newly created still uses canonical naming).
+   3. The scaffold (step 4) is idempotent anyway — skip existing entries and create **only what is missing** (anything newly created still uses canonical naming).
 
    Team-shared context: if the vault is a git repo, synchronization is the git merge layer's job (`versioning-convention.md`, concurrency layer 2) — nothing for init to touch; mention it only.
 
@@ -67,7 +67,14 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - `verifier` — verification, review, disproof; report-only.
    - Start sessions with `/brain:ss`.
 
-3. **Delegate the vault scaffold** — delegate as **one** `scribe` brief. If `<vault-root>` does not exist, confirm creation with the user before proceeding. **Idempotent — skip folders/files that already exist (no overwriting).** What to create (canonical tree vault-tree.md):
+3. **Protect `CLAUDE.local.md` from git** — the file holds private data (vault absolute paths, `org`, `ticket-system` credentials); it must never be committed. If the project root is a git repo, add it to `.gitignore` **idempotently**. Not a git repo → do nothing (silent skip). Re-running never duplicates the line:
+   ```bash
+   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+     grep -qxF 'CLAUDE.local.md' .gitignore 2>/dev/null || echo 'CLAUDE.local.md' >> .gitignore
+   fi
+   ```
+
+4. **Delegate the vault scaffold** — delegate as **one** `scribe` brief. If `<vault-root>` does not exist, confirm creation with the user before proceeding. **Idempotent — skip folders/files that already exist (no overwriting).** What to create (canonical tree vault-tree.md):
    - `000_common/{facts,patterns,policies}/index.md`
    - `<NNN>_<project>/knowledge/index.md` — NNN = the next number (max numeric-prefixed folder + 1, 3 digits — same computation as `/brain:ss` §Ensure the project folder)
    - `<NNN>_<project>/docs/{tech-design,business,policy,adr,research,feature}/index.md`
@@ -76,4 +83,4 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - Project hub `<NNN>_<project>/index.md` — one-line definition + `PREFIX: <value>` + TOC pointers only (canonical doc-catalog.md §Project hub)
    - Vault root `index.md` — one-line definition + TOC pointers only (index.md pointer principle, vault-tree.md)
 
-4. **Report** — report the list of created/updated paths, and point the user to `/brain:onboard` for the content interview.
+5. **Report** — report the list of created/updated paths, and point the user to `/brain:onboard` for the content interview.
