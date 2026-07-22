@@ -30,7 +30,8 @@ assert_exit() {    # <desc> <expected> <actual>
 
 # ---------------------------------------------------------------- fixtures
 mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" \
-         "$V/000_common/facts" "$V/000_common/patterns" "$V/000_common/policies"
+         "$V/000_common/facts" "$V/000_common/facts/machines" \
+         "$V/000_common/patterns" "$V/000_common/policies"
 
 session() {  # <basename> <uid> <status>
   printf -- '---\nuid: %s\nproject: selftest\ncreated: 2026-07-18\nupdated: 2026-07-18\nstatus: %s\nwriter: nwkim\n---\n\n## Goal\n' \
@@ -77,6 +78,10 @@ printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/nested/deep-no
 printf -- '---\nkind: fact\n---\n'    > "$V/000_common/facts/facts-no-title.md"
 printf -- '---\nkind: pattern\n---\n' > "$V/000_common/patterns/patterns-no-title.md"
 printf -- '---\nkind: policy\n---\n'  > "$V/000_common/policies/policies-no-title.md"
+# facts/machines/ is nested under facts/ (depth 2) — only reachable because validate.sh adds it
+# as an explicit scan root. Positive fixture: reverting that expansion drops it from scope and
+# kills the assert below, while the deeper project nested/ note stays out of scope regardless.
+printf -- '---\nkind: fact\n---\n'     > "$V/000_common/facts/machines/machine-no-title.md"
 printf -- '---\ntitle: tool inventory\n---\n' > "$V/000_common/facts/tool-x.md"
 
 # ---------------------------------------------------------------- run
@@ -100,6 +105,7 @@ assert_no_match "CRLF file is not misreported as headerless" 'CRLF-20260718-1200
 # knowledge scope — one positive per directory pins the scope
 assert_match   "project knowledge dir is scanned"            'knowledge/no-title.md:1: missing frontmatter key: title'
 assert_match   "000_common/facts is scanned"                 'facts/facts-no-title.md:1: missing frontmatter key: title'
+assert_match   "000_common/facts/machines is scanned"        'machines/machine-no-title.md:1: missing frontmatter key: title'
 assert_match   "000_common/patterns is scanned"              'patterns/patterns-no-title.md:1: missing frontmatter key: title'
 assert_match   "000_common/policies is scanned"              'policies/policies-no-title.md:1: missing frontmatter key: title'
 
@@ -116,9 +122,9 @@ assert_no_match "titled knowledge note produces no finding"  'knowledge/good.md'
 assert_no_match "000_common facts note with title is quiet"  'tool-x.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
-# numbers are asserted (not just "some count"): 10 sessions, and 6 knowledge = 2 project
-# (good + no-title; index/0.*/nested excluded) + 2 facts + 1 pattern + 1 policy.
-assert_match   "scanned counts appear in the summary"        '(10 sessions, 6 knowledge)'
+# numbers are asserted (not just "some count"): 10 sessions, and 7 knowledge = 2 project
+# (good + no-title; index/0.*/nested excluded) + 2 facts + 1 machines + 1 pattern + 1 policy.
+assert_match   "scanned counts appear in the summary"        '(10 sessions, 7 knowledge)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?

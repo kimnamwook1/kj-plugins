@@ -112,6 +112,10 @@ done < <(find "$VAULT" -mindepth 1 -maxdepth 1 -type d -name '[0-9][0-9][0-9]_*'
 for sub in facts patterns policies; do
   [ -d "$VAULT/000_common/$sub" ] && KDIRS[${#KDIRS[@]}]="$VAULT/000_common/$sub"
 done
+# facts/machines/ is the one nested knowledge subtree recall reads (one note per machine),
+# so add it as an explicit scan root. -maxdepth 1 (below) is kept, so arbitrary deeper nesting
+# — and project knowledge/ subfolders — stay out of scope. Surgical, not a blanket recurse.
+[ -d "$VAULT/000_common/facts/machines" ] && KDIRS[${#KDIRS[@]}]="$VAULT/000_common/facts/machines"
 
 # An empty array expanded under `set -u` is an unbound-variable error in bash 3.2 — guard it.
 if [ ${#KDIRS[@]} -eq 0 ]; then

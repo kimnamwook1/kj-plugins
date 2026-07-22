@@ -11,7 +11,7 @@
       index.md
       organization.md                #     organization info (interview)
       user.md                        #     user — preferences & conventions
-      machines/                      #     one note per machine (hostname.md — OS, key tools)
+      machines/                      #     one note per machine (<hostname>.md — lowercase-kebab; OS, key tools)
       tool-mcp.md                    #     MCP server inventory
       tool-skill.md                  #     skill inventory
       tool-cli.md                    #     CLI inventory
@@ -74,6 +74,10 @@
 - **required document files = uppercase**
   - `PRD.md` · `FRD.md` · `BM.md` · `GTM.md`
   - Exception: documents under `research/` may be lowercase.
+- **machine notes = `<hostname>.md`, lowercase-kebab**
+  - `facts/machines/kj-mac-mini-m4.md` — a knowledge/fact note, so lowercase; not an uppercase document file (`COMPLIANCE.md`).
+  - frontmatter = same schema as other facts notes: `title` (required) plus `uid` · `created` · `status` · `projects`. Reference: `000_common/facts/machines/kj-mac-mini-m4.md`.
+  - this canon gap is why two vaults stored one machine under divergent case/schema.
 - **multi-word filenames = `UPPER_SNAKE`**
   - `SEQUENCE.md` · `THREAT_MODEL.md` · `DATA_FLOW.md` · `STATE_DIAGRAM.md` · `API_SPEC.md`
 - **folder index = `index.md`**
