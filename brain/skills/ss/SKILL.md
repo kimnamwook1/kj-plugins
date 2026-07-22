@@ -22,7 +22,7 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 
 1. **Resolve VAULT** — `VAULT` = the `vault-root` value defined in the project's `CLAUDE.local.md`. **If missing, ask the user for the vault root and point them to `/brain:init` onboarding** — never write to an arbitrary path.
 
-2. **Resolve project** — if a first argument is given, that is the project override. Otherwise Read `${CLAUDE_SKILL_DIR}/../_session-shared/project-inference.md` and infer from cwd by its rules. If inference fails, do not guess — ask the user.
+2. **Resolve project** — if a first argument is given, that is the project override. Otherwise Read `${CLAUDE_SKILL_DIR}/../_session-shared/project-inference.md` and resolve by its rules (config `project:` first, then cwd). If inference fails, do not guess — ask the user.
 
 3. **Verify the vault exists** — check that `VAULT` is a directory. **If not**: inform the user and stop — "The vault doesn't exist yet. Create it with `/brain:init`, or use a different path?" — never write to some other vault on your own.
 

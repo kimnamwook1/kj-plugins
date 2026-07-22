@@ -22,9 +22,9 @@ environment facts  ──(direct / auto-derived)──▶  common/facts/
 
 ## common/policies/ Promotion
 ```
-laws · regulations · certifications  ──(draft=agent / signature=user)──▶  common/policies/
+org-wide binding norm (external mandate OR self-imposed invariant)  ──(draft=agent / signature=user)──▶  common/policies/
 ```
-- **Policies**: **not** promotion **on the patterns/knowledge axis** — accumulated advice (patterns) does not become obligation (policies). They are derived directly from external mandates (laws, regulators); the transcription path from such a mandate is the next item.
+- **Policies**: **not** promotion **on the patterns/knowledge axis** — accumulated advice (patterns) does not become obligation (policies). They are set directly by decision, origin-agnostic (an external mandate like a law/regulation, or a self-imposed org-wide invariant); the transcription path from such a norm is the next item.
 - **Human sign-off gate (canon: this section)** — **no agent writes `common/policies/` on its own. Agents draft; the user signs.** A candidate that reads as obligation is still recorded on its normal tier (project `knowledge/` — nothing is lost) and **additionally returned as a `common-policy candidates` list**; the calling skill presents the list **in one batch** at the promotion point (`skills/sh`·`sc` · dreaming §7), and only approved items get a follow-up `scribe` brief writing to `000_common/policies/`. **Never interrupt per item.**
 - **Why only policies**: they sit at the top of Document Conflict Precedence (`docs/project-docs-convention.md`), so one wrong entry silently overrides every other document. Project `knowledge/` · `facts/` · `patterns/` keep the **automatic** score gate unchanged (`skills/_session-shared/knowledge-promotion.md`).
 
@@ -33,7 +33,7 @@ laws · regulations · certifications  ──(draft=agent / signature=user)─�
 decision occurs  ──(architecture, immediate)──▶  <project>/docs/adr/
 ```
 - **ADR**: **no** promotion — a single tier in `docs/adr/` from birth. They never rise out of feature folders (they are never written there in the first place).
-- **Cross-project decisions are not raised into ADRs either** — decisions shared across all projects go to `common/policies/` (external mandate), or each project records its own ADR separately. Bundle decisions that may legitimately diverge per project (git strategy etc.) into one, and exceptions become impossible.
+- **Cross-project decisions are not raised into ADRs either** — a decision that binds every project in this vault goes to `common/policies/` (origin-agnostic — external mandate or self-imposed invariant); one that may legitimately differ per project stays split (each project its own ADR, or a per-project norm in `<project>/docs/policy/`). **The test is whether an exception can arise inside this vault, not whether the org differs** — a convention that needs a per-project exception is not a policy at all: admit one exception and its binding force is gone. So bundling a genuinely divergent decision into `common/policies/` makes exceptions impossible. In a single-org vault git branch strategy does *not* diverge — it stays in `common/policies/`; it would split per project only if several distinct orgs shared one vault.
 
 ## <project>/docs/policy/ Promotion
 ```

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- **`common/policies/` re-defined by binding force + scope, not origin (KJP-15).** The tier was described as *external* mandates — laws, regulations, certifications. It is now any norm that **binds every project in the vault**, origin-agnostic: an external mandate **or** a self-imposed org-wide invariant, gated on must vs. advice/technique. Touches `knowledge-convention` (3-axis table Content/Origin cells), `knowledge-escalate-convention` (§common/policies diagram + bullet), and `knowledge-promotion` (the obligation test in Step 2 and the sole-exception note in Step 1). The `Binding force = yes (no project exceptions)` cell was already on this axis and is unchanged.
+- **ADR counterexample re-premised (KJP-15).** The "don't bundle decisions that may diverge per project" warning stands, but its test is now *whether an exception can arise inside this vault*, not *whether the org differs*. Consequently git branch strategy does **not** diverge in a single-org vault and stays in `common/policies/`; it would split per project only across distinct orgs sharing one vault.
+- **Session commit is a per-vault choice, not a fixed gitignore (KJP-15).** The earlier session share-scope split stands — `sessions/` sits outside the team-shared surface; what changes is the premise that a gitignore was its *sole* implementation. The gitignore is now framed as the team-vault implementation only — a solo vault may track sessions (the commit doubles as backup). The plain-uid (never `[[wikilink]]`) rule for shared notes is unchanged, re-grounded on "a session may be absent from the shared surface." Touches `versioning-convention` §Share scope, `knowledge-promotion` reject-log clause, `knowledge-convention` `source_sessions` comment.
+- **`ss` project-resolution wording tightened (KJP-15).** Step 2 said "infer from cwd"; it now reads "config `project:` first, then cwd", matching `project-inference.md` §Priority (config outranks cwd). Behavior unchanged — wording only.
+
+### Added
+- **`update-over-create` names its tooling in canon (KJP-15).** `knowledge-convention` now states edit-existing-with-`Edit` / `Write`-only-for-new at the canon layer, so the scribe procedure's tool rule (`knowledge-promotion`) reads as canon-derived rather than a lone skill-level instruction.
+
 ## 0.1.2 — 2026-07-18
 
 ### Added

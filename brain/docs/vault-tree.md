@@ -18,7 +18,7 @@
       tool-plugin.md                 #     plugin inventory
       claude-code/                   #     CC notes by topic
     patterns/                        #   B. upward-distilled lessons (promoted by Dreaming)
-    policies/                        #   C. company-wide compliance
+    policies/                        #   C. org-wide binding norms (every project; origin-agnostic)
       COMPLIANCE.md                   
     dream-log.md                     #   Dreaming run log — incremental baseline for the next dream
   NNN_<project>/                   # per project (number = sort order, identifier is the slug)
@@ -61,7 +61,7 @@
           SEQUENCE.md
           STATE_DIAGRAM.md
           policy/                    # rules that apply to this feature only (scope: feature)
-  sessions/                          # local-only: gitignored — the team shares NNN_*/ + 000_common only
+  sessions/                          # outside the team share (NNN_*/ + 000_common); committing it is a per-vault choice
     index.md                         # session table of contents
     <uid>.md                         # session = one file (episodic). uid = PROJECT_PREFIX-YYYYMMDD-HHMMSS
     assets/                          # (optional) shared raw images & video
