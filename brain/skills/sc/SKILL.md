@@ -56,7 +56,7 @@ Both touch the same file (`<VAULT>/sessions/<uid>.md`) and the **executor is `sc
 
 - **Target file**: `<VAULT>/sessions/<uid>.md` (the path settled in ①)
 - **Context**: `vault-root` · `project` · session `uid` · today's date · the ③ verdict (`done` / `cancel`, whether verification is pending)
-- **(⑤) Closing Progress entry** — insert **at the top of** `## Progress` (newest-on-top). Canonical `#### ` structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`):
+- **(⑤) Closing Progress entry** — insert **at the top of** `## Progress` (newest-on-top). Canonical `#### ` structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`). The `(completed)` heading suffix is the closure token from the status-suffix vocabulary (canon: sessions-note-convention §Progress entry status suffix) — used for `done` and `cancel` alike; never put a non-status description in the suffix.
   ```markdown
   ### YYYY-MM-DD (completed)
   **Final state:** final state / verification result (one line).
