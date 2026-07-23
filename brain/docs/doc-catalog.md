@@ -31,7 +31,7 @@
 | **FULL_TEST_PLAN** | `test-plan` | qa | `docs/tech-design/` | When a verification strategy is needed before implementation starts | universal |
 | **GLOSSARY** | `glossary` | planning | `docs/tech-design/` | When domain terms become ambiguous (maintained from the start) | universal |
 | **CODE_CONVENTION** | `code-convention` | architecture | `docs/tech-design/` | When the stack/language is decided (early in the project). Differs per project, so it is not common | universal |
-| **GIT_STRATEGY** | `git-strategy` | devops | `docs/tech-design/` | When a repo comes into existence. Default is trunk-based, but **a project may carve out exceptions**, so it is not common | universal |
+| **GIT_STRATEGY** | `git-strategy` | devops | `docs/tech-design/` | When a repo comes into existence. Per-project **pointer** to the common `DELIVERY_STRATEGY` policy (`000_common/policies/` — org default git flow §0); records this project's delivery bucket + any exceptions, else "예외 없음 — DELIVERY_STRATEGY 준수". 🔴 **Distinct artifact from `DELIVERY_STRATEGY`**: `GIT_STRATEGY` = per-project (may carve exceptions) **points at** `DELIVERY_STRATEGY` = org-wide default (no project exceptions) — DELIVERY_STRATEGY §6 | universal |
 | **RUNBOOK** | `runbook` | devops | `docs/tech-design/` | When there is something to deploy | universal |
 | **OBSERVABILITY** | `observability` | devops | `docs/tech-design/` | When entering production | situational |
 | **COMPLIANCE** | `compliance` | compliance | `docs/tech-design/` | Regulated user data or AI features (regulated/non-trivial projects) | situational |

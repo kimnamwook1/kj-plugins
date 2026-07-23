@@ -79,6 +79,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - `<NNN>_<project>/knowledge/index.md` — NNN = the next number (max numeric-prefixed folder + 1, 3 digits — same computation as `/brain:ss` §Ensure the project folder)
    - `<NNN>_<project>/docs/{tech-design,business,policy,adr,research,feature}/index.md`
    - **19 stubs** — 17 tech-design + 2 business. Each file = frontmatter (`status: stub` — the standard is project-docs-convention.md) + H1 **only**. Canonical list doc-catalog.md.
+     - **Exception — `GIT_STRATEGY.md`**: seed it as a **pointer** to the common `DELIVERY_STRATEGY` policy (`000_common/policies/DELIVERY_STRATEGY.md`), not a bare H1. Body = a pointer to that policy (org default git flow §0, keyed by the brain-config `org`) + the delivery bucket (**server-SaaS / server-personal / client** — TBD, set at `/brain:onboard` from Axis 1/2) + a project-exceptions line defaulting to **"예외 없음 — DELIVERY_STRATEGY 준수"**. 🔴 Never restate the org git-flow value; the stub only points (restate → drift). This is a factual pointer, not an empty-heading skeleton, so it is exempt from doc-templates.md's "only DESIGN/MILESTONE get a body template" rule. Idempotency unchanged — the skip-if-exists rule above still governs.
    - `sessions/index.md`
    - Project hub `<NNN>_<project>/index.md` — one-line definition + `PREFIX: <value>` + TOC pointers only (canonical doc-catalog.md §Project hub)
    - Vault root `index.md` — one-line definition + TOC pointers only (index.md pointer principle, vault-tree.md)
