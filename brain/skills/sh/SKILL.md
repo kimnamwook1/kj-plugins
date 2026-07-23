@@ -70,7 +70,7 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
 ## Park Entry Format (Progress structure)
 
-Insert at the **top** of `## Progress` (above existing entries). Follow the canonical `#### ` subheading structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`):
+Insert at the **top** of `## Progress` (above existing entries). Follow the canonical `#### ` subheading structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`). The `(parked)` heading suffix is a **statusline contract** — it is the one token the statusline parses (canon: sessions-note-convention §Progress entry status suffix). A round-count may trail it (`(parked #5)`); never put a non-status description there.
 
 ```markdown
 ### YYYY-MM-DD (parked)
