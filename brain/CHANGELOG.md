@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.3 — 2026-07-23
 
 ### Changed
 - **`DESIGN_SPEC` renamed to `DESIGN`, role expanded from link-holder to design-system spec (KJP-17).** Was: `DESIGN_SPEC` / kind `design-spec`, scoped to "holds Figma/Pencil links". Now `DESIGN` / kind `design` — an **FRD-grade design-system spec** (design tokens · component inventory · states · interaction rules) that **also** links the external SSOT (Figma/Pencil), not just links. Touches `doc-catalog` (row + kind), `vault-tree` (`DESIGN_SPEC.md` → `DESIGN.md` + annotation). Tier stays `situational` (UI products only). ⚠️ Canon only — the vault's existing `DESIGN_SPEC.md` files are renamed under KJP-24, not here.
