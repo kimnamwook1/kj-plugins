@@ -37,7 +37,7 @@
 | **COMPLIANCE** | `compliance` | compliance | `docs/tech-design/` | Regulated user data or AI features (regulated/non-trivial projects) | situational |
 | **DR** | `dr` | devops | `docs/tech-design/` | When data loss is a business risk (enterprise/prod) | situational |
 | **INTEGRATION** | `integration` | backend / architecture | `docs/tech-design/` | When external service integrations appear | situational |
-| **DESIGN_SPEC** | `design-spec` | design | `docs/tech-design/` | When the product has a UI (source of truth is Figma/Pencil; this holds links) | situational |
+| **DESIGN** | `design` | design | `docs/tech-design/` | When the product has a UI. **Design-system spec — FRD-grade**: design tokens · component inventory · states · interaction rules. **External SSOT = Figma/Pencil; this document holds the links AND the rules** (body template → [[doc-templates]]) | situational |
 | **MIGRATION** | `migration` | backend / devops | `docs/tech-design/` | When schema changes or data migrations occur | situational |
 
 **2 business documents** ★new — pre-created as stubs at project creation (17 tech-design + 2 business = **19**)
@@ -46,6 +46,17 @@
 |---|---|---|---|---|---|
 | **BM** | `bm` | **business** | `docs/business/` | When revenue model, cost structure, or unit economics affect product decisions. Referenced by the PRD | universal |
 | **GTM** | `gtm` | **marketing** | `docs/business/` | When launch, channel, or positioning decisions are needed. Referenced by the PRD | universal |
+
+**Planning (roadmap)** — **not pre-created** (created on trigger, not part of the 19-stub baseline)
+
+| Document | kind | owner | Location | When (trigger) | Tier |
+|---|---|---|---|---|---|
+| **MILESTONE** | `milestone` | **pm** | `docs/planning/` | When the project needs **phased delivery planning** — sequencing major deliverables/releases across time (the roadmap). Not for a single-shot small tool. Body template → [[doc-templates]] | situational |
+
+> **MILESTONE boundaries (who owns overlap).** MILESTONE = **"when what"** (timing · sequencing of already-defined scope). It never redefines scope and never records decision rationale.
+> - **vs PRD** — PRD owns **"what & why"** (product direction/requirements). MILESTONE references PRD/FRD scope via wikilinks; it never restates it.
+> - **vs ADR** — ADR owns **"why we decided X"** (a hard-to-reverse decision). MILESTONE links to ADRs for the *why*; it only carries the *when*.
+> - **vs the tracker** — the tracker owns the **fluid task/sprint queue** (status changes often, [[project-docs-convention]] §boundaries). MILESTONE owns the **durable phase/release plan** (stable milestones + exit criteria). The tracker executes against the milestone; the milestone never mirrors task status.
 
 **Project norms, decisions, research**
 

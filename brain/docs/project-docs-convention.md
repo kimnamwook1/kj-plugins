@@ -1,6 +1,6 @@
 # Project Docs
 
-> Tree & naming → [[vault-tree]] · document selection → [[doc-catalog]]
+> Tree & naming → [[vault-tree]] · document selection → [[doc-catalog]] · body templates (DESIGN·MILESTONE) → [[doc-templates]]
 
 ## Version Control
 - [[versioning-convention]]

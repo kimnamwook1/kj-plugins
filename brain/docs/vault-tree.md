@@ -35,7 +35,7 @@
         GIT_STRATEGY.md  
         ARCHITECTURE.md
         COMPLIANCE.md                # compliance for this project
-        DESIGN_SPEC.md
+        DESIGN.md                    # design-system spec (tokens·components·states·interactions) + Figma/Pencil links
         DR.md
         ERD.md
         GLOSSARY.md
@@ -52,6 +52,8 @@
       business/
         BM.md
         GTM.md
+      planning/                      # roadmap axis — spans tech+business, so it sits above the tech/business split. NOT pre-created (created on trigger)
+        MILESTONE.md                 # "when what" — phased delivery plan; references PRD/FRD scope + ADRs, never restates them
       policy/                        # promotion tier for cross-feature product rules; project-wide norms <PREFIX>-POL-0000N.md — criteria & ID issuance: project-docs-convention
       feature/                       # per-feature design (FRD·TDC·DATA_FLOW·SEQUENCE·STATE_DIAGRAM)  
         <feature>/                        
@@ -70,7 +72,7 @@
 ## Naming Conventions
 
 - **folders = lowercase**
-  - e.g. `docs/` · `docs/feature/` · `docs/policy/` · `docs/business/`
+  - e.g. `docs/` · `docs/feature/` · `docs/policy/` · `docs/business/` · `docs/planning/`
 - **required document files = uppercase**
   - `PRD.md` · `FRD.md` · `BM.md` · `GTM.md`
   - Exception: documents under `research/` may be lowercase.
