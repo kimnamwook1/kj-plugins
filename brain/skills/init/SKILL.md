@@ -1,13 +1,13 @@
 ---
 name: init
-description: Set up the brain harness structure — creates the project CLAUDE.local.md (PM role text, router) and the vault scaffold. Use when the user says "init", "install the harness", "set up the vault", "하네스 설치", "볼트 세팅". Mechanical structure only — the content interview is onboard.
+description: Set up the brain harness structure — creates the project CLAUDE.md (shared brain config, PM role, worker profiles) + CLAUDE.local.md (vault-root, router) and the vault scaffold. Use when the user says "init", "install the harness", "set up the vault", "하네스 설치", "볼트 세팅". Mechanical structure only — the content interview is onboard.
 ---
 
 # init — Harness Structure Setup (mechanical)
 
-Sets up the brain harness in a project — **mechanical structure only** (collect values → `CLAUDE.local.md` → vault scaffold). Content (filling documents) is `/brain:onboard`'s job. Canonical tree & naming = `${CLAUDE_SKILL_DIR}/../../docs/vault-tree.md` · canonical document list = `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md`.
+Sets up the brain harness in a project — **mechanical structure only** (collect values → `CLAUDE.md` + `CLAUDE.local.md` → vault scaffold). Content (filling documents) is `/brain:onboard`'s job. Canonical tree & naming = `${CLAUDE_SKILL_DIR}/../../docs/vault-tree.md` · canonical document list = `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md`.
 
-> **Executor = PM (main session).** `CLAUDE.local.md` lives outside the vault (project root), so the PM writes it directly. **The vault scaffold (step 4) is delegated to a `scribe` worker** — the PM does not write vault content directly (canonical governance: `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`).
+> **Executor = PM (main session).** `CLAUDE.md` and `CLAUDE.local.md` live outside the vault (project root), so the PM writes them directly. **The vault scaffold (step 4) is delegated to a `scribe` worker** — the PM does not write vault content directly (canonical governance: `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`).
 
 ## Steps
 
@@ -24,16 +24,18 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
 
    Team-shared context: if the vault is a git repo, synchronization is the git merge layer's job (`versioning-convention.md`, concurrency layer 2) — nothing for init to touch; mention it only.
 
-2. **Create `CLAUDE.local.md`** (project root) — **if it already exists, add/update only the brain block** (replace only what is between the `<!-- brain:begin -->` … `<!-- brain:end -->` markers), **never overwrite the whole file**. The block has 4 sections:
+2. **Create the two config files** (project root) — the brain block is **split by shareability**: `CLAUDE.md` = committed, true for every teammate · `CLAUDE.local.md` = gitignored, machine-specific. For **each** file: **if it already exists, add/update only the brain block** (replace only what is between that file's `<!-- brain:begin -->` … `<!-- brain:end -->` markers), **never overwrite the whole file**.
 
-   **`## brain config`** — key-value:
+   ### 2a. `CLAUDE.md` — committed · team-shared (3 sections)
+
+   **`## brain config`** — shared keys only:
    ```
-   vault-root: <absolute path>
    org: <org>
    project: <project>
    prefix: <PREFIX>
-   ticket-system: TBD   # settled in /brain:onboard
+   ticket-system: TBD   # identifier only — settled in /brain:onboard
    ```
+   🔴 **Identifiers only, never credentials.** `ticket-system` holds a shareable identifier (system name · workspace · project code). **Real credentials (tokens, keys) go in neither CLAUDE file** — they live in a separate env file (e.g. `~/.config/claude/huly.env`).
 
    **`## PM role`**
    - Single point of contact — decompose, delegate, aggregate, and report requests.
@@ -41,8 +43,23 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - Never write vault content directly — delegate recording via a `scribe` brief. **Commits are the PM's** (boundary recording — canonical versioning-convention.md).
    - Ticket loop — when large, plan (built-in Plan, read-only) → coder → verifier. When small, straight to worker/coder. Exploration and multi-file investigation use built-in Explore (read-only).
    - Brief discipline — specify Goal, constraints, context pointers, DoD. No file overlap between concurrent workers.
-   - Document-conflict arbitration — the canonical precedence is `<home>/.claude/brain-docs/project-docs-convention.md` (same expanded-home rule as the Router below).
+   - Document-conflict arbitration — the canonical precedence is `<home>/.claude/brain-docs/project-docs-convention.md` (same expanded-home rule as the `CLAUDE.local.md` Router, 2b).
    - When unsure, vault first — no guessing.
+
+   **`## Worker profiles`**
+   - `worker` — default profile for general tickets/briefs (including scribe recording briefs).
+   - `coder` — implementation only, worktree isolation.
+   - `verifier` — verification, review, disproof; report-only.
+   - Start sessions with `/brain:ss`.
+
+   ### 2b. `CLAUDE.local.md` — gitignored · machine-local (2 sections)
+
+   Everything here is machine-specific by nature: `vault-root` differs per person **even on a team**, and every Router line is a machine-absolute path (the 🔴 expansion rule below).
+
+   **`## brain config`** — local key only:
+   ```
+   vault-root: <absolute path>
+   ```
 
    **`## Router`** — one line for each of the 8 docs below (trigger + path). Point every line at the stable symlink `$HOME/.claude/brain-docs/<doc>.md` — **never** at the plugin install path. The symlink is created and refreshed on every SessionStart by `hooks/hooks.json`, so it tracks the plugin wherever it lives; a hard-coded install path dies on the next version bump or repo move.
 
@@ -61,13 +78,9 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    Plus one tool-inventory line:
    - When wondering which tools, CLIs, or MCPs are available → `<vault-root>/000_common/facts/tool-*.md` (if missing, `/brain:onboard` step 6)
 
-   **`## Worker profiles`**
-   - `worker` — default profile for general tickets/briefs (including scribe recording briefs).
-   - `coder` — implementation only, worktree isolation.
-   - `verifier` — verification, review, disproof; report-only.
-   - Start sessions with `/brain:ss`.
+   **Migration on re-run (pre-split projects)** — projects initialized before the split hold all 4 sections in `CLAUDE.local.md`. No special case needed: each file's brain block is fully regenerated between its own markers, so a re-run writes the shared sections (shared config keys · PM role · Worker profiles) into the `CLAUDE.md` block and leaves only `vault-root` + Router in the `CLAUDE.local.md` block — carrying existing values over (e.g. a settled `ticket-system`) instead of resetting them to defaults. Report the move in step 5.
 
-3. **Protect `CLAUDE.local.md` from git** — the file holds private data (vault absolute paths, `org`, `ticket-system` credentials); it must never be committed. If the project root is a git repo, add it to `.gitignore` **idempotently**. Not a git repo → do nothing (silent skip). Re-running never duplicates the line:
+3. **Protect `CLAUDE.local.md` from git** — the file holds machine-local data (the vault absolute path, machine-absolute Router pointers); it must never be committed. If the project root is a git repo, add it to `.gitignore` **idempotently**. Not a git repo → do nothing (silent skip). Re-running never duplicates the line. 🔴 **Never gitignore `CLAUDE.md`** — it is the shared half and committing it is the point; if `.gitignore` already covers it (explicit entry or pattern), report to the user instead of working around it:
    ```bash
    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
      grep -qxF 'CLAUDE.local.md' .gitignore 2>/dev/null || echo 'CLAUDE.local.md' >> .gitignore

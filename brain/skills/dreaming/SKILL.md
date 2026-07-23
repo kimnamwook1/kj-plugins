@@ -127,7 +127,7 @@ action-needed items only (stubs to fill, promotions awaiting approval, failures 
 - **`writer: scribe`** — unlike a human session's `writer:` (= `whoami`, an actual person), a dream report is machine-generated, so it carries the scribe-worker label (`scribe`). This difference is intentional.
 
 ## v1 scope (now)
-grep-based (graphify later). dedup·staleness·secondary promotion·CLAUDE.md pointer regeneration·**structural audit (§5)**·**metrics snapshot (§6)**. Scheduling lives outside this skill (cron/loop). **Early on the vault is small and there is almost nothing to do — that is normal.** The value grows as the vault accumulates.
+grep-based (graphify later). dedup·staleness·secondary promotion·CLAUDE.local.md Router pointer regeneration·**structural audit (§5)**·**metrics snapshot (§6)**. Scheduling lives outside this skill (cron/loop). **Early on the vault is small and there is almost nothing to do — that is normal.** The value grows as the vault accumulates.
 
 ## Forbidden
 - **No automatic application** of destructive changes (merge·delete·move) — propose·approve.

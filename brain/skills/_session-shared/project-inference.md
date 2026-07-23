@@ -8,7 +8,7 @@
 
 ## Rule (cwd fallback)
 
-**`CLAUDE.local.md` configuration wins; cwd inference is the fallback** — if the project `CLAUDE.local.md` has a `project:` value, that is canonical (recorded by `/brain:init` onboarding). Below is the fallback rule for when that value is absent; it assumes the convention that everything under the work root (the top-level folder that collects repos) is layered as `<org>/<project>/<repo>`. The value that goes into `project:` = the **product family**, i.e. the path segment immediately after org:
+**Configuration wins; cwd inference is the fallback** — if the project `CLAUDE.md` brain config has a `project:` value, that is canonical (recorded by `/brain:init`; pre-split projects may still carry it in `CLAUDE.local.md` — read both). Below is the fallback rule for when that value is absent; it assumes the convention that everything under the work root (the top-level folder that collects repos) is layered as `<org>/<project>/<repo>`. The value that goes into `project:` = the **product family**, i.e. the path segment immediately after org:
 
 ```
 <work-root>/<org>/<project>/<repo>/...
@@ -22,6 +22,6 @@ Examples (hypothetical):
 ## Priority
 
 1. **If a first argument exists, it is the project override.** (e.g. `ss rocket` or `ss rocket "fix login"` → project `rocket`, the remaining text is the title.) An argument always beats configuration and inference.
-2. Without an argument, **the `project:` value in `CLAUDE.local.md`** — configuration first.
+2. Without an argument, **the `project:` value in `CLAUDE.md`** (pre-split projects: `CLAUDE.local.md`) — configuration first.
 3. Without configuration either, **parse cwd** with the fallback rule above.
 4. If inference fails because cwd is not shaped like `<work-root>/<org>/<project>` — **do not guess; ask the user for the project name.**

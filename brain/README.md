@@ -88,9 +88,10 @@ Brain-to-harness mapping (the design-consistency anchor):
 /plugin install brain
 
 # 2. Structure setup (once per project)
-/brain:init      # writes CLAUDE.local.md (PM role statement + router) at the project root
-                 # and scaffolds the vault; an existing vault is adopted, not recreated
-                 # (structure diff is reported; migration only with your approval)
+/brain:init      # writes CLAUDE.md (shared brain config + PM role + worker profiles,
+                 # committed) and CLAUDE.local.md (vault-root + router, gitignored) at the
+                 # project root, and scaffolds the vault; an existing vault is adopted, not
+                 # recreated (structure diff is reported; migration only with your approval)
 
 # 3. Content setup (once per project)
 /brain:onboard   # 5-question interview (ticket system · goal · stack · regulation · deploy
@@ -259,7 +260,7 @@ table is a finding, not a convenience.
 |---|---|---|
 | Session schema (file-per-session · frontmatter · 3-value status) | `docs/sessions-note-convention.md` | root index · `skills/ss` · dreaming |
 | Vault tree, paths, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
-| External ticket system = canonical work queue | PM role statement (`CLAUDE.local.md`, written by `/brain:init`) | sessions-note-convention |
+| External ticket system = canonical work queue | PM role statement (`CLAUDE.md`, written by `/brain:init`) | sessions-note-convention |
 | Promotion score gate (sum ≥ 3 · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
 | Human sign-off gate for `common/policies/` (agents draft, the user signs) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sh`·`sc` · dreaming |
 | Third-time test (reject-log recurrence → rule) | `skills/dreaming/SKILL.md` §3 | knowledge-promotion |
@@ -292,10 +293,12 @@ table is a finding, not a convenience.
 
 ## FAQ / Notes
 
-- **Why `CLAUDE.local.md`?** It is gitignored (machine-local values like `vault-root` don't
-  belong in the repo), it is loaded on every session, and it is the only reliable path for
-  handing the PM its router and role statement each time. `/brain:init` manages only its own
-  marker-delimited block, so your other local notes survive.
+- **Why two config files?** Both load every session, and `/brain:init` manages only its own
+  marker-delimited block in each, so your other notes survive. `CLAUDE.md` is committed —
+  the shareable half (org · project · prefix · ticket-system identifier, PM role statement,
+  worker profiles) reaches every teammate; it is never gitignored. `CLAUDE.local.md` stays
+  gitignored — `vault-root` differs per person even on a team, and the router is
+  machine-absolute paths. Real credentials go in neither file (separate env).
 - **Existing vault? Team-shared vault?** `/brain:init` detects an existing directory and
   switches to adopt mode: it diffs the structure against the canonical tree, reports
   mismatches, and migrates only with explicit approval. Cross-machine sync is a git merge

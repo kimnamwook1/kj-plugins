@@ -9,7 +9,7 @@ Fills **content** into the structure init laid down — get answers through an i
 
 ## Prerequisite
 
-`CLAUDE.local.md` must contain `## brain config` (vault-root, project, prefix). **If missing, stop and point the user to `/brain:init` first** — do not write to arbitrary paths.
+The brain config must be present across the two config files: `CLAUDE.md` `## brain config` (org, project, prefix, ticket-system) + `CLAUDE.local.md` (vault-root, Router). Pre-split projects may still hold everything in `CLAUDE.local.md` — both files load merged, so read both. **If missing, stop and point the user to `/brain:init` first** — do not write to arbitrary paths.
 
 ## Steps
 
@@ -29,7 +29,7 @@ Fills **content** into the structure init laid down — get answers through an i
    - Rationale: **tools go unused not because the inventory is missing but because it is not recalled** — creation is measurement (this step), recall is the router (the tool-inventory line `/brain:init` put into CLAUDE.local.md), checking is worker discipline (worker).
 
 7. **Answer → application mapping**:
-   - **① Ticket system** → update `ticket-system` in `CLAUDE.local.md`. If there is a system, confirm the project identifier and MCP availability, and record the session `related_ticket` mapping (which system's issue IDs get written) in the brain config. If none, `ticket-system: none` — manage via session To-Dos only.
+   - **① Ticket system** → update `ticket-system` in `CLAUDE.md` (brain config; pre-split projects: wherever the key currently lives). **Identifier only** — real credentials go in neither CLAUDE file (separate env, e.g. `~/.config/claude/huly.env`). If there is a system, confirm the project identifier and MCP availability, and record the session `related_ticket` mapping (which system's issue IDs get written) in the brain config. If none, `ticket-system: none` — manage via session To-Dos only.
    - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, also `BM`.
    - **③ Stack** → `CODE_CONVENTION` · `ARCHITECTURE` (architecture brief) · `GIT_STRATEGY` (devops label). Classify from Q1/Q2 and record the bucket in `GIT_STRATEGY`:
      - Q1 *I control* + Q2 *SaaS* → **server-SaaS** · Q1 *I control* + Q2 *personal/internal* → **server-personal** · Q1 *someone else controls* → **client** (Q2 skipped).

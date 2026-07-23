@@ -9,7 +9,7 @@ Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask
 > Workers **never write to the vault directly**. Hand off, and a `scribe` worker records it via the PM (**`scribe` = a worker given a recording brief** — a label, not a resident agent). Keep `Learned` atomic — promotion quality is governed by capture quality (GIGO).
 
 ## Recall — cue-based
-- **CLAUDE.md pointers** (per project): a **thin router / hot-cache** auto-loaded every session.
+- **CLAUDE.local.md Router pointers** (per project): a **thin router / hot-cache** auto-loaded every session. (Machine-local absolute paths — lives in `CLAUDE.local.md`, never the committed `CLAUDE.md`.)
   - Rules: **pointers only, no content** (token savings). **Auto-maintained** (Dreaming/`scribe`). No hand-curation (it rots).
 - **★ `ss` recall step**: at session start (**both new sessions and resumes**), inject related memory into `## Context` — **canon: `skills/_session-shared/recall.md`** (source composition, related hops, caps, and source-path discipline are all defined only there).
 
@@ -18,7 +18,7 @@ Keep realtime cheap; batch the hard parts. Runs periodically (scheduled).
 - **dedup / consolidation** — merge accumulated similar notes.
 - **staleness flags** — mark claims unreferenced for N months / grown stale (not deletion; flagged for review).
 - **Stage-2 promotion + graph links** — elevate cross-project recurrences to common, add missing cross-links.
-- **Recall-layer refresh** — regenerate CLAUDE.md pointers + rescan the facts inventory.
+- **Recall-layer refresh** — regenerate the CLAUDE.local.md Router pointers + rescan the facts inventory.
 
 **Guardrails (violate these and memory gets polluted)**:
 - **Incremental** — not the whole vault every time; only what changed or aged since the last dream.
