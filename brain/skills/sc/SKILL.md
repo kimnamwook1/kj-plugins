@@ -49,6 +49,8 @@ Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and execute
 
 Writing the promoted notes · appending one line to `knowledge/index.md` · logging non-promoted items to `0.rejected.md` are **all done by `scribe`** (the skill passes only the raw Learned lines plus `vault-root`·`project`·`uid`·today's date). Use the **promoted note titles** `scribe` returns in ⑤'s `→ promoted: [[…]]` links — so the links point to notes that actually exist.
 
+**Feedback counters (same delegation — KJP-7)** — the PM extracts the injected-note list from the session's `## Context` recall block (the canonical injected-notes record — `recall.md` §Injection; grep, read-only) and judges **which of those notes were actually used this session**. The brief has `scribe` bump `recalled:` +1 on every injected note and `useful:` +1 on the used subset — Edit-based (+1 on the literal current value; absent field → insert at 1), **once per session**, guarded by the Context counter-marker line (a prior `sh` may already have written it — then only the `useful:` top-up applies). Semantics·marker format·exclusions (`[M]` session lines · `000_common/policies/`) canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. The marker line itself lands in `## Context` through the ⑤·⑥ brief (the session file is that delegation's scope).
+
 ### ④b Document check (detection + routing only — no auto-writing, no new files)
 If this session's `Outputs` touched **architecture, API surface, deployment, or schema**, pick the affected document(s) from `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md` and either (a) fold the document update into the outgoing ⑤·⑥ `scribe` brief (content = what the Handoff actually produced, routed per the catalog's owner label) or (b) leave it as an open item in the session `## To-Do-List`. Never fabricate document content the session did not produce — generating content that doesn't exist is fabrication, not recall (`skills/dreaming/SKILL.md` §stub-scan). This check lives in `sc` only — park (`sh`) is frequent and cheap; closure is the natural document boundary.
 
@@ -71,6 +73,7 @@ Both touch the same file (`<VAULT>/sessions/<uid>.md`) and the **executor is `sc
   - `path/to/output` — what it is
   ```
   (Include Mistake/Fixed if this closing session has any; omit otherwise. The Learned links must match the note titles `scribe` actually promoted in ④.)
+- **`## Context` counter marker**: if ④ bumped feedback counters, append (or extend, via Edit) the counter-marker line at the end of the recall block — format canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. Touch nothing else in Context.
 - **(⑥) Frontmatter update**:
   - Flip `status:` to `done` (or `cancel`). Replace **only the `status:` line inside the frontmatter block** — the body Progress may also contain the string `status:`, so a naive global replace misfires.
   - `updated:` to today. (Legacy fields like `end_date`/`start_date`/`date` are not in the schema — do not create them.)
@@ -87,7 +90,7 @@ The PM commits the vault directly **after** the ④·⑤·⑥ `scribe` writes ar
   git -C "$VAULT" add -- <paths…> && git -C "$VAULT" commit -q -m "session <uid>: completed — <one-line gist>"
   ```
 - **Stage only the paths this session wrote — `git add -A` is forbidden.** One vault is shared by concurrent sessions of other projects; `-A` sweeps their in-flight work into this session's commit under this session's message.
-- **The pathspec = what the scribes returned** — the ⑤·⑥ session file `<VAULT>/sessions/<uid>.md` + the ④ promoted note paths + `<project>/knowledge/index.md`·`0.rejected.md` when touched. If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
+- **The pathspec = what the scribes returned** — the ⑤·⑥ session file `<VAULT>/sessions/<uid>.md` + the ④ promoted note paths + `<project>/knowledge/index.md`·`0.rejected.md` when touched + the ④ counter-bumped note paths (these may sit outside `<project>/` — `[C]`/`[X]` notes). If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
 - **Leave every other dirty file dirty** — do not stage, stash, or revert anything outside that list, however unrelated-looking the diff. It is another session's unfinished work.
 - **Read `git -C "$VAULT" status --porcelain` before staging.** If dirty files reach beyond this session's own paths, say so in ⑧ (`N files dirty across M directories — staged only this session's`) and stage from the pathspec anyway. A report, not a gate — never block the closure on it.
 - **commit-only — `git push` is forbidden.** The vault carries session raw text (repo names·SHAs·infra topology·secret candidates) verbatim. Local commit is where this skill's job ends; **remote exposure is the user's call** — even on an explicit user request this skill does not push automatically.

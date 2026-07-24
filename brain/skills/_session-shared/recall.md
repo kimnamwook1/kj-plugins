@@ -36,7 +36,7 @@ emit() {
   esac
   _sec=$(( _sec + $(sec_delta "$(fm "$_p" type)") ))               # type refinement: gotcha/decision > lesson > reference
   [ "$_sec" -gt 5 ] && _sec=5; [ "$_sec" -lt 1 ] && _sec=1
-  _cf=$(fm "$_p" score | tr -cd '0-9');    [ -n "$_cf" ] || _cf=0  # promotion-score sum if a note persists one; else 0
+  _cf=$(fm "$_p" useful | tr -cd '0-9');   [ -n "$_cf" ] || _cf=0  # useful: feedback counter (KJP-7); field absent (pre-KJP-7 note) = 0
   _pr=$(fm "$_p" priority | tr -cd '0-9'); [ -n "$_pr" ] || _pr=0  # priority if present; else 0
   _tr=$(trigger_line "$_p" | tr '\t\n' '  ')
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$_s" "$_sec" "$_cf" "$_pr" "$(ymd "$(fm "$_p" updated)")" "$_p" "$_l" "$_l $_tr"
@@ -69,7 +69,7 @@ emit() {
     grep -q "^project: <project>" "$f" || continue
     u=$(ymd "$(fm "$f" updated)")
     awk '/^#### Mistake/{ if(b!="")print b; b=""; c=1; h=$0; sub(/^####[ \t]*/,"",h); b=h; next }
-         /^####/{ if(b!=""){print b; b=""} c=0; next }
+         /^##/{ if(b!=""){print b; b=""} c=0; next }   # any ##/###/#### heading ends the block — bare /^####/ let a trailing Mistake swallow the next ### date entry / ## section (KJP-9)
          c&&NF{ s=$0; gsub(/^[ \t]+|[ \t]+$/,"",s); b=(b==""?s:b" "s) }
          END{ if(b!="")print b }' "$f" | while IFS= read -r m; do
       [ -n "$m" ] && printf 'M\t5\t0\t0\t%s\t%s\t%s\t%s\n' "$u" "$f" "$m" "$m"   # [M] = top section axis: sec=5
@@ -85,7 +85,7 @@ emit() {
     {
       src=$1; sec=$2+0; conf=$3+0; prio=$4+0; upd=$5+0; path=$6; label=$7; otext=$8
       sec_n = sec*20                                                      # W_SECTION axis, normalized 20..100
-      c=conf; if(c>10)c=10; conf_n=c*10                                   # W_CONFIDENCE (promotion-score sum, cap 10) 0..100
+      c=conf; if(c>10)c=10; conf_n=c*10                                   # W_CONFIDENCE (useful feedback counter, cap 10) 0..100
       p=prio; if(p>5)p=5;   prio_n=p*20                                   # W_PRIORITY (cap 5) 0..100
       t=tolower(otext); gsub(/[^a-z0-9]+/," ",t); nt=split(t,ta," ")
       delete seen; ov=0
@@ -106,7 +106,7 @@ The pipeline scores every candidate with a fixed integer weighted sum, sorts des
 | Weight | Term (normalized 0–100) | Computation | Source |
 |---|---|---|---|
 | **W_SECTION 10** | section axis | `sec*20` — M=5 · C-policies=4 · C-facts/patterns=3 · K=2 · X=1, then ±1 by `type:` (gotcha/decision > lesson > reference), clamped 1..5 | source prefix + `type:` |
-| **W_CONFIDENCE 5** | promotion score | `min(sum,10)*10` — score sum if a note persists one; else 0 (current schema does **not** persist it → 0, per ticket "없으면 0") | `score:` |
+| **W_CONFIDENCE 5** | net-help feedback | `min(useful,10)*10` — the `useful:` feedback counter (sessions that actually used the note; bumped by `sh`/`sc`, canon `docs/knowledge-convention.md` §Feedback counters — KJP-7); field absent (pre-KJP-7 note) = 0 | `useful:` |
 | **W_OVERLAP 4** | goal overlap | `overlap_count*100/goal_tokens` — distinct goal tokens (≥2 chars) present in title+Trigger | `$GOAL` ↔ `title:`/`## Trigger` |
 | **W_PRIORITY 1** | priority | `min(prio,5)*20` — if present; else 0 | `priority:` |
 | **W_RECENCY 0.5** | recency | `updated` (YYYYMMDD) — **tiebreaker only**: the low-order digits of the sort key, so it can never overturn a score difference | `updated:` |
@@ -121,6 +121,6 @@ From the **ranked top-N** above (A), you may add each note's `related:` neighbor
 ## Injection
 The ranker's **top-N** (default 8) **is** the recall set — no manual re-picking, no re-ordering. Emit each item on its own line with its **source path** (reduces memory hallucination and staleness); the ranker already puts direct goal matches and Mistakes (M) up top. If the ranked set is empty, quietly move on with "no relevant accumulated memory (fresh vault)".
 - **On a policies (C) conflict**: `common/policies/` is the normative axis — when it contradicts facts or patterns, **policies wins** (`docs/project-docs-convention.md` §Document Conflict Precedence). If you spot a contradiction, do not silently pick one — call it out in the recall block.
-- **New session**: add as a recall block to `## Context`.
-- **Continue**: present recall **together with** the continuation summary (live context priming). Do not overwrite the session note's `## Context`.
-> Marker: `<!-- recall: recall.md · K+common(facts/patterns/policies)+cross+Mistake · deterministic weighted-sum ranker (S10/C5/O4/P1/rec0.5) · top-N cap · 1-hop related · source paths · graphify first -->`
+- **New session**: add as a recall block to `## Context`. **This block doubles as the session's canonical injected-notes record** (each line already carries its source path — no separate list is kept): `sh`/`sc` read it to bump the injected notes' `recalled:`/`useful:` feedback counters (canon: `docs/knowledge-convention.md` §Feedback counters).
+- **Continue**: present recall **together with** the continuation summary (live context priming). Do not overwrite the session note's `## Context`. (Feedback counters count injection **once per session** — the resume re-presentation is screen-only and extends neither the injected-notes record nor any counter.)
+> Marker: `<!-- recall: recall.md · K+common(facts/patterns/policies)+cross+Mistake · deterministic weighted-sum ranker (S10/C5/O4/P1/rec0.5 · C=useful feedback) · top-N cap · 1-hop related · source paths · Context block = injected-notes record · graphify first -->`

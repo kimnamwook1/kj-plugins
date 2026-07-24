@@ -32,9 +32,11 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
 2. **Pending-marker scan** (see "Scan for Pending Markers" below) — always run **before** deciding resume actions. **The scan is done by the PM directly** (a read-only `grep` — command below). Organize found markers by location·request·owner and **put them into the `## To-Do-List` items of the step-4 brief** (writing them to the file is `scribe`'s job).
 
-3. **Knowledge promotion (`scribe` delegation, automatic)** (see "Knowledge Promotion" below) — run **before** delegating the park entry. Per the `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` procedure, **delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the two-gate judgment, no approval asked). Put the `→ promoted: [[..]]` backlinks `scribe` returns into the step-4 Learned. (Scope: **knowledge promotion only** — `<uid>.md` is delegated separately in step 4.)
+3. **Knowledge promotion (`scribe` delegation, automatic)** (see "Knowledge Promotion" below) — run **before** delegating the park entry. Per the `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` procedure, **delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the two-gate judgment, no approval asked). Put the `→ promoted: [[..]]` backlinks `scribe` returns into the step-4 Learned. (Scope: **knowledge promotion + feedback-counter bumps on the injected notes** (Feedback-counters paragraph below) — `<uid>.md` is delegated separately in step 4.)
 
    **Policy signature batch** — if `scribe` returns `common-policy candidates`, present **the whole list once** here (knowledge-promotion Step 4) and hand only the approved ones to a follow-up `scribe` brief writing `000_common/policies/`. `common/policies/` is the sole tier no agent may write on its own — **agents draft, the user signs** (`${CLAUDE_SKILL_DIR}/../../docs/knowledge-escalate-convention.md`). No candidates → no prompt; **never ask per item.**
+
+   **Feedback counters (same delegation — KJP-7)** — the PM extracts the injected-note list from the session's `## Context` recall block (the canonical injected-notes record — `recall.md` §Injection; grep, read-only) and judges **which of those notes were actually used this session**. The brief has `scribe` bump `recalled:` +1 on every injected note and `useful:` +1 on the used subset — Edit-based (+1 on the literal current value; absent field → insert at 1), **once per session**, guarded by the Context counter-marker line. Semantics·marker format·exclusions (`[M]` session lines · `000_common/policies/`) canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. The marker line itself lands in `## Context` through the **step-4** brief (the session file is step 4's scope); if the marker already exists, only the `useful:` top-up applies.
 
 4. **Record park entry·To-Do·frontmatter → delegate to `scribe` (one delegation)** — the PM **decides the content**, and **`scribe` writes it**. Insert per the Park Entry Format below at the **top** of `## Progress` (newest on top). Factual, not verbose.
 
@@ -42,6 +44,7 @@ description: Park (suspend) a work session — not closure. Unconditionally park
    - **Target file**: `<VAULT>/sessions/<uid>.md` (**this file only** — do not modify other vault files)
    - **`## Progress`**: insert the Park Entry Format block below **at the top** (preserve existing entries, no overwriting). The Learned line includes the step-3 backlinks (`→ promoted: [[..]]`) verbatim.
    - **`## To-Do-List`**: resume actions + the pending markers found in step 2 (Where·What·Who). **If step 5 captured user direction, it goes first.**
+   - **`## Context`**: if step 3 bumped feedback counters, append (or extend, via Edit) the counter-marker line at the end of the recall block — format canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. Touch nothing else in Context.
    - **frontmatter**: `updated:` to today. **Keep `status` at `active` — never change it** (park is not closure).
    - **Return requirement**: the recorded path + the inserted entry heading.
 
@@ -53,7 +56,7 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
    - **Command**: `git -C "$VAULT" add -- <paths…> && git -C "$VAULT" commit -q -m "<message>"`
      - **Stage only the paths this session wrote — `git add -A` is forbidden.** One vault is shared by concurrent sessions of other projects; `-A` sweeps their in-flight work into this session's commit under this session's message.
-     - **The pathspec = what the scribes returned** — the step-4 session file `<VAULT>/sessions/<uid>.md` + the step-3 promoted note paths + `<project>/knowledge/index.md`·`0.rejected.md` when touched. If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
+     - **The pathspec = what the scribes returned** — the step-4 session file `<VAULT>/sessions/<uid>.md` + the step-3 promoted note paths + `<project>/knowledge/index.md`·`0.rejected.md` when touched + the step-3 counter-bumped note paths (these may sit outside `<project>/` — `[C]`/`[X]` notes). If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
      - **Leave every other dirty file dirty** — do not stage, stash, or revert anything outside that list, however unrelated-looking the diff. It is another session's unfinished work.
      - **Read `git -C "$VAULT" status --porcelain` before staging.** If dirty files reach beyond this session's own paths, say so in step 8 (`N files dirty across M directories — staged only this session's`) and stage from the pathspec anyway. A report, not a gate — never block the park on it.
      - If none of those paths changed, **do not commit** (no empty commits). If the vault is not a git repo, skip quietly and mention it in step 8.

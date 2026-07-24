@@ -264,6 +264,9 @@ table is a finding, not a convenience.
 | Promotion two-gate judgment (score sum ≥ 3 + verdict enum `promote/already_known/not_durable/unsupported` · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
 | Human sign-off gate for `common/policies/` (agents draft, the user signs) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sh`·`sc` · dreaming |
 | Third-time test (reject-log recurrence → rule) | `skills/dreaming/SKILL.md` §3 | knowledge-promotion |
+| Feedback counters (`recalled:`/`useful:` · once-per-session marker · no auto-delete) | `docs/knowledge-convention.md` §Feedback counters | recall · `skills/ss`·`sh`·`sc` · dreaming |
+| Session-Mistake recurrence scan (similarity test · cap · suppression keys) | `skills/dreaming/SKILL.md` §3 | knowledge-convention (`source_items` fallback) |
+| dream-log format (run heading · project field · cumulative read) | `skills/dreaming/SKILL.md` §7 | root index · vault-tree |
 | Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss` · memory-control-convention |
 | git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
 | Session lifecycle (start/handoff/complete) | `skills/ss`·`sh`·`sc` | sessions-note-convention · dreaming |
