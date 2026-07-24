@@ -33,6 +33,7 @@
   - `### YYYY-MM-DD` — date heading. An optional **status suffix** may follow (`(parked)` / `(completed)`); see [§Progress entry status suffix](#progress-entry-status-suffix-statusline-contract) below. The suffix is **parsed by the statusline**, so the notation is a contract.
     - `#### Done` — completed
     - `#### Mistake` — mistakes  ← highest reuse value (prevents repeating the same mistake). Also used as a salience signal.
+      - **(optional) skill-step tag** — a Mistake made **while executing a brain skill's step** may end with one inline tag `[skill:<skill>§<step>]` (e.g. `- ran recall before GOAL was set [skill:ss§6a]`). `<step>` = the step label exactly as that skill document writes it; **at most one tag per Mistake line, at the end of the line**. Absent = the mistake is not tied to a skill step — **never guess a tag**. Dreaming counts these tags by exact string for per-skill-step aggregation (`skills/dreaming/SKILL.md` §3). The tag is additive metadata — the free-text description stays the record. It is **not** a Progress status suffix (that closed set below is untouched).
     - `#### Fixed` — how the mistake was fixed
     - `#### Learned` — things learned (write atomically → input to promotion)
     - `#### Outputs` — outputs (paths/content), documents created under docs, code file names, etc.

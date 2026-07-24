@@ -261,7 +261,7 @@ table is a finding, not a convenience.
 | Session schema (file-per-session · frontmatter · 3-value status) | `docs/sessions-note-convention.md` | root index · `skills/ss` · dreaming |
 | Vault tree, paths, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
 | External ticket system = canonical work queue | PM role statement (`CLAUDE.md`, written by `/brain:init`) | sessions-note-convention |
-| Promotion score gate (sum ≥ 3 · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
+| Promotion two-gate judgment (score sum ≥ 3 + verdict enum `promote/already_known/not_durable/unsupported` · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
 | Human sign-off gate for `common/policies/` (agents draft, the user signs) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sh`·`sc` · dreaming |
 | Third-time test (reject-log recurrence → rule) | `skills/dreaming/SKILL.md` §3 | knowledge-promotion |
 | Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss` · memory-control-convention |
