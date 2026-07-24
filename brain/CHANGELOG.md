@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.4 — 2026-07-25
 
 ### Changed
 - **`validate.sh` recognizes dreaming-report uids (KJP-32).** Dreaming reports carry `uid: YYYYMMDD-HHMMSS` with no PREFIX by canon (`dreaming/SKILL.md` §Report format — a dream is a cross-project batch), but the session uid check knew only `<PREFIX>-YYYYMMDD-HHMMSS` and flagged every dreaming report. The check now branches on `session_type: dreaming` (same shape-only + filename-match discipline, dreaming-specific pattern). Ticket resolution: the flagged vault file was **legal** — the specific canon (dreaming skill) outranks the general one (sessions-note-convention); the linter, not the file, was wrong. Self-test grows a legal-dreaming fixture + a PREFIX-carrying positive fixture (42 asserts).
