@@ -32,7 +32,7 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
 2. **Pending-marker scan** (see "Scan for Pending Markers" below) — always run **before** deciding resume actions. **The scan is done by the PM directly** (a read-only `grep` — command below). Organize found markers by location·request·owner and **put them into the `## To-Do-List` items of the step-4 brief** (writing them to the file is `scribe`'s job).
 
-3. **Knowledge promotion (`scribe` delegation, automatic)** (see "Knowledge Promotion" below) — run **before** delegating the park entry. Per the `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` procedure, **delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the score gate, no approval asked). Put the `→ promoted: [[..]]` backlinks `scribe` returns into the step-4 Learned. (Scope: **knowledge promotion only** — `<uid>.md` is delegated separately in step 4.)
+3. **Knowledge promotion (`scribe` delegation, automatic)** (see "Knowledge Promotion" below) — run **before** delegating the park entry. Per the `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` procedure, **delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the two-gate judgment, no approval asked). Put the `→ promoted: [[..]]` backlinks `scribe` returns into the step-4 Learned. (Scope: **knowledge promotion only** — `<uid>.md` is delegated separately in step 4.)
 
    **Policy signature batch** — if `scribe` returns `common-policy candidates`, present **the whole list once** here (knowledge-promotion Step 4) and hand only the approved ones to a follow-up `scribe` brief writing `000_common/policies/`. `common/policies/` is the sole tier no agent may write on its own — **agents draft, the user signs** (`${CLAUDE_SKILL_DIR}/../../docs/knowledge-escalate-convention.md`). No candidates → no prompt; **never ask per item.**
 
@@ -111,6 +111,6 @@ Spell out found markers in `## To-Do-List`: **Where** (file:line/section) · **W
 
 ## Knowledge Promotion (before writing the park entry)
 
-Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and follow it as written. (Summary: **delegate to `scribe` → `scribe` auto-selects·promotes via the score gate (sum ≥ 3)** (no approval asked — **only `common/policies/` candidates are batched for the user's signature**) → trigger-first notes in `<project>/knowledge/` → the session Learned gets only `→ promoted: [[..]]` links. Dedup is Dreaming's job.)
+Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and follow it as written. (Summary: **delegate to `scribe` → `scribe` auto-selects·promotes via the two-gate judgment (score gate sum ≥ 3 + similar-note verdict)** (no approval asked — **only `common/policies/` candidates are batched for the user's signature**) → trigger-first notes in `<project>/knowledge/` → the session Learned gets only `→ promoted: [[..]]` links. Dedup is Dreaming's job.)
 
 > The step-3 delegation's scope is **knowledge promotion only** — its scope differs from step 4, so there is no overlap (step 3: `<project>/knowledge/`, step 4: `<VAULT>/sessions/<uid>.md`). The two delegations may be merged into one `scribe` call — specifying both scopes in the brief cuts round trips.

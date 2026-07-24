@@ -6,7 +6,7 @@
 ```
 session Learned  ──(scribe, realtime)──▶  <project>/knowledge/
 ```
-- **Stage 1 (realtime, `scribe`)**: at session close, each Learned → (a) **score gate** (canon: `skills/_session-shared/knowledge-promotion.md`) — **sum ≥ 3 promotes / below → reject-log at `<project>/knowledge/0.rejected.md`** (not discarded — audit trail + recurrence signal for Dreaming. No `title:`, so it never hits recall) (b) query for similars via graphify → update/create (c) atomic note, trigger-first (d) uid backlink. **Never force perfect dedup** — write roughly and let Dreaming clean up.
+- **Stage 1 (realtime, `scribe`)**: at session close, each Learned → (a) **two-gate judgment** (canon: `skills/_session-shared/knowledge-promotion.md`) — **score gate (sum ≥ 3), then a similar-note verdict** (`promote / already_known / not_durable / unsupported`, closed enum); **only `promote` writes — every reject → one coded line at `<project>/knowledge/0.rejected.md`** (not discarded — audit trail + recurrence signal for Dreaming. No `title:`, so it never hits recall) (b) query for similars via graphify → update/create (c) atomic note, trigger-first (d) uid backlink. **Never force perfect dedup** — write roughly and let Dreaming clean up.
 
 ## common/patterns/ Promotion
 ```
@@ -26,7 +26,7 @@ org-wide binding norm (external mandate OR self-imposed invariant)  ──(draft
 ```
 - **Policies**: **not** promotion **on the patterns/knowledge axis** — accumulated advice (patterns) does not become obligation (policies). They are set directly by decision, origin-agnostic (an external mandate like a law/regulation, or a self-imposed org-wide invariant); the transcription path from such a norm is the next item.
 - **Human sign-off gate (canon: this section)** — **no agent writes `common/policies/` on its own. Agents draft; the user signs.** A candidate that reads as obligation is still recorded on its normal tier (project `knowledge/` — nothing is lost) and **additionally returned as a `common-policy candidates` list**; the calling skill presents the list **in one batch** at the promotion point (`skills/sh`·`sc` · dreaming §7), and only approved items get a follow-up `scribe` brief writing to `000_common/policies/`. **Never interrupt per item.**
-- **Why only policies**: they sit at the top of Document Conflict Precedence (`docs/project-docs-convention.md`), so one wrong entry silently overrides every other document. Project `knowledge/` · `facts/` · `patterns/` keep the **automatic** score gate unchanged (`skills/_session-shared/knowledge-promotion.md`).
+- **Why only policies**: they sit at the top of Document Conflict Precedence (`docs/project-docs-convention.md`), so one wrong entry silently overrides every other document. Project `knowledge/` · `facts/` · `patterns/` keep the **automatic** two-gate judgment unchanged (`skills/_session-shared/knowledge-promotion.md`).
 
 ## docs/adr/
 ```

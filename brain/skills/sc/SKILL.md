@@ -43,7 +43,7 @@ On n, stop and point to marker handling or `sh` (park).
 Judge done/cancel from the session's open To-Dos and the user's stated closure intent; if ambiguous, confirm with the user.
 
 ### ④ Knowledge promotion (finalize mode, `scribe` delegation)
-Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and execute it. **Delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the score gate, no approval asked). Same as park (`sh`) — closure adds no approval gate (automatic; dedup is Dreaming's job).
+Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and execute it. **Delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the two-gate judgment, no approval asked). Same as park (`sh`) — closure adds no approval gate (automatic; dedup is Dreaming's job).
 
 **Policy signature batch** — the one exception: if `scribe` returns `common-policy candidates`, present **the whole list once** here (knowledge-promotion Step 4) and hand only the approved ones to a follow-up `scribe` brief writing `000_common/policies/`. `common/policies/` is the sole tier no agent may write on its own — **agents draft, the user signs** (`${CLAUDE_SKILL_DIR}/../../docs/knowledge-escalate-convention.md`). No candidates → no prompt; **never ask per item.**
 
