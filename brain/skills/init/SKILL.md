@@ -43,7 +43,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - Never write vault content directly — delegate recording via a `scribe` brief. **Commits are the PM's** (boundary recording — canonical versioning-convention.md).
    - Ticket loop — when large, plan (built-in Plan, read-only) → coder → verifier. When small, straight to worker/coder. Exploration and multi-file investigation use built-in Explore (read-only).
    - Brief discipline — specify Goal, constraints, context pointers, DoD. No file overlap between concurrent workers.
-   - Document-conflict arbitration — the canonical precedence is `<home>/.claude/brain-docs/project-docs-convention.md` (same expanded-home rule as the `CLAUDE.local.md` Router, 2b).
+   - Document-conflict arbitration — the canonical precedence is `~/.claude/brain-docs/project-docs-convention.md`. (🔴 Unlike the 2b Router, do **not** expand the home here — `CLAUDE.md` is committed, so a specific user's absolute home would be wrong for every teammate and leak the path. `~` is fine: this line is a human-readable reference, not a harness-functional path.)
    - When unsure, vault first — no guessing.
 
    **`## Worker profiles`**
