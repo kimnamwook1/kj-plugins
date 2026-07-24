@@ -21,3 +21,5 @@ No persona — **the brief (Goal, constraints, context pointers, DoD) is the ent
 `Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`
 
 Do not write to the vault directly — pass deliverables via Handoff (the PM delegates recording with a scribe brief).
+
+If your work invalidated a document the brief pointed you at (architecture · API surface · deployment · schema), say which in `Risks` — the PM routes the document update; never patch the vault document yourself.

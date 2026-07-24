@@ -49,6 +49,9 @@ Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and execute
 
 Writing the promoted notes · appending one line to `knowledge/index.md` · logging non-promoted items to `0.rejected.md` are **all done by `scribe`** (the skill passes only the raw Learned lines plus `vault-root`·`project`·`uid`·today's date). Use the **promoted note titles** `scribe` returns in ⑤'s `→ promoted: [[…]]` links — so the links point to notes that actually exist.
 
+### ④b Document check (detection + routing only — no auto-writing, no new files)
+If this session's `Outputs` touched **architecture, API surface, deployment, or schema**, pick the affected document(s) from `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md` and either (a) fold the document update into the outgoing ⑤·⑥ `scribe` brief (content = what the Handoff actually produced, routed per the catalog's owner label) or (b) leave it as an open item in the session `## To-Do-List`. Never fabricate document content the session did not produce — generating content that doesn't exist is fabrication, not recall (`skills/dreaming/SKILL.md` §stub-scan). This check lives in `sc` only — park (`sh`) is frequent and cheap; closure is the natural document boundary.
+
 ### ⑤·⑥ Closing entry + frontmatter transition (`scribe` delegation — together in one call)
 Both touch the same file (`<VAULT>/sessions/<uid>.md`) and the **executor is `scribe`**, so **delegate them in a single `scribe` call** (calling separately reopens the same file and only adds round trips). The skill **decides the content and hands it over**; `scribe` writes.
 

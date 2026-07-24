@@ -34,7 +34,7 @@ history:
 
 - **Pre-created = 19** — 17 in `tech-design/` + 2 in `business/`. **At project onboarding the PM delegates pre-creating all of them as `status: stub`** (full scaffold).
 - **Feature document set = 5** (`FRD` · `TDC` · `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` + the `policy/` folder) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be).
-- **ADRs are never pre-created** — the `architecture` worker creates one only when a meaningful decision actually occurs (ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".
+- **ADRs are never pre-created** — one is created only when a meaningful decision actually occurs: **the PM delegates it as a recording brief carrying the `architecture` owner label** (a brief label, not a resident agent — workers never write the vault directly; [[memory-control-convention]] §Governance. ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".
 - Total document kinds = 24 (19 + 5 feature). But **only 19 are pre-created** — do not conflate the two numbers.
 
 ## TDC — if FRD is the "what", TDC is the "how"

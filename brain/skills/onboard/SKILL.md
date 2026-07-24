@@ -33,6 +33,7 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
    - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, also `BM`.
    - **③ Stack** → `CODE_CONVENTION` · `ARCHITECTURE` (architecture brief) · `GIT_STRATEGY` (devops label). Classify from Q1/Q2 and record the bucket in `GIT_STRATEGY`:
      - Q1 *I control* + Q2 *SaaS* → **server-SaaS** · Q1 *I control* + Q2 *personal/internal* → **server-personal** · Q1 *someone else controls* → **client** (Q2 skipped).
+     - Recording the bucket gives the stub real content — the same write flips `GIT_STRATEGY` `status: stub → draft` (stub rule, `docs/project-docs-convention.md`; the init-seeded pointer body alone does not clear stub — the bucket does).
      - 🔴 **Never hardcode a git-flow value.** The org default flow is keyed by the brain-config `org` and defined in the common policy `DELIVERY_STRATEGY` (`000_common/policies/`) §0; the bucket rules are §1–3. The `GIT_STRATEGY` stub **points** at that policy — it never restates the flow or the bucket rules (restate → drift).
    - **④ Regulation** → decides the priority of `COMPLIANCE` · `THREAT_MODEL`.
    - **⑤ Deployment** → `RUNBOOK`.

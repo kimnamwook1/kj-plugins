@@ -17,3 +17,5 @@ isolation: worktree
 
 ## Handoff format (fixed)
 `Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`
+
+If your work invalidated a document the brief pointed you at (architecture · API surface · deployment · schema), say which in `Risks` — the PM routes the document update; never patch the vault document yourself.
