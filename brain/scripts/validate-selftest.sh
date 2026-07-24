@@ -68,6 +68,14 @@ printf -- '---\nuid: YYYYMMDD-HHMMSS\nproject: <project-slug>\ncreated: YYYY-MM-
 # -maxdepth 1 makes it surface and kills the assert below.
 printf -- '# no frontmatter\n' > "$V/sessions/nested/NESTED-20260718-120010.md"
 
+# Dreaming reports: uid = YYYYMMDD-HHMMSS without PREFIX by canon (dreaming/SKILL.md §Report
+# format). Clean one must stay silent; the PREFIX-shaped one is the positive fixture — dropping
+# the session_type branch makes the clean one fire and kills the assert pair below.
+printf -- '---\nuid: 20260719-005513\nproject:\nsession_type: dreaming\ncreated: 2026-07-19\nupdated: 2026-07-19\nstatus: done\nwriter: scribe\n---\n' \
+  > "$V/sessions/20260719-005513.md"
+printf -- '---\nuid: DRM-20260719-005514\nproject:\nsession_type: dreaming\ncreated: 2026-07-19\nupdated: 2026-07-19\nstatus: done\nwriter: scribe\n---\n' \
+  > "$V/sessions/DRM-20260719-005514.md"                             # dreaming uid must NOT carry a PREFIX
+
 # Knowledge: one positive (missing title) fixture per scanned directory, so that dropping any
 # single directory from the scan scope kills a specific assert.
 printf -- '---\ntype: gotcha\ntitle: a real title\n---\n' > "$V/013_selftest/knowledge/good.md"
@@ -101,6 +109,8 @@ assert_match   "missing key: writer"                         'BAD-20260718-12000
 assert_match   "missing frontmatter entirely is caught"      'BAD-20260718-120006.md:1: no YAML frontmatter'
 assert_match   "CRLF file is parsed, not misread"            'CRLF-20260718-120009.md:6: invalid status "frozen"'
 assert_no_match "CRLF file is not misreported as headerless" 'CRLF-20260718-120009.md:1: no YAML frontmatter'
+assert_no_match "dreaming report uid without PREFIX is legal" '20260719-005513\.md'
+assert_match   "dreaming uid with a PREFIX is caught"        'DRM-20260719-005514.md:2: dreaming uid is not YYYYMMDD-HHMMSS'
 
 # knowledge scope — one positive per directory pins the scope
 assert_match   "project knowledge dir is scanned"            'knowledge/no-title.md:1: missing frontmatter key: title'
@@ -122,9 +132,9 @@ assert_no_match "titled knowledge note produces no finding"  'knowledge/good.md'
 assert_no_match "000_common facts note with title is quiet"  'tool-x.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
-# numbers are asserted (not just "some count"): 10 sessions, and 7 knowledge = 2 project
-# (good + no-title; index/0.*/nested excluded) + 2 facts + 1 machines + 1 pattern + 1 policy.
-assert_match   "scanned counts appear in the summary"        '(10 sessions, 7 knowledge)'
+# numbers are asserted (not just "some count"): 12 sessions (10 + 2 dreaming), and 7 knowledge
+# = 2 project (good + no-title; index/0.*/nested excluded) + 2 facts + 1 machines + 1 pattern + 1 policy.
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 7 knowledge)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?

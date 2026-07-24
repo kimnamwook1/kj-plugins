@@ -81,9 +81,17 @@ while IFS= read -r f; do
 
       if ("uid" in seen) {
         u = val["uid"]
+        # dreaming reports are cross-project batches: uid = YYYYMMDD-HHMMSS, no PREFIX by canon
+        # (dreaming/SKILL.md §Report format). Same shape-only + filename-match discipline.
+        if (val["session_type"] == "dreaming") {
+          if (u !~ /^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/)
+            print file ":" ln["uid"] ": dreaming uid is not YYYYMMDD-HHMMSS: " u
+          else if (u != base)
+            print file ":" ln["uid"] ": uid \"" u "\" does not match filename \"" base "\""
+        }
         # ponytail: shape-only check — TST-20261345-996699 (month 13, day 45) passes.
         # Calendar validation in awk costs more than the class of typo it would catch.
-        if (u !~ /^[A-Z][A-Z0-9]*-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/)
+        else if (u !~ /^[A-Z][A-Z0-9]*-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/)
           print file ":" ln["uid"] ": uid is not <PREFIX>-YYYYMMDD-HHMMSS: " u
         else if (u != base)
           print file ":" ln["uid"] ": uid \"" u "\" does not match filename \"" base "\""
