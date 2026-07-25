@@ -1,12 +1,12 @@
 ---
 name: sc
-description: Close a work session — flip status to done (cancel if abandoned), write the closing entry, and finalize knowledge promotion. Use when the user says "sc", "session complete", "세션 종료", "세션 완료", "이 작업 끝", "마감", "세션 닫기". If just pausing to resume later, use sh instead of sc.
+description: Close a work session — flip status to done, write the closing entry, and finalize knowledge promotion. An abandoned session closes as done plus an abandoned tag; there is no cancel status. Use when the user says "sc", "session complete", "세션 종료", "세션 완료", "이 작업 끝", "마감", "세션 닫기". If just pausing to resume later, use sh instead of sc.
 argument-hint: "[session-file?]"
 ---
 
 # sc — Session Complete
 
-> **When in doubt, present the fork first.** If context or arguments are too thin, present a one-liner and get their pick: which do you want — `ss` (start) / `sh` (park/handoff) / `sc` (complete)?
+> **When in doubt, present the fork first.** If context or arguments are too thin, present a one-liner and get their pick: which do you want — `ss` (start new) / `sr` (resume a parked one) / `sl` (just list what is open) / `sh` (park/handoff) / `sc` (complete)?
 
 **Closes** a work session. This is a hard-to-reverse state transition, so do not skip the confirmation steps below before transitioning.
 
@@ -16,13 +16,13 @@ All three of `ss` · `sh` · `sc` share **executor = PM (main session), vault co
 
 ## Hard rule — the sh vs sc boundary
 
-- **Only this skill flips `status` to `done` (or `cancel`).** Closure only.
-- If the work isn't ending — just pausing to resume later — stop here and point to `sh`. Park keeps `status: active`.
+- **Only this skill writes `status: done`.** Closure only, and `done` is the only value it ever writes (KJP-48 retired `cancel`).
+- If the work isn't ending — just pausing to resume later — stop here and point to `sh`. Park writes `status: parked`, which keeps the session open for `sr`.
 
 ## Flow
 
 ### ① Settle the target session
-Settle the `status: active` session worked on in this conversation (`<VAULT>/sessions/<uid>.md`). If a session file path was given as an argument, use that. If no session is clear from the conversation, present the project's `status: active` candidates and let the user choose (no guessing). (`VAULT` = the `vault-root` in the project's `CLAUDE.local.md` — if missing, ask the user and point to `/brain:init`. If project inference is needed, Read `${CLAUDE_SKILL_DIR}/../_session-shared/project-inference.md`.)
+Settle the open (`status: active` or `parked`) session worked on in this conversation (`<VAULT>/sessions/<uid>.md`). If a session file path was given as an argument, use that. If no session is clear from the conversation, present the project's open candidates — both states, via the shared scan (`${CLAUDE_SKILL_DIR}/../_session-shared/active-sessions.md` §1, state marker included) — and let the user choose (no guessing). **Closing a `parked` session directly is normal** — work often turns out to be finished only after it was parked, and requiring an `sr` round-trip first would buy nothing. (`VAULT` = the `vault-root` in the project's `CLAUDE.local.md` — if missing, ask the user and point to `/brain:init`. If project inference is needed, Read `${CLAUDE_SKILL_DIR}/../_session-shared/project-inference.md`.)
 
 ### ② Pending-marker scan
 Grep the target session for pending markers:
@@ -35,12 +35,17 @@ If markers remain, do not close as-is — ask:
 > N unresolved markers remain (list locations·content). Close anyway? (y/n)
 On n, stop and point to marker handling or `sh` (park).
 
-### ③ Confirm the closure mode — done vs cancel
-- Goal achieved, normal closure → `done`.
-- Goal **abandoned·dropped** (not continuing) → `cancel`.
-- **Verification/review still pending but the work itself is finished** → set status to `done`, leave the remaining verification items open in the session `## To-Do-List`, and add `needs-review` to `tags`. (The status vocabulary is only the 3 values `active|done|cancel` — pending-verification is a tag/To-Do-List matter, not a status.)
+### ③ Confirm closure — the status is always `done`; the *outcome* goes in tags
 
-Judge done/cancel from the session's open To-Dos and the user's stated closure intent; if ambiguous, confirm with the user.
+**Every closure writes `status: done`.** There is no second closing value to choose between (KJP-48): `status` answers "is this session still open", and a closed session is closed whether or not its goal was reached. Outcome lives in `tags:`.
+
+- Goal achieved, normal closure → `done`, no outcome tag.
+- Goal **abandoned·dropped** (not continuing) → `done` + **`abandoned`** in `tags:`. Say why in the ⑤ closing entry's `**Final state:**` line — the tag marks it, the entry explains it. **Never `status: cancel`** — retired; `validate.sh` reports it.
+- **Verification/review still pending but the work itself is finished** → `done`, leave the remaining verification items open in the session `## To-Do-List`, and add `needs-review` to `tags`.
+
+The status vocabulary is only the 3 values `active|parked|done` — abandonment, pending-verification and blocked are all tag/`## To-Do-List` matters, not statuses.
+
+Judge the outcome tag from the session's open To-Dos and the user's stated closure intent; if ambiguous, confirm with the user. **The abandoned/achieved call is the only judgment here — never let ambiguity about it stall the closure itself**, since the status is `done` either way.
 
 ### ④ Knowledge promotion (finalize mode, `scribe` delegation)
 Read `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` and execute it. **Delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the two-gate judgment, no approval asked). Same as park (`sh`) — closure adds no approval gate (automatic; dedup is Dreaming's job).
@@ -60,8 +65,8 @@ Both touch the same file (`<VAULT>/sessions/<uid>.md`) and the **executor is `sc
 **Writing brief — hand the following to `scribe` as-is:**
 
 - **Target file**: `<VAULT>/sessions/<uid>.md` (the path settled in ①)
-- **Context**: `vault-root` · `project` · session `uid` · today's date · the ③ verdict (`done` / `cancel`, whether verification is pending)
-- **(⑤) Closing Progress entry** — insert **at the top of** `## Progress` (newest-on-top). Canonical `#### ` structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`). The `(completed)` heading suffix is the closure token from the status-suffix vocabulary (canon: sessions-note-convention §Progress entry status suffix) — used for `done` and `cancel` alike; never put a non-status description in the suffix.
+- **Context**: `vault-root` · `project` · session `uid` · today's date · the ③ verdict (which outcome tags apply — `abandoned` and/or `needs-review`; the status is `done` regardless)
+- **(⑤) Closing Progress entry** — insert **at the top of** `## Progress` (newest-on-top). Canonical `#### ` structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`). The `(completed)` heading suffix is the closure token from the status-suffix vocabulary (canon: sessions-note-convention §Progress entry status suffix) — **the same token for an abandoned closure as for an achieved one** (the suffix records that the session closed; *how it went* is the `abandoned` tag plus the `**Final state:**` line). Never put a non-status description in the suffix.
   ```markdown
   ### YYYY-MM-DD (completed)
   **Final state:** final state / verification result (one line).
@@ -75,9 +80,9 @@ Both touch the same file (`<VAULT>/sessions/<uid>.md`) and the **executor is `sc
   (Include Mistake/Fixed if this closing session has any; omit otherwise. The Learned links must match the note titles `scribe` actually promoted in ④.)
 - **`## Context` counter marker**: if ④ bumped feedback counters, append (or extend, via Edit) the counter-marker line at the end of the recall block — format canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. Touch nothing else in Context.
 - **(⑥) Frontmatter update**:
-  - Flip `status:` to `done` (or `cancel`). Replace **only the `status:` line inside the frontmatter block** — the body Progress may also contain the string `status:`, so a naive global replace misfires.
+  - Flip `status:` to `done`. Replace **only the `status:` line inside the frontmatter block** — the body Progress may also contain the string `status:`, so a naive global replace misfires. The prior value may be `active` **or** `parked`; both close to `done`.
   - `updated:` to today. (Legacy fields like `end_date`/`start_date`/`date` are not in the schema — do not create them.)
-  - If ③ judged verification pending, add `needs-review` to `tags:`.
+  - Add the ③ outcome tags to `tags:` — `abandoned` if the goal was dropped, `needs-review` if verification is pending. Neither, either, or both.
 - **Return requirement**: the recorded file path + the final `status` value.
 
 ⚠ The `status` transition happens **only in this delegation** — the PM does not patch it directly with `sed`/redirection (vault content writes belong to `scribe`, as a discipline).
@@ -109,4 +114,4 @@ Session closed: <VAULT>/sessions/<uid>.md (status: done) · vault committed
 
 - **`obsidian create` / `obsidian-cli create` CLI is absolutely forbidden** — `Write`/`Edit` tools only (duplicate-file bug). **An existing file is changed with `Edit`; `Write` is for creating a file that does not exist yet** — `Edit`'s `old_string` is a compare-and-swap, so if a concurrent session moved the anchor the edit fails loudly instead of silently swallowing their work. The party doing that write is the `scribe` worker.
 - Touch only **the paths under `vault-root` in `CLAUDE.local.md` + the `<project>/knowledge/` that `scribe` writes during promotion**. All other folders·other vaults are off-limits.
-- **The `status` vocabulary is exactly** `active` / `done` / `cancel`. Pending-verification·blocked go in tags/`## To-Do-List` open items, not in status.
+- **The `status` vocabulary is exactly** `active` / `parked` / `done`. Abandoned·pending-verification·blocked go in tags/`## To-Do-List` open items, not in status.

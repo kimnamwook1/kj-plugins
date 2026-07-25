@@ -1,13 +1,13 @@
 ---
 name: sh
-description: Park (suspend) a work session — not closure. Unconditionally parks the current session — scan pending markers → knowledge promotion + park entry in Progress (all vault content writes delegated to the scribe worker), status stays active. The next ss will ask whether to resume the parked session. Use when the user says "sh", "handoff", "park", "pause", "핸드오프", "세션 인계", "잠깐 멈춤", "보류". To close a session for good, use sc.
+description: Park (suspend) a work session — not closure. Unconditionally parks the current session — scan pending markers → knowledge promotion + park entry in Progress (all vault content writes delegated to the scribe worker), status flips active → parked. Resume it later with sr. Use when the user says "sh", "handoff", "park", "pause", "핸드오프", "세션 인계", "잠깐 멈춤", "보류". To close a session for good, use sc.
 ---
 
 # sh — Session Park (Handoff)
 
-> **When in doubt, present the fork first.** If context is too thin, present a one-liner and get their pick: which do you want — `ss` (start) / `sh` (park/handoff) / `sc` (complete)?
+> **When in doubt, present the fork first.** If context is too thin, present a one-liner and get their pick: which do you want — `ss` (start new) / `sr` (resume a parked one) / `sl` (just list what is open) / `sh` (park/handoff) / `sc` (complete)?
 
-**Parks (suspends)** the current session — carves the working context into the session file and stops. A later `ss` will ask whether to resume this parked session.
+**Parks (suspends)** the current session — carves the working context into the session file, flips `status` to `parked`, and stops. Getting back in is `sr`, explicitly typed; nothing surfaces the session on its own.
 
 > **Where this skill fits:** common to all three skills (`ss`·`sh`·`sc`) — **executor = PM (main session), vault content writes = the `scribe` worker** (a subagent handed a writing brief — not resident). Governance canon: `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`.
 
@@ -19,16 +19,16 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
 ## Hard rule — the sh vs sc boundary
 
-- **This skill keeps status at `active`.** Park is *suspension/hold*, not closure. A parked session remains `active` so `ss` keeps surfacing it (for resumption).
-- **To close (`done`) a session, use `sc`.** Never change `status` here.
+- **This skill flips status `active` → `parked` (KJP-48).** Park is *suspension/hold*, not closure — and `parked` is the status that says exactly that. Both `active` and `parked` are **open** states, so `sl`/`sr` still find the session; what changes is that "waiting" is now readable from one grep of `^status:` instead of being guessed from the Progress body.
+- **`parked` is the only status `sh` ever writes.** Never `done` — **to close a session, use `sc`.** If the session is already `parked` (a second `sh` without an intervening `sr`), the value simply stays `parked`; the park entry is still appended.
 
 ## Workflow — unconditional PARK
 
-`sh` takes no arguments and asks no questions — when invoked it **unconditionally parks the current session**. Working context is recorded in the session file itself, and resumption is handled by `ss` detecting the parked session and asking whether to continue.
+`sh` takes no arguments and asks no questions — when invoked it **unconditionally parks the current session**. Working context is recorded in the session file itself; resumption is a separate explicit verb, `sr`.
 
 ### Steps
 
-1. **Settle the target session** — the `status: active` session worked on in this conversation (`<VAULT>/sessions/<uid>.md`). If the user named one, use that. (`VAULT` = the `vault-root` in the project's `CLAUDE.local.md` — if missing, ask the user and point to `/brain:init`.)
+1. **Settle the target session** — the open (`status: active`, or `parked` if a previous `sh` already ran) session worked on in this conversation (`<VAULT>/sessions/<uid>.md`). If the user named one, use that. (`VAULT` = the `vault-root` in the project's `CLAUDE.local.md` — if missing, ask the user and point to `/brain:init`.)
 
 2. **Pending-marker scan** (see "Scan for Pending Markers" below) — always run **before** deciding resume actions. **The scan is done by the PM directly** (a read-only `grep` — command below). Organize found markers by location·request·owner and **put them into the `## To-Do-List` items of the step-4 brief** (writing them to the file is `scribe`'s job).
 
@@ -45,12 +45,12 @@ description: Park (suspend) a work session — not closure. Unconditionally park
    - **`## Progress`**: insert the Park Entry Format block below **at the top** (preserve existing entries, no overwriting). The Learned line includes the step-3 backlinks (`→ promoted: [[..]]`) verbatim.
    - **`## To-Do-List`**: resume actions + the pending markers found in step 2 (Where·What·Who). **If step 5 captured user direction, it goes first.**
    - **`## Context`**: if step 3 bumped feedback counters, append (or extend, via Edit) the counter-marker line at the end of the recall block — format canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. Touch nothing else in Context.
-   - **frontmatter**: `updated:` to today. **Keep `status` at `active` — never change it** (park is not closure).
-   - **Return requirement**: the recorded path + the inserted entry heading.
+   - **frontmatter**: `updated:` to today, and **flip `status:` to `parked`**. Replace **only the `status:` line inside the frontmatter block** — the body Progress may also contain the string `status:`, so a naive global replace misfires. **Never `done`** — that is `sc`'s alone.
+   - **Return requirement**: the recorded path + the inserted entry heading + the final `status` value.
 
 5. **Capture user direction** — if the user gave intent for the next session, put it **at the front of** `## To-Do-List`. User's words > agent analysis. (The PM captures·judges → ships it in the step-4 brief.)
 
-6. **Frontmatter update** — included in the step-4 delegation (`updated:` = today, `status` stays `active` — never changed). The PM does not touch it separately.
+6. **Frontmatter update** — included in the step-4 delegation (`updated:` = today, `status:` → `parked`). The PM does not touch it separately, and never patches `status` with `sed`/redirection — vault content writes belong to `scribe`.
 
 7. **git commit (vault snapshot — commit-only, executor = PM)** — the PM commits directly **after** the step-3·4 `scribe` writes are done (**record → commit order** — committing first leaves the park entry out of the snapshot). The canon for commit executor·timing is versioning-convention — `scribe` never commits (a commit swallows the whole repo, sweeping in other `scribe` workers' unfinished work too — only the PM, who sees the whole, is safe).
 
@@ -65,15 +65,15 @@ description: Park (suspend) a work session — not closure. Unconditionally park
    - **Scope is `$VAULT` only** — pinned via `git -C`. Do not touch other repos or paths outside the vault.
 
 8. **Closing notice:**
-   > Session parked: `<VAULT>/sessions/<uid>.md` (status stays active)
+   > Session parked: `<VAULT>/sessions/<uid>.md` (status: parked)
    >
-   > The next `ss` will ask whether to resume this parked session.
+   > Resume it with `sr`; see everything open with `sl`.
    >
    > (If the work is finished, close it with `sc`, not `sh`.)
 
 ## Park Entry Format (Progress structure)
 
-Insert at the **top** of `## Progress` (above existing entries). Follow the canonical `#### ` subheading structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`). The `(parked)` heading suffix is a **statusline contract** — it is the one token the statusline parses (canon: sessions-note-convention §Progress entry status suffix). A round-count may trail it (`(parked #5)`); never put a non-status description there.
+Insert at the **top** of `## Progress` (above existing entries). Follow the canonical `#### ` subheading structure (canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`). The `(parked)` heading suffix is the **per-entry historical record** of this park — kept, but **no longer a machine-judgment source** (KJP-48: state is read from frontmatter `status:`; canon: sessions-note-convention §Progress entry status suffix). A round-count may trail it (`(parked #5)`); never put a non-status description there.
 
 ```markdown
 ### YYYY-MM-DD (parked)
@@ -90,8 +90,8 @@ Insert at the **top** of `## Progress` (above existing entries). Follow the cano
 - `path/to/output` — what it is
 ```
 
-> Resume actions (the old "Next") go in the session `## To-Do-List`, not in this block — `ss` reads that on resumption.
-> **Vault binding:** the session file is `<VAULT>/sessions/<uid>.md`, `status: active` (created by `ss`). git = SOT (versioning-convention). **Writing this block to the file is `scribe`** (step-4 delegation); **committing is the PM** (step 7 — record then commit, commit-only, no push).
+> Resume actions (the old "Next") go in the session `## To-Do-List`, not in this block — `sr` reads that on resumption.
+> **Vault binding:** the session file is `<VAULT>/sessions/<uid>.md`, created by `ss` as `status: active` and left by this skill at `status: parked`. git = SOT (versioning-convention). **Writing this block to the file is `scribe`** (step-4 delegation); **committing is the PM** (step 7 — record then commit, commit-only, no push).
 
 ## Key Rules
 

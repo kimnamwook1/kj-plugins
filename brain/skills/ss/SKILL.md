@@ -17,10 +17,10 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 1. **`ss`** (this skill) — create the session file, `status: active`, inject recall.
 2. **`sr`** — resume a parked session. **The only path back into one.**
 3. **`sl`** — list parked sessions, read-only.
-4. **`sh`** — when pausing/handing off work: scan pending markers, promote knowledge, add a park entry to `## Progress`. **status stays active.**
-5. **`sc`** — when closing work: closing entry + `status: done` (`cancel` if abandoned).
+4. **`sh`** — when pausing/handing off work: scan pending markers, promote knowledge, add a park entry to `## Progress`. **`status: active` → `parked`.**
+5. **`sc`** — when closing work: closing entry + **`status: done`** (an abandoned session is `done` + an `abandoned` tag — there is no `cancel`).
 
-> **`ss` never scans for parked sessions and never announces them (KJP-43).** Measured 2026-07-25 on the reference vault: 11 of 11 projects held exactly one `status: active` session, so a project-scoped scan matched on essentially every invocation — a fork question, a ~6 KB extract per candidate, and a user round-trip charged to someone who asked to *start* something. Not even a "N parked sessions exist" line belongs here. Someone who wants to resume types `sr`.
+> **`ss` never scans for parked sessions and never announces them (KJP-43).** Measured 2026-07-25 on the reference vault: 11 of 11 projects held exactly one open session, so a project-scoped scan matched on essentially every invocation — a fork question, a ~6 KB extract per candidate, and a user round-trip charged to someone who asked to *start* something. Not even a "N parked sessions exist" line belongs here. Someone who wants to resume types `sr`.
 
 > **Common to all session skills — executor = PM (main session), vault content writes = the `scribe` worker.** The PM does **reading, detection, judgment** — uid minting (`date`) · existence checks · user Q&A · performing recall (read) · **deciding what to record**. Creating/modifying vault files is **delegated to the `scribe` worker via a writing brief** (`Agent` tool — specify "what · to which path · with what content"). `scribe` is not a resident agent but a subagent handed a writing brief. Governance canon: `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md` · commit discipline: `${CLAUDE_SKILL_DIR}/../../docs/versioning-convention.md`.
 
@@ -117,5 +117,5 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 - **Create only. `ss` never resumes and never lists.** No parked-session scan, no fork question, **not even a "you have N parked sessions" notice** — that is `sr` and `sl` (KJP-43). If the user actually wanted to resume, name `sr` and stop; do not resume from here.
 - **`obsidian create` / `obsidian-cli create` CLI is absolutely forbidden** — duplicate-file bug. `Write`/`Edit` tools only. **An existing file is changed with `Edit`; `Write` is for creating a file that does not exist yet** — `Edit`'s `old_string` is a compare-and-swap, so if a concurrent session moved the anchor the edit fails loudly instead of silently swallowing their work. **The party doing that write is the `scribe` worker** — the PM never writes vault **content** directly (governance canon: memory-control-convention §Governance).
 - **Write only under the `vault-root` in `CLAUDE.local.md`** — any other path or other vault is off-limits.
-- **The `status` vocabulary is exactly:** `active` / `done` / `cancel` (3 values). Other states (pending-verification·blocked) go in `tags` or as open `## To-Do-List` items, not in status.
+- **The `status` vocabulary is exactly:** `active` / `parked` / `done` (3 values). **`ss` only ever writes `active`** — `parked` is `sh`'s, `done` is `sc`'s. Other states (abandoned·pending-verification·blocked) go in `tags` or as open `## To-Do-List` items, not in status.
 - **Session = a single file** — `sessions/<uid>.md` (uid = `<PREFIX>-YYYYMMDD-HHMMSS`). Not a folder.

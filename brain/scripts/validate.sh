@@ -50,7 +50,7 @@ AWK_PRELUDE='
 
 # ---------------------------------------------------------------- session notes
 # Excluded alongside index.md because neither is a session: index.md is the folder TOC, and
-# sample-session.md is the schema placeholder — its uid/status are literal `<active|done|cancel>`
+# sample-session.md is the schema placeholder — its uid/status are literal `<active|parked|done>`
 # specimens, so validating it would flag the spec itself forever and make --strict unusable.
 # ponytail: if this exclusion list grows past these two, that is the signal to promote it to a
 # convention (a `meta:` frontmatter flag or a naming rule) instead of extending the -name chain.
@@ -99,11 +99,15 @@ while IFS= read -r f; do
 
       if ("status" in seen) {
         s = val["status"]
-        if (s != "active" && s != "done" && s != "cancel") {
+        if (s != "active" && s != "parked" && s != "done") {
           if (s ~ /^(stub|draft|approved|deprecated|stale)$/)
-            print file ":" ln["status"] ": document status \"" s "\" used in a session note (session status = active|done|cancel)"
+            print file ":" ln["status"] ": document status \"" s "\" used in a session note (session status = active|parked|done)"
+          # `cancel` was a session status until KJP-48. Its own message carries the migration
+          # instruction, since "invalid" alone would not say what to replace it with.
+          else if (s == "cancel")
+            print file ":" ln["status"] ": retired status \"cancel\" (session status = active|parked|done; an abandoned session is done + an abandoned tag)"
           else
-            print file ":" ln["status"] ": invalid status \"" s "\" (expected active|done|cancel)"
+            print file ":" ln["status"] ": invalid status \"" s "\" (expected active|parked|done)"
         }
       }
     }

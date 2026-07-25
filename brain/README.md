@@ -102,11 +102,11 @@ Brain-to-harness mapping (the design-consistency anchor):
 /brain:ss        # start a NEW tracked session — recall injects relevant knowledge and past
                  # Mistakes into the session Context. Never resumes, never scans for parked
                  # sessions, never even mentions them
-/brain:sr        # resume a parked session — the only path back into one; re-presents goal,
-                 # latest progress and recall priming (screen-only, no vault write)
-/brain:sl        # list parked sessions — read-only, writes nothing, adopts nothing
+/brain:sr        # resume a parked session — the only path back into one; status parked → active,
+                 # re-presents goal, latest progress and recall priming (screen-only)
+/brain:sl        # list open sessions (parked + active) — read-only, writes nothing, adopts nothing
 /brain:sh        # park a session (handoff) — pending markers scanned, knowledge promoted,
-                 # status stays active so sr can resume it later
+                 # status active → parked; sr resumes it later
 /brain:sc        # complete a session — closing entry, status → done, promotions finalized
 
 # 5. Periodically
@@ -134,8 +134,9 @@ What it checks — **sessions** (`sessions/*.md`, top level only; `index.md` and
 `sample-session.md` schema placeholder excluded, since neither is a session): the six required
 frontmatter keys (`uid` `project` `created` `updated` `status` `writer`), `uid` matching
 `<PREFIX>-YYYYMMDD-HHMMSS` **and** the filename, and `status` being exactly one of
-`active|done|cancel` (a document status such as `draft` leaking into a session note is called
-out specifically). **Knowledge notes** — the top level of each `NNN_<project>/knowledge/` and
+`active|parked|done` (a document status such as `draft` leaking into a session note is called
+out specifically, as is the retired `cancel` — whose message carries the migration instruction:
+an abandoned session is `done` + an `abandoned` tag). **Knowledge notes** — the top level of each `NNN_<project>/knowledge/` and
 of `000_common/{facts,patterns,policies}/`: `title:` present. Subdirectories are not scanned
 (so `facts/machines/` is out of scope), matching the flat scan in
 `skills/_session-shared/recall.md`, which also supplies the `index.md` + `0.*` meta exclusion.
@@ -274,7 +275,7 @@ table is a finding, not a convenience.
 | Session-Mistake recurrence scan (similarity test · cap · suppression keys) | `skills/dreaming/SKILL.md` §3 | knowledge-convention (`source_items` fallback) |
 | dream-log format (run heading · project field · cumulative read) | `skills/dreaming/SKILL.md` §7 | root index · vault-tree |
 | Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss`·`sr` · memory-control-convention |
-| Active-session scan + summary extract (`status: active` × `project` · `\|\| :` loop terminator) | `skills/_session-shared/active-sessions.md` | `skills/sl`·`sr` |
+| Open-session scan + summary extract (`status: active\|parked` × `project` · `\|\| :` loop terminator) | `skills/_session-shared/active-sessions.md` | `skills/sl`·`sr` |
 | git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
 | Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · dreaming |
 | Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |

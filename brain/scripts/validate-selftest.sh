@@ -44,6 +44,12 @@ session BAD-20260718-120002   BAD-20260718-120002   frozen          # invalid st
 session BAD-20260718-120003   BAD-20260718-999999   active          # uid != filename
 session BAD-20260718-120004   not-a-uid             active          # malformed uid
 
+# The 3-value vocabulary is active|parked|done (KJP-48). `parked` is first-class — a positive
+# fixture in the *quiet* direction only proves the scan ran if something else in the same scan
+# fires, which the pair below guarantees: `cancel` is the retired token and must be reported.
+session PARKED-20260718-120012 PARKED-20260718-120012 parked        # legal — parked is a session status
+session BAD-20260718-120013    BAD-20260718-120013    cancel        # retired vocabulary — must be caught
+
 printf -- '---\nuid: BAD-20260718-120005\ncreated: 2026-07-18\nstatus: active\n---\n' \
   > "$V/sessions/BAD-20260718-120005.md"                            # missing project/updated/writer
 printf -- '# just a body\n' > "$V/sessions/BAD-20260718-120006.md"   # no frontmatter
@@ -61,7 +67,7 @@ printf -- '---\r\nuid: CRLF-20260718-120009\r\nproject: s\r\ncreated: c\r\nupdat
 
 # The schema placeholder: deliberately broken three ways (placeholder uid, placeholder status,
 # missing writer) so "silent" can only mean the exclusion held, not that the fixture was clean.
-printf -- '---\nuid: YYYYMMDD-HHMMSS\nproject: <project-slug>\ncreated: YYYY-MM-DD\nupdated: YYYY-MM-DD\nstatus: <active|done|cancel>\n---\n' \
+printf -- '---\nuid: YYYYMMDD-HHMMSS\nproject: <project-slug>\ncreated: YYYY-MM-DD\nupdated: YYYY-MM-DD\nstatus: <active|parked|done>\n---\n' \
   > "$V/sessions/sample-session.md"
 
 # Nested sessions are out of scope (-maxdepth 1). Broken on purpose so that dropping
@@ -101,6 +107,7 @@ assert_exit    "default mode exits 0 even with findings" 0 "$rc"
 # rules fire
 assert_match   "doc status in session note is caught"        'BAD-20260718-120001.md:6: document status "draft"'
 assert_match   "invalid status is caught"                    'BAD-20260718-120002.md:6: invalid status "frozen"'
+assert_match   "retired status cancel is caught"             'BAD-20260718-120013.md:6: retired status "cancel"'
 assert_match   "uid/filename mismatch is caught"             'BAD-20260718-120003.md:2: uid .* does not match filename'
 assert_match   "malformed uid is caught"                     'BAD-20260718-120004.md:2: uid is not <PREFIX>-YYYYMMDD-HHMMSS'
 assert_match   "missing key: project"                        'BAD-20260718-120005.md:1: missing frontmatter key: project'
@@ -121,6 +128,7 @@ assert_match   "000_common/policies is scanned"              'policies/policies-
 
 # quiet cases
 assert_no_match "clean session note produces no finding"     'CLEAN-20260718-120000'
+assert_no_match "parked is a legal session status"           'PARKED-20260718-120012'
 assert_no_match "quoted scalars are not false positives"     'QUOTED-20260718-12000[78]'
 assert_no_match "sessions/index.md is excluded"              'sessions/index.md'
 assert_no_match "sample-session.md placeholder is excluded"  'sample-session.md'
@@ -132,9 +140,9 @@ assert_no_match "titled knowledge note produces no finding"  'knowledge/good.md'
 assert_no_match "000_common facts note with title is quiet"  'tool-x.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
-# numbers are asserted (not just "some count"): 12 sessions (10 + 2 dreaming), and 7 knowledge
+# numbers are asserted (not just "some count"): 14 sessions (12 + 2 dreaming), and 7 knowledge
 # = 2 project (good + no-title; index/0.*/nested excluded) + 2 facts + 1 machines + 1 pattern + 1 policy.
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 7 knowledge)'
+assert_match   "scanned counts appear in the summary"        '(14 sessions, 7 knowledge)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
