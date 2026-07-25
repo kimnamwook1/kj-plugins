@@ -50,7 +50,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - `worker` — default profile for general tickets/briefs (including scribe recording briefs).
    - `coder` — implementation only, worktree isolation.
    - `verifier` — verification, review, disproof; report-only.
-   - Start sessions with `/brain:ss`.
+   - Session skills are one verb each — new session `/brain:ss` (creates only), resume `/brain:sr`, list open sessions `/brain:sl` (read-only), park `/brain:sh`, close `/brain:sc`. **`ss` neither scans for nor announces parked sessions** — resuming means typing `sr`.
 
    ### 2b. `CLAUDE.local.md` — gitignored · machine-local (2 sections)
 

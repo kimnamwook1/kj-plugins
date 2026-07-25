@@ -21,7 +21,9 @@ koreanjoker's Claude Code plugin marketplace.
 /brain:init       # once per project — writes CLAUDE.local.md, scaffolds the vault
 /brain:onboard    # once per project — 5-question interview fills the stub docs
 
-/brain:ss         # start a session (resumes a parked one if there is any)
+/brain:ss         # start a NEW session (creates only — never resumes, never scans)
+/brain:sr         # resume a parked session — the only path back into one
+/brain:sl         # list parked sessions — read-only
 /brain:sh         # park it — knowledge promotion + a Progress entry, status stays active
 /brain:sc         # close it out
 
@@ -37,7 +39,7 @@ Full documentation, design rationale, and the vault conventions live in
 .claude-plugin/marketplace.json   # marketplace manifest
 brain/                            # the plugin
   .claude-plugin/plugin.json
-  skills/                         # ss · sh · sc · init · onboard · dreaming
+  skills/                         # ss · sr · sl · sh · sc · init · onboard · dreaming
   agents/                         # worker · coder · verifier profiles
   docs/                           # vault conventions (the canon)
   scripts/                        # validate.sh — vault schema checker
