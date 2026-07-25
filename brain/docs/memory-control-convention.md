@@ -12,7 +12,9 @@ Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask   (+ optional: D
 ## Recall — cue-based
 - **CLAUDE.local.md Router pointers** (per project): a **thin router / hot-cache** auto-loaded every session. (Machine-local absolute paths — lives in `CLAUDE.local.md`, never the committed `CLAUDE.md`.)
   - Rules: **pointers only, no content** (token savings). **Auto-maintained** (Dreaming/`scribe`). No hand-curation (it rots).
-- **★ `ss` recall step**: at session start (**both new sessions and resumes**), inject related memory into `## Context` — **canon: `skills/_session-shared/recall.md`** (source composition, related hops, caps, and source-path discipline are all defined only there).
+- **★ recall step**: at session start, pull in related memory — **canon: `skills/_session-shared/recall.md`** (source composition, related hops, caps, and source-path discipline are all defined only there). Two callers, two dispositions:
+  - **`ss` (new session)** — recall is **written into `## Context`** (`scribe` delegation). That block is the session's canonical injected-notes record, which `sh`/`sc` later read to bump `recalled:`/`useful:`.
+  - **`sr` (resume)** — recall is **re-presented on screen only, never written**. Feedback counters count injection once per session, so a resume extends neither the record nor any counter. Skipping it would leave a resumed session with zero priming, so it is required, not optional.
 
 ## Dreaming Skill (sleep consolidation)
 Keep realtime cheap; batch the hard parts. Runs periodically (scheduled).

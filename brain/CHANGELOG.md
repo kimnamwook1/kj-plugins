@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **`sr` (resume) and `sl` (list) split out of `ss` — one verb, one skill (KJP-43).** `ss` is now **creation only**. Measured 2026-07-25 on the reference vault (`sessions/` = 38 files / 600 KB, `status: active` = 11, spread one per project across 11 projects): the project filter that was supposed to keep the resume fork rare matched on **essentially every invocation**, so a user asking to *start* a session paid a fork question + a ~6 KB `awk` extract per candidate + a round-trip, every time. User decision: **remove the resume path from `ss` entirely — not even a "N parked sessions exist" notice.** Resuming is now an explicit verb.
+  - **`skills/sr/SKILL.md`** — resume: shared scan → candidate list → user pick → adopt. Frontmatter touch-up delegated to `scribe` (`cc_session_ids` prepended, `updated` bumped, `status` **stays** `active`, body untouched — `sr` writes no Progress entry). **Recall re-presentation is required and screen-only** (no `## Context` rewrite, no counter bump) — skipping it would leave a resumed session with zero priming. 0 matches ⇒ stop and name `ss`; never falls through into creation.
+  - **`skills/sl/SKILL.md`** — list: **read-only, hard**. No `Write`, no `Edit`, no `scribe` brief, no `updated:` touch, no adoption, no creation. Takes `[project|all]`; `all` sweeps every project (`PROJ_RE='.*'`), which is why the shared scan carries an explicit `session_type: dreaming` skip — under `.*` a dreaming report's empty `project:` would otherwise match.
+  - **`skills/_session-shared/active-sessions.md`** — the scan and the summary `awk` now live in **exactly one place**, next to `recall.md`. `sl` and `sr` read it; `ss` does not use it at all.
+
+### Fixed
+- **Active-session scan no longer exits 1 on a normal run (KJP-41).** Cause: a `while read` loop's exit status is the exit status of the **last command of its last iteration**, so a final non-matching `grep -q` (1) propagated through the pipeline and out of the snippet. Fixed at the new home (`_session-shared/active-sessions.md` §1) with a `|| :` loop-body terminator. Measured on fixture vaults, before → after: **0 matches `exit=1` → `exit=0`**, and — beyond the ticket's original claim — **2 matches also `exit=1` → `exit=0`** (the last file scanned happened to be a non-match, so the false positive was never limited to the empty case). ⚠ The visually identical `while read` loops in `_session-shared/recall.md` (lines 47·55·61·67) are **deliberately left alone**: they sit inside a `{ … } | awk | sort | head` pipeline where the tail decides the exit status, so the bug cannot occur and a terminator there would be noise.
+
+### Changed
+- **`ss` no longer asks about a worktree fork (KJP-42).** A PM session always runs in the current working tree, and isolation is already automatic for the `coder` agent via its `isolation: worktree` frontmatter (`agents/coder.md:4`) — the question duplicated a decision nobody makes at session start. `git_branch` is still recorded (`git rev-parse --abbrev-ref HEAD`); **`git_worktree` stays in the schema but `ss` always writes it empty**, leaving room for a coder worktree path to be recorded later. Removes the only `EnterWorktree` call in the session skills.
+- **Skill trigger vocabulary de-conflicted** — `ss` keeps new-session wording only (all resume vocabulary removed); `sr` owns "sr"/"재개"/"resume"/"이어서"/"세션 이어"; `sl` owns "sl"/"세션 목록"/"열린 세션"/"뭐 하다 말았지". Zero token overlap between the three trigger sets.
+- **Canon synced** — `docs/sessions-note-convention.md` (`project:` scan owner · `git_worktree` always-empty rule · `## Context` written by `ss` / re-presented by `sr` · skill-step tag example `ss§6a → ss§3a`), `docs/memory-control-convention.md` (§Recall split into the two callers and their two dispositions), `_session-shared/recall.md` (caller list + "Continue" → "Resume (`sr`)"), `skills/dreaming/SKILL.md` (the `status: active` / empty-`project:` guards now name the shared scan, plus why `sl all` makes the dreaming skip load-bearing), `skills/init/SKILL.md` (generated PM-role line), `CLAUDE.md`, `brain/README.md`, root `README.md`. **`sh` and `sc` are untouched by design** — see the note in the Risks of the KJP-43 handoff about two now-stale sentences in `sh`.
+
 ## 0.1.5 — 2026-07-25
 
 ### Changed

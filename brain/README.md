@@ -98,11 +98,15 @@ Brain-to-harness mapping (the design-consistency anchor):
                  # target) — fills stub docs to draft for answered questions only — plus a
                  # measured environment check that builds 000_common/facts/ tool inventories
 
-# 4. Daily loop
-/brain:ss        # start (or resume) a tracked session — recall injects relevant knowledge
-                 # and past Mistakes into the session Context
+# 4. Daily loop — one verb, one skill
+/brain:ss        # start a NEW tracked session — recall injects relevant knowledge and past
+                 # Mistakes into the session Context. Never resumes, never scans for parked
+                 # sessions, never even mentions them
+/brain:sr        # resume a parked session — the only path back into one; re-presents goal,
+                 # latest progress and recall priming (screen-only, no vault write)
+/brain:sl        # list parked sessions — read-only, writes nothing, adopts nothing
 /brain:sh        # park a session (handoff) — pending markers scanned, knowledge promoted,
-                 # status stays active so ss can resume it later
+                 # status stays active so sr can resume it later
 /brain:sc        # complete a session — closing entry, status → done, promotions finalized
 
 # 5. Periodically
@@ -260,18 +264,19 @@ table is a finding, not a convenience.
 
 | Fact | Canonical (defined only here) | Pointers only (no restating) |
 |---|---|---|
-| Session schema (file-per-session · frontmatter · 3-value status) | `docs/sessions-note-convention.md` | root index · `skills/ss` · dreaming |
+| Session schema (file-per-session · frontmatter · 3-value status) | `docs/sessions-note-convention.md` | root index · `skills/ss`·`sr` · dreaming |
 | Vault tree, paths, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
 | External ticket system = canonical work queue | PM role statement (`CLAUDE.md`, written by `/brain:init`) | sessions-note-convention |
 | Promotion two-gate judgment (score sum ≥ 3 + verdict enum `promote/already_known/not_durable/unsupported` · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
 | Human sign-off gate for `common/policies/` (agents draft, the user signs) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sh`·`sc` · dreaming |
 | Third-time test (reject-log recurrence → rule) | `skills/dreaming/SKILL.md` §3 | knowledge-promotion |
-| Feedback counters (`recalled:`/`useful:` · once-per-session marker · no auto-delete) | `docs/knowledge-convention.md` §Feedback counters | recall · `skills/ss`·`sh`·`sc` · dreaming |
+| Feedback counters (`recalled:`/`useful:` · once-per-session marker · no auto-delete) | `docs/knowledge-convention.md` §Feedback counters | recall · `skills/ss`·`sh`·`sc` · dreaming (`sr` re-presents recall but bumps nothing) |
 | Session-Mistake recurrence scan (similarity test · cap · suppression keys) | `skills/dreaming/SKILL.md` §3 | knowledge-convention (`source_items` fallback) |
 | dream-log format (run heading · project field · cumulative read) | `skills/dreaming/SKILL.md` §7 | root index · vault-tree |
-| Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss` · memory-control-convention |
+| Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss`·`sr` · memory-control-convention |
+| Active-session scan + summary extract (`status: active` × `project` · `\|\| :` loop terminator) | `skills/_session-shared/active-sessions.md` | `skills/sl`·`sr` |
 | git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
-| Session lifecycle (start/handoff/complete) | `skills/ss`·`sh`·`sc` | sessions-note-convention · dreaming |
+| Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · dreaming |
 | Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |
 | Stub pre-creation and stub rules | `docs/project-docs-convention.md` | doc-catalog · `/brain:init` |
 | Policy system (identification · IDs · promotion) | `docs/project-docs-convention.md` | doc-catalog · dreaming |
