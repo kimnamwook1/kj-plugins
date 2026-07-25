@@ -16,6 +16,6 @@ isolation: worktree
 - **Commit only when the user asks** — never commit secrets.
 
 ## Handoff format (fixed)
-`Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`
+`Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask` (+ optional `Docs draft`, below)
 
-If your work invalidated a document the brief pointed you at (architecture · API surface · deployment · schema), say which in `Risks` — the PM routes the document update; never patch the vault document yourself.
+**`Docs draft` (optional — only when your work affects a project document):** if your work invalidated or extended a document the brief pointed you at (architecture · API surface · deployment · schema) — or one you discovered mid-work that the brief did not predict — name it in `Risks` **and attach a `Docs draft` section**: the goal, structure, and behavior of what you built, written by you (you know the work; the scribe only copies into the vault — it never authors, and the PM forwards your draft verbatim). Never patch the vault document yourself.

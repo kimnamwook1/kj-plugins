@@ -163,7 +163,8 @@ Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — summary
     index.md             #   project hub — pointer index + project PREFIX
     knowledge/           #   project-scoped reusable knowledge (semantic, atomic notes)
     docs/                #   official docs — tech-design/ · adr/ · research/ · business/
-                         #   policy/ · feature/<F>/ (FRD, TDC, diagrams, feature policies)
+                         #   policy/ · feature/<F>/ (FRD · TDC — diagrams live in its
+                         #   §Diagrams — · feature policies)
   sessions/
     <uid>.md             # one file per session (episodic); uid = PREFIX-YYYYMMDD-HHMMSS
 ```
@@ -194,9 +195,10 @@ Three profiles in `agents/`, differing only in isolation and permissions:
 - **Personas are briefs, not agents.** Labels like `scribe` name a *kind of brief*, not a
   resident agent. Every worker is scoped by the brief it receives: Goal, constraints, context
   pointers, DoD.
-- **Handoff format (fixed)**: `Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`.
-  Workers never write to the vault directly — deliverables travel by Handoff, and the PM
-  delegates recording to a scribe brief.
+- **Handoff format (fixed)**: `Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`
+  (+ optional `Docs draft` — a worker-authored document draft; the scribe copies it verbatim,
+  never authors). Workers never write to the vault directly — deliverables travel by Handoff,
+  and the PM delegates recording to a scribe brief.
 
 ## Conventions (docs/)
 

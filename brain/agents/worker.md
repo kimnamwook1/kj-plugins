@@ -18,8 +18,8 @@ No persona — **the brief (Goal, constraints, context pointers, DoD) is the ent
 - Splitting costs round-trips — do it only when the gain is clear.
 
 ## Handoff format (fixed)
-`Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`
+`Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask` (+ optional `Docs draft`, below)
 
-Do not write to the vault directly — pass deliverables via Handoff (the PM delegates recording with a scribe brief).
+Do not write to the vault directly — pass deliverables via Handoff (the PM delegates recording with a scribe brief; direct vault writes break serialization — concurrent sessions collide).
 
-If your work invalidated a document the brief pointed you at (architecture · API surface · deployment · schema), say which in `Risks` — the PM routes the document update; never patch the vault document yourself.
+**`Docs draft` (optional — only when your work affects a project document):** if your work invalidated or extended a document the brief pointed you at (architecture · API surface · deployment · schema) — or one you discovered mid-work that the brief did not predict — name it in `Risks` **and attach a `Docs draft` section**: the goal, structure, and behavior of what you built, written by you (you know the work; the scribe only copies into the vault — it never authors, and the PM forwards your draft verbatim). Never patch the vault document yourself.

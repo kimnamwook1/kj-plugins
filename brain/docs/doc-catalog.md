@@ -1,7 +1,8 @@
 # Doc Catalog — Canonical Source for Document Selection
 
-> **The PM selects documents with this table — per task, and for the project onboarding baseline.** At project onboarding the PM delegates pre-creation of **17 tech-design + 2 business = 19** stubs (**full scaffold**, [[project-docs-convention]]), and their content is filled in as judged by this table.
+> **The PM selects documents with this table — per task, and for the project onboarding baseline.** At project onboarding the PM delegates pre-creation of **5 tech-design + 1 business = 6** stubs ([[project-docs-convention]]), and their content is filled in as judged by this table. Former standalone kinds live on as **sections** of the 6 (per-row "absorbs" notes below) — split a section into its own file only when it actually grows heavy, never pre-emptively.
 >
+> - **Naming = abbreviation + full name, everywhere a document is titled** — this table's Document column and every stub H1: `# PRD (Product Requirements Doc — 제품 요구사항)`.
 > - **tier = universal (baseline)**: laid down by default for any non-trivial project.
 > - **tier = situational**: created only when the trigger actually occurs.
 > - Location conventions: project-wide = `docs/` · **per-feature = `docs/feature/<F>/`** (feature lives **under** docs) · reusable knowledge = `knowledge/` · project hub = root `index.md` · shared across all projects = `common/`. (Structure & naming canon: [[vault-tree]])
@@ -18,40 +19,35 @@
 |---|---|---|---|---|---|
 | **Project hub** | `type: project` | pm | root `index.md` | Once at onboarding. **One-line definition + PREFIX + TOC pointers only** — no content prose (index.md pointer principle, [[vault-tree]]) | universal |
 
-**17 tech-design documents** — all pre-created as stubs at project creation ([[project-docs-convention]])
+**Tech-design documents** — the 5 marked ★stub are pre-created at project creation ([[project-docs-convention]]); the rest are created on trigger
+
+| Document | kind | owner | Location | When (trigger) · absorbed sections | Tier |
+|---|---|---|---|---|---|
+| **PRD (Product Requirements Doc — 제품 요구사항)** ★stub | `prd` | planning | `docs/tech-design/` | When defining product direction & requirements (early in the project). **References [[BUSINESS]] (§BM · §GTM) via wikilinks.** Absorbs as sections: **§비기능 요구 (NFR)** — performance/availability/security targets that affect the design · **§용어 (Glossary)** — domain terms, accumulated as they become ambiguous | universal |
+| **ARCHITECTURE (시스템 설계)** ★stub | `architecture` | architecture | `docs/tech-design/` | When system design begins. Absorbs as sections: **§데이터 모델 (ERD)** — when there is persistent data · **§외부 연동 (Integrations)** — external service contracts. Split a section into its own file only when it actually grows heavy | universal |
+| **API_SPEC (API Specification — repo spec 미러)** | `api` | content=backend / sync=scribe (dreaming) | `docs/tech-design/` | When exposing an API/service boundary. ⚠️ **Read-only mirror — SSOT is the repo spec** ([[project-docs-convention]]). **Not pre-created** — dreaming's api-mirror audit generates it once an API exists (a stub mirror of nothing would be noise) | universal |
+| **THREAT_MODEL (위협 모델)** ★stub | `threat-model` | security | `docs/tech-design/` | When handling user data or authentication (mandatory once before launch). **Kept independent** — security/evidence character; never folded into another document | universal |
+| **CODE_CONVENTION (코드 규약)** ★stub | `code-convention` | architecture | `docs/tech-design/` | When the stack/language is decided (early in the project). Differs per project, so it is not common. Absorbs as a section: **§테스트 규율 (test discipline)** — project-wide test strategy only; per-feature acceptance criteria belong to each FRD | universal |
+| **RUNBOOK (배포·운영 절차)** ★stub | `runbook` | devops | `docs/tech-design/` | When there is something to deploy. Absorbs as sections: **§Delivery** — delivery classification + git flow (note below) · **§관측 (Observability)** — on entering production · **§재해 복구 (DR)** — when data loss is a business risk · **§마이그레이션 (Migration)** — schema-change/migration procedures | universal |
+| **COMPLIANCE (컴플라이언스 — 규제 대응)** | `compliance` | compliance | `docs/tech-design/` | Regulated user data or AI features (regulated/non-trivial projects) | situational |
+| **DESIGN (디자인 시스템 스펙 — FRD급)** | `design` | design | `docs/tech-design/` | When the product has a UI. **Design-system spec — FRD-grade**: design tokens · component inventory · states · interaction rules. **SSOT = the design tool if one is used, else the repo component source (code-first — git history = the change history); this document holds the links AND the rules** (body template → [[doc-templates]]) | situational |
+
+> **RUNBOOK §Delivery (absorbs the former `GIT_STRATEGY` file).** Records this project's delivery bucket (from `/brain:onboard` Q1/Q2) + a git-flow pointer + an exceptions line (default "예외: 없음 — 분류표 준수").
+> 🔴 **The git flow is decided by the vault's delivery classification note** — a classification table mapping **project type → flow**. There is no single org-default flow; org is only where documents live (one org legitimately runs different flows per project type). The note's **path differs per vault**: a binding vault keeps it in `000_common/policies/` (e.g. `DELIVERY_STRATEGY.md`); a vault still stabilizing may keep it in `000_common/facts/` as a non-binding reference and promote it to `policies/` when stable. **Never hardcode the path or restate a flow value — refer to "the vault's delivery classification note" and point** (restate → drift).
+
+**1 business document** — pre-created as a stub at project creation (5 tech-design + 1 business = **6**)
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **PRD** | `prd` | planning | `docs/tech-design/` | When defining product direction & requirements (early in the project). **References BM·GTM via wikilinks** | universal |
-| **NFR** | `nfr` | architecture / planning | `docs/tech-design/` | When performance/availability/security targets affect the design | universal |
-| **ARCHITECTURE** | `architecture` | architecture | `docs/tech-design/` | When system design begins | universal |
-| **ERD** | `erd` | backend / architecture | `docs/tech-design/` | When there is persistent data (DB) | universal |
-| **API_SPEC** | `api` | content=backend / sync=scribe (dreaming) | `docs/tech-design/` | When exposing an API/service boundary. ⚠️ **Read-only mirror — SSOT is the repo spec** ([[project-docs-convention]]) | universal |
-| **THREAT_MODEL** | `threat-model` | security | `docs/tech-design/` | When handling user data or authentication (mandatory once before launch) | universal |
-| **FULL_TEST_PLAN** | `test-plan` | qa | `docs/tech-design/` | When a verification strategy is needed before implementation starts | universal |
-| **GLOSSARY** | `glossary` | planning | `docs/tech-design/` | When domain terms become ambiguous (maintained from the start) | universal |
-| **CODE_CONVENTION** | `code-convention` | architecture | `docs/tech-design/` | When the stack/language is decided (early in the project). Differs per project, so it is not common | universal |
-| **GIT_STRATEGY** | `git-strategy` | devops | `docs/tech-design/` | When a repo comes into existence. Per-project **pointer** to the common `DELIVERY_STRATEGY` policy (`000_common/policies/` — org default git flow §0); records this project's delivery bucket + any exceptions, else "예외 없음 — DELIVERY_STRATEGY 준수". 🔴 **Distinct artifact from `DELIVERY_STRATEGY`**: `GIT_STRATEGY` = per-project (may carve exceptions) **points at** `DELIVERY_STRATEGY` = org-wide default (no project exceptions) — DELIVERY_STRATEGY §6 | universal |
-| **RUNBOOK** | `runbook` | devops | `docs/tech-design/` | When there is something to deploy | universal |
-| **OBSERVABILITY** | `observability` | devops | `docs/tech-design/` | When entering production | situational |
-| **COMPLIANCE** | `compliance` | compliance | `docs/tech-design/` | Regulated user data or AI features (regulated/non-trivial projects) | situational |
-| **DR** | `dr` | devops | `docs/tech-design/` | When data loss is a business risk (enterprise/prod) | situational |
-| **INTEGRATION** | `integration` | backend / architecture | `docs/tech-design/` | When external service integrations appear | situational |
-| **DESIGN** | `design` | design | `docs/tech-design/` | When the product has a UI. **Design-system spec — FRD-grade**: design tokens · component inventory · states · interaction rules. **External SSOT = Figma/Pencil; this document holds the links AND the rules** (body template → [[doc-templates]]) | situational |
-| **MIGRATION** | `migration` | backend / devops | `docs/tech-design/` | When schema changes or data migrations occur | situational |
+| **BUSINESS (사업 — BM·GTM 통합)** ★stub | `business` | **business** | `docs/business/` | One file, two sections. **§BM (Business Model — 수익 모델)** — when revenue model, cost structure, or unit economics affect product decisions · **§GTM (Go-To-Market — 진입 전략)** — when launch, channel, or positioning decisions are needed. Referenced by the PRD | universal |
 
-**2 business documents** ★new — pre-created as stubs at project creation (17 tech-design + 2 business = **19**)
+**Planning (roadmap)** — **not pre-created** (created on trigger, not part of the 6-stub baseline)
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **BM** | `bm` | **business** | `docs/business/` | When revenue model, cost structure, or unit economics affect product decisions. Referenced by the PRD | universal |
-| **GTM** | `gtm` | **marketing** | `docs/business/` | When launch, channel, or positioning decisions are needed. Referenced by the PRD | universal |
+| **MILESTONE (마일스톤 — 단계별 딜리버리 로드맵)** | `milestone` | **pm** | `docs/` (root) | When the project needs **phased delivery planning** — sequencing major deliverables/releases across time (the roadmap). Not for a single-shot small tool. Body template → [[doc-templates]] | situational |
 
-**Planning (roadmap)** — **not pre-created** (created on trigger, not part of the 19-stub baseline)
-
-| Document | kind | owner | Location | When (trigger) | Tier |
-|---|---|---|---|---|---|
-| **MILESTONE** | `milestone` | **pm** | `docs/planning/` | When the project needs **phased delivery planning** — sequencing major deliverables/releases across time (the roadmap). Not for a single-shot small tool. Body template → [[doc-templates]] | situational |
+> **MILESTONE home = `docs/` root.** The former `docs/planning/` folder is removed (a folder for one file was over-design — KJP-17 partially reversed). Create a `planning/` folder only when a **second** planning document actually appears.
 
 > **MILESTONE boundaries (who owns overlap).** MILESTONE = **"when what"** (timing · sequencing of already-defined scope). It never redefines scope and never records decision rationale.
 > - **vs PRD** — PRD owns **"what & why"** (product direction/requirements). MILESTONE references PRD/FRD scope via wikilinks; it never restates it.
@@ -62,20 +58,17 @@
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **POLICY (project)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (document frontmatter) | `docs/policy/<PREFIX>-POL-0000N.md` | When a rule applies to **2 or more features** (`scope: project`) — criteria, ID, promotion canon: [[project-docs-convention]] | situational |
-| **ADR** | `adr` | architecture (ID issued by PM) | `docs/adr/<PREFIX>-ADR-0000N.md` | One per hard-to-reverse code/design decision. 🔴 **Never pre-created** | universal |
+| **POLICY (Project Policy — 프로젝트 공통 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (document frontmatter) | `docs/policy/<PREFIX>-POL-0000N.md` | When a rule applies to **2 or more features** (`scope: project`) — criteria, ID, promotion canon: [[project-docs-convention]] | situational |
+| **ADR (Architecture Decision Record — 결정 기록)** | `adr` | architecture (ID issued by PM) | `docs/adr/<PREFIX>-ADR-0000N.md` | One per hard-to-reverse code/design decision. 🔴 **Never pre-created** | universal |
 | **research (folder)** | folder (free-form) | research | `docs/research/` | When research/benchmarking outputs appear | situational |
 
 **Feature documents** — `docs/feature/<F>/`. Stubs created **at feature kickoff on PM instruction** (not pre-created, [[project-docs-convention]])
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **FRD** | `frd` | planning | `docs/feature/<F>/` | When expanding one PRD feature into an executable spec (per feature). **The "what"** | universal |
-| **TDC** ★new | `tdc` | **architecture** | `docs/feature/<F>/` | When expanding the FRD into an implementation approach. **The "how"** — see the section below | universal |
-| **DATA_FLOW** | `data-flow` | architecture / backend | `docs/feature/<F>/` | When the feature moves data. **Prose goes in the TDC; this holds the diagram** | universal |
-| **SEQUENCE** | `sequence` | architecture / backend | `docs/feature/<F>/` | When multiple components interact. **Prose goes in the TDC** | universal |
-| **STATE_DIAGRAM** | `state-diagram` | architecture / backend | `docs/feature/<F>/` | 🔴 **Only for features with a real state machine** (login, payment, orders, etc.). Otherwise **keep as stub** | situational |
-| **POLICY (feature)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (document frontmatter) | `docs/feature/<F>/policy/` | When a rule applies **to this feature only** (`scope: feature`) — [[project-docs-convention]] | situational |
+| **FRD (Feature Requirements Doc — 기능 요구사항)** | `frd` | planning | `docs/feature/<F>/` | When expanding one PRD feature into an executable spec (per feature). **The "what"** | universal |
+| **TDC (Technical Design & Concept — 구현 설계)** | `tdc` | **architecture** | `docs/feature/<F>/` | When expanding the FRD into an implementation approach. **The "how".** Absorbs as a **§Diagrams** section the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files (only diagrams remained there — "prose goes in the TDC" was already the rule). Diagrams only in §Diagrams; prose only in the prose sections; a state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.). Canon: [[project-docs-convention]] §TDC | universal |
+| **POLICY (Feature Policy — 기능 한정 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (document frontmatter) | `docs/feature/<F>/policy/` | When a rule applies **to this feature only** (`scope: feature`) — [[project-docs-convention]] | situational |
 
 **On-demand**
 

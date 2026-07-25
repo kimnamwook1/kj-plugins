@@ -12,7 +12,7 @@
 ## frontmatter Standard (all Docs documents)
 
 ```yaml
-id: <PREFIX>-<TYPE>-0000N   # multi-instance documents (POL·ADR etc.) only. Omitted for singleton documents (PRD·NFR…)
+id: <PREFIX>-<TYPE>-0000N   # multi-instance documents (POL·ADR etc.) only. Omitted for singleton documents (PRD·ARCHITECTURE…)
 kind: prd | frd | tdc | adr | policy | ...   # document kind (doc-catalog "kind" column)
 title: <document title>
 project: <project-slug>
@@ -32,16 +32,17 @@ history:
 
 ## stub Pre-creation Rules
 
-- **Pre-created = 19** — 17 in `tech-design/` + 2 in `business/`. **At project onboarding the PM delegates pre-creating all of them as `status: stub`** (full scaffold).
-- **Feature document set = 5** (`FRD` · `TDC` · `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` + the `policy/` folder) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be).
+- **Pre-created = 6** — 5 in `tech-design/` (`PRD` · `ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`) + 1 in `business/` (`BUSINESS`). **At project onboarding the PM delegates pre-creating all of them as `status: stub`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
+- **`API_SPEC` is not pre-created** — it is a read-only repo-spec mirror (§The Only Exception below); dreaming's api-mirror audit generates it once an API exists. `COMPLIANCE` · `DESIGN` · `MILESTONE` stay situational (created on trigger).
+- **Feature document set = 3** (`FRD` · `TDC` + the `policy/` folder) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be).
 - **ADRs are never pre-created** — one is created only when a meaningful decision actually occurs: **the PM delegates it as a recording brief carrying the `architecture` owner label** (a brief label, not a resident agent — workers never write the vault directly; [[memory-control-convention]] §Governance. ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".
-- Total document kinds = 24 (19 + 5 feature). But **only 19 are pre-created** — do not conflate the two numbers.
+- The catalog lists more kinds than get pre-created (situational + trigger-generated + the feature set). **Only 6 are pre-created** — do not conflate the two numbers.
 
 ## TDC — if FRD is the "what", TDC is the "how"
 
 - **Role**: implementation approach · interfaces · trade-offs · **lightweight decisions**. 🔴 **Never bury major decisions in the TDC — split them out as ADRs and link** — an ADR is standalone evidence of a hard-to-reverse decision; mixed into a document, it cannot be found.
-- **TDC = hub for the 3 diagrams**: `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` **stay separate files** (tooling/rendering reasons), but **the prose (why it flows this way) is written only in the TDC.** The TDC binds the three together with wikilinks. → If prose is scattered across 4 places, all four drift apart bit by bit.
-- **Reference direction (one-way)**: `FRD → TDC → (diagrams · ADR · policy)`. Never create reverse references — with a cycle, which one is upstream disappears (the conflict order ("Document Conflict Precedence" below) stops working).
+- **TDC = prose + §Diagrams in one file**: the data-flow · sequence · state diagrams live **inside the TDC as a `§Diagrams` section** (they absorbed the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files — only diagrams remained there once prose was banned from them). **Prose (why it flows this way) lives only in the prose sections; §Diagrams holds diagrams only** — scatter prose into diagram captions and the two drift apart. A state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.) — otherwise omit it.
+- **Reference direction (one-way)**: `FRD → TDC → (ADR · policy)`. Never create reverse references — with a cycle, which one is upstream disappears (the conflict order ("Document Conflict Precedence" below) stops working).
 
 > **Non-code decisions** (stack, vendor, scope) go to `type: decision` notes in `knowledge/`, not ADRs — only code/design decisions get an ADR.
 
@@ -76,12 +77,12 @@ history:
 The pecking order when documents disagree — the higher one wins:
 
 ```
-common/policies (global)  >  docs/policy  >  NFR  >  PRD  >  FRD  >  TDC
+common/policies (global)  >  docs/policy  >  PRD §비기능 요구(NFR)  >  PRD  >  FRD  >  TDC
 ```
 
 - 🔴 **This table is the PM's arbitration tool — not for workers.** Worker instructions carry only one line: "on conflict, don't judge on your own — report to the PM". Hand workers the pecking order and it becomes "I won, so ignore that one", and fixing the losing document never happens.
 - 🔴 **A conflict is usually a signal that one of the two is wrong.** Follow the winner and **fix the loser** — left alone, the next person hits the same conflict again.
-- The logic of the order: norms (must be followed) > constraints (NFR) > the what (PRD→FRD) > the how (TDC). **The lower you go the more concrete it gets, and the concrete never beats the abstract.**
+- The logic of the order: norms (must be followed) > constraints (the PRD's NFR section) > the what (PRD→FRD) > the how (TDC). **The lower you go the more concrete it gets, and the concrete never beats the abstract.** (A section outranking the rest of its own document is intentional — a constraint binds the requirements written next to it.)
 
 ## What Not to Put in the Vault (boundaries)
 

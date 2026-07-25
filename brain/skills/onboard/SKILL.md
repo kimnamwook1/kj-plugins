@@ -17,9 +17,10 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
 
 1. **Do you use an external ticket system?** — Huly · Jira · Linear · GitHub Issues · none
 2. **What is the goal?** — what you are building and why
-3. **Is the tech stack decided?** Plus two delivery-classification sub-questions (they decide `GIT_STRATEGY`):
+3. **Is the tech stack decided?** Plus three sub-questions — two delivery-classification ones (they decide `RUNBOOK` §Delivery) and one design-tooling one:
    - **Q1 — Who controls deployment?** *I control* (server · web · GitOps · self-host) or *someone else controls* (store review · shipped binary — mobile app, browser extension, other **client artifacts**).
-   - **Q2 — Real-user SaaS?** *SaaS* or *personal / internal*. **Only applies to the "I control (server)" bucket** (DELIVERY_STRATEGY §2, Axis 2).
+   - **Q2 — Real-user SaaS?** *SaaS* or *personal / internal*. **Only applies to the "I control (server)" bucket** (Axis 2 of the vault's delivery classification note).
+   - **Q3 — Do you use a design tool?** (tool-neutral — never suggest a specific tool) *Yes, <name>* → that link becomes `DESIGN` §SSOT · *No* → repo code-first (the repo component source is the SSOT). Only relevant for UI products — skip for headless projects.
 4. **Any regulation or sensitive data?** — personal data, payments, AI disclosure
 5. **Any deployment target?**
 
@@ -30,11 +31,12 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
 
 7. **Answer → application mapping**:
    - **① Ticket system** → update `ticket-system` in `CLAUDE.md` (brain config; pre-split projects: wherever the key currently lives). **Identifier only** — real credentials go in neither CLAUDE file (separate env, e.g. `~/.config/claude/huly.env`). If there is a system, confirm the project identifier and MCP availability, and record the session `related_ticket` mapping (which system's issue IDs get written) in the brain config. If none, `ticket-system: none` — manage via session To-Dos only.
-   - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, also `BM`.
-   - **③ Stack** → `CODE_CONVENTION` · `ARCHITECTURE` (architecture brief) · `GIT_STRATEGY` (devops label). Classify from Q1/Q2 and record the bucket in `GIT_STRATEGY`:
+   - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, also `BUSINESS` §BM.
+   - **③ Stack** → `CODE_CONVENTION` · `ARCHITECTURE` (architecture brief) · **`RUNBOOK` §Delivery** (devops label). Classify from Q1/Q2 and record the bucket in `RUNBOOK` §Delivery:
      - Q1 *I control* + Q2 *SaaS* → **server-SaaS** · Q1 *I control* + Q2 *personal/internal* → **server-personal** · Q1 *someone else controls* → **client** (Q2 skipped).
-     - Recording the bucket gives the stub real content — the same write flips `GIT_STRATEGY` `status: stub → draft` (stub rule, `docs/project-docs-convention.md`; the init-seeded pointer body alone does not clear stub — the bucket does).
-     - 🔴 **Never hardcode a git-flow value.** The org default flow is keyed by the brain-config `org` and defined in the common policy `DELIVERY_STRATEGY` (`000_common/policies/`) §0; the bucket rules are §1–3. The `GIT_STRATEGY` stub **points** at that policy — it never restates the flow or the bucket rules (restate → drift).
+     - Recording the bucket gives the stub real content — the same write flips `RUNBOOK` `status: stub → draft` (stub rule, `docs/project-docs-convention.md`; the init-seeded §Delivery pointer alone does not clear stub — the bucket does).
+     - 🔴 **Never hardcode a git-flow value.** The flow is decided by **the vault's delivery classification note** — a classification table mapping project type → flow (org is only where documents live; there is no single org-default flow). The note's path differs per vault (binding: `000_common/policies/`, e.g. `DELIVERY_STRATEGY.md` · stabilizing: a non-binding reference in `000_common/facts/`, promoted when stable) — resolve it in this vault and make `RUNBOOK` §Delivery **point**; never restate the flow or the bucket rules (restate → drift).
+     - **Q3 (design tool)** → recorded when `DESIGN` gets created (UI products — `DESIGN` stays situational): tool named → that link seeds `DESIGN` §SSOT · none → the repo component source is the SSOT (code-first; git history = change history). Body canon: `docs/doc-templates.md`.
    - **④ Regulation** → decides the priority of `COMPLIANCE` · `THREAT_MODEL`.
    - **⑤ Deployment** → `RUNBOOK`.
 

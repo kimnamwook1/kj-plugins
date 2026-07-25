@@ -28,40 +28,26 @@
       *.md                           
     docs/                            # official documents
       index.md
-      tech-design/
+      MILESTONE.md                   # NOT pre-created — "when what" phased delivery plan, docs/ root (a planning/ folder only if a 2nd planning doc appears)
+      tech-design/                   # pre-created stubs = the 5 below marked ★
         index.md
-        API_SPEC.md
-        CODE_CONVENTION.md
-        GIT_STRATEGY.md  
-        ARCHITECTURE.md
-        COMPLIANCE.md                # compliance for this project
-        DESIGN.md                    # design-system spec (tokens·components·states·interactions) + Figma/Pencil links
-        DR.md
-        ERD.md
-        GLOSSARY.md
-        INTEGRATION.md
-        MIGRATION.md
-        NFR.md
-        OBSERVABILITY.md
-        PRD.md
-        RUNBOOK.md
-        FULL_TEST_PLAN.md
-        THREAT_MODEL.md
+        PRD.md                       # ★ + §비기능 요구(NFR) · §용어(Glossary)
+        ARCHITECTURE.md              # ★ + §데이터 모델(ERD) · §외부 연동(Integrations) — split a section out only when it grows heavy
+        CODE_CONVENTION.md           # ★ + §테스트 규율 (project-wide test discipline)
+        RUNBOOK.md                   # ★ + §Delivery(구 GIT_STRATEGY) · §관측(Observability) · §재해 복구(DR) · §마이그레이션(Migration)
+        THREAT_MODEL.md              # ★ independent — security/evidence character
+        API_SPEC.md                  # NOT pre-created — repo-spec read-only mirror; dreaming api-mirror generates it once an API exists
+        COMPLIANCE.md                # situational — compliance for this project
+        DESIGN.md                    # situational — design-system spec (tokens·components·states·interactions) + SSOT links (design tool, or repo component source when code-first)
       adr/                           #   standalone evidence of hard-to-reverse decisions <PREFIX>-ADR-0000N.md
       research/                      #   research outputs (free-form)
       business/
-        BM.md
-        GTM.md
-      planning/                      # roadmap axis — spans tech+business, so it sits above the tech/business split. NOT pre-created (created on trigger)
-        MILESTONE.md                 # "when what" — phased delivery plan; references PRD/FRD scope + ADRs, never restates them
+        BUSINESS.md                  # ★ one file, two sections — §BM · §GTM
       policy/                        # promotion tier for cross-feature product rules; project-wide norms <PREFIX>-POL-0000N.md — criteria & ID issuance: project-docs-convention
-      feature/                       # per-feature design (FRD·TDC·DATA_FLOW·SEQUENCE·STATE_DIAGRAM)  
+      feature/                       # per-feature design (FRD·TDC — diagrams live in TDC §Diagrams)
         <feature>/                        
           FRD.md
-          TDC.md                     # hub for the 3 diagrams — prose lives here only
-          DATA_FLOW.md
-          SEQUENCE.md
-          STATE_DIAGRAM.md
+          TDC.md                     # prose sections + §Diagrams (absorbed the former DATA_FLOW·SEQUENCE·STATE_DIAGRAM files)
           policy/                    # rules that apply to this feature only (scope: feature)
   sessions/                          # outside the team share (NNN_*/ + 000_common); committing it is a per-vault choice
     index.md                         # session table of contents
@@ -72,14 +58,14 @@
 ## Naming Conventions
 
 - **folders = lowercase**
-  - e.g. `docs/` · `docs/feature/` · `docs/policy/` · `docs/business/` · `docs/planning/`
+  - e.g. `docs/` · `docs/feature/` · `docs/policy/` · `docs/business/`
 - **required document files = uppercase**
-  - `PRD.md` · `FRD.md` · `BM.md` · `GTM.md`
+  - `PRD.md` · `FRD.md` · `BUSINESS.md` · `RUNBOOK.md`
   - Exception: documents under `research/` may be lowercase.
 - **machine notes = `<hostname>.md`, lowercase-kebab**
   - `facts/machines/kj-mac-mini-m4.md` — a knowledge/fact note, so lowercase; not an uppercase document file (`COMPLIANCE.md`).
   - frontmatter = same schema as other facts notes: `title` (required) plus `uid` · `created` · `status` · `projects`. Reference: `000_common/facts/machines/kj-mac-mini-m4.md`.
   - this canon gap is why two vaults stored one machine under divergent case/schema.
 - **multi-word filenames = `UPPER_SNAKE`**
-  - `SEQUENCE.md` · `THREAT_MODEL.md` · `DATA_FLOW.md` · `STATE_DIAGRAM.md` · `API_SPEC.md`
+  - `THREAT_MODEL.md` · `CODE_CONVENTION.md` · `API_SPEC.md`
 - **folder index = `index.md`**

@@ -11,7 +11,7 @@
 ## Scope — only two kinds have a body template
 
 - **DESIGN** and **MILESTONE** only. These are the first (and, for now, the only) kinds with a body skeleton.
-- 🔴 **Do not template the other ~22 kinds.** A stub pre-filled with empty headings reads as a wall of false facts (empty heading = "there is none"). A kind earns a template only when its body shape is stable and repeated — not preemptively.
+- 🔴 **Do not template the other kinds.** A stub pre-filled with empty headings reads as a wall of false facts (empty heading = "there is none"). A kind earns a template only when its body shape is stable and repeated — not preemptively. (The absorbed-section skeletons the 6 pre-created stubs carry are [[doc-catalog]]'s per-row "absorbs" notes, not body templates — a stub still stays H1-only until content arrives.)
 - The other kinds stay as a one-line stub until content is written; their structure emerges from [[doc-catalog]] role + [[project-docs-convention]].
 
 ## stub rule for templated docs (🔴 read before pre-filling)
@@ -24,17 +24,18 @@
 
 ## DESIGN — design-system spec (FRD-grade)
 
-- **Role**: the design-system contract for a UI product — tokens, components, states, interaction rules — **plus links to the external SSOT**.
-- **External SSOT = Figma / Pencil.** The pixels live there; this document holds the **links + the rules a Figma file cannot enforce in prose** (token names, state matrices, interaction invariants). Never paste screenshots as the source of truth — link.
+- **Role**: the design-system contract for a UI product — tokens, components, states, interaction rules — **plus links to the SSOT**.
+- **SSOT = the design tool if one is used (Figma, Pencil, …); if code-first, the repo component source (git history = the change history).** The pixels/source live there; this document holds the **links + the rules the SSOT cannot enforce in prose** (token names, state matrices, interaction invariants). Never paste screenshots as the source of truth — link. This is the **same shape as the API_SPEC repo-mirror pattern** ([[project-docs-convention]] §The Only Exception): the authoritative artifact lives outside the vault; the vault document links and rules, never overrides.
+- **Component-confirmation record = 3 layers, one home each**: ① pixels & change history = the SSOT (tool or repo) · ② the confirmed spec = that component's row in §Components + §States & Interactions · ③ the confirmed *why* = the row's Notes + one `history:` line — an ADR when the decision is hard to reverse. 🔴 **No per-component `.md` files** — a second document per component is a second SSOT, and two SSOTs drift.
 - **Required frontmatter keys**: `kind: design` · `title` · `project` · `status` · `owner: design` · `updated` · `history`. (Singleton — no `id`. No `scope`/`feature`.)
 
 ```markdown
 ## Overview
 <!-- One paragraph: what product surface this covers, and the design language in one line. -->
 
-## External SSOT (source of truth)
-<!-- Links only. The authoritative pixels live here — this doc never overrides them. -->
-- Figma / Pencil: <url>
+## SSOT (design tool or repo)
+<!-- Links only. Design tool if one is used; repo component source if code-first (git history = change history). The authoritative pixels/source live there — this doc never overrides them. -->
+- Design tool (Figma, Pencil, …): <url>  — or repo component source: <path>
 - (component library file, prototype, etc.)
 
 ## Design Tokens
@@ -63,7 +64,7 @@
 ## MILESTONE — phased delivery plan ("when what")
 
 - **Role**: the roadmap. Sequences already-defined scope across time. Records **when**, never **what/why** (PRD) or **why-we-decided** (ADR).
-- **Boundaries** (owner of overlap — [[doc-catalog]] MILESTONE note): references PRD/FRD scope via wikilinks (never restates it); links ADRs for rationale; leaves fluid task/sprint status to the tracker. This doc is the **durable** plan, not a task mirror.
+- **Boundaries** (owner of overlap — [[doc-catalog]] MILESTONE note): references PRD/FRD scope via wikilinks (never restates it); links ADRs for rationale; leaves fluid task/sprint status to the tracker. This doc is the **durable** plan, not a task mirror. Home = `docs/` root ([[doc-catalog]]).
 - **Required frontmatter keys**: `kind: milestone` · `title` · `project` · `status` · `owner: pm` · `updated` · `history`. (Singleton — no `id`.)
 
 ```markdown
