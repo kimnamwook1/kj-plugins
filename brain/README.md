@@ -137,12 +137,26 @@ frontmatter keys (`uid` `project` `created` `updated` `status` `writer`), `uid` 
 `active|parked|done` (a document status such as `draft` leaking into a session note is called
 out specifically, as is the retired `cancel` — whose message carries the migration instruction:
 an abandoned session is `done` + an `abandoned` tag). **Knowledge notes** — the top level of each `NNN_<project>/knowledge/` and
-of `000_common/{facts,patterns,policies}/`: `title:` present. Subdirectories are not scanned
-(so `facts/machines/` is out of scope), matching the flat scan in
-`skills/_session-shared/recall.md`, which also supplies the `index.md` + `0.*` meta exclusion.
+of `000_common/{facts,patterns,policies}/`: `title:` present. Subdirectories are not scanned,
+matching the flat scan in
+`skills/_session-shared/recall.md`, which also supplies the `index.md` + `0.*` meta exclusion —
+with one surgical exception, `000_common/facts/machines/`, added as an explicit scan root
+(one note per machine, which recall reads).
 
-Every run prints the scanned file counts (`OK — no issues (22 sessions, 271 knowledge)`) so a
-collapsed scan is visibly different from a clean vault — "OK" alone cannot distinguish the two.
+**Session-uid wikilinks on the shared surface** — every `*.md` under `NNN_*/docs/`,
+`NNN_*/knowledge/` and `000_common/` (recursive, no meta-file exclusion): a `[[…]]` whose
+target is a session uid is a finding. Canon is `docs/versioning-convention.md` §Share scope —
+`sessions/` sits outside the team-shared surface and a team vault gitignores it, so the link
+dangles in a teammate's vault; a shared note cites a session as **plain uid text**. Catches
+`[[uid]]`, `[[sessions/uid]]`, `[[uid|alias]]`, `[[uid#heading]]`, `![[uid]]`, for both the
+`<PREFIX>-YYYYMMDD-HHMMSS` form and the PREFIX-less dreaming-report form. 🔴 **`sessions/`
+itself is not scanned** — a session's own wikilinks are its record. Wikilinks between vault
+*documents* (`[[<PREFIX>-ADR-0000N]]`, `[[<ID>]]`) are untouched; only session targets are
+banned.
+
+Every run prints the scanned file counts (`OK — no issues (22 sessions, 271 knowledge, 640
+shared)`) so a collapsed scan is visibly different from a clean vault — "OK" alone cannot
+distinguish the two.
 Unreadable files are reported as findings rather than skipped, so `--strict` cannot pass a file
 it never read. Output is `file:line: message`, so editors and terminals can jump straight to it.
 

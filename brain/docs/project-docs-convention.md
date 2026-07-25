@@ -23,10 +23,10 @@ feature: <feature-name>      # only when scope: feature (+ feature documents FRD
 updated: YYYY-MM-DD
 tags: []
 history:
-  - { date: YYYY-MM-DD, change: <one line>, by: <agent>, session: "[[PROJECT_PREFIX-YYYYMMDD-HHMMSS]]" }
+  - { date: YYYY-MM-DD, change: <one line>, by: <agent>, session: "PROJECT_PREFIX-YYYYMMDD-HHMMSS" }
 ```
 
-- **`session:` is the session uid verbatim** — `PROJECT_PREFIX-YYYYMMDD-HHMMSS`. Never abbreviate (if wikilinks don't match actual filenames, they all break). Canon → [[sessions-note-convention]]
+- **`session:` is the session uid verbatim, as plain text** — `PROJECT_PREFIX-YYYYMMDD-HHMMSS`. 🔴 **Never a `[[wikilink]]`**: a document lives on the team-shared surface but `sessions/` sits outside it (a team vault gitignores it), so a session wikilink dangles in every teammate's vault that lacks that session — canon → [[versioning-convention]] §Share scope, enforced by `scripts/validate.sh`. Never abbreviate either — the uid is the lookup key for finding the session. Canon → [[sessions-note-convention]]
 - **owner rule**: **work is not accepted as complete without updating the documents you own.**
 - **stub rule**: **treat as "no information" — never cite as evidence.** **The moment content is filled in, switch to `draft` immediately**.
 

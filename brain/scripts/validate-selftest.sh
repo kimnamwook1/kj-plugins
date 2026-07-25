@@ -29,7 +29,7 @@ assert_exit() {    # <desc> <expected> <actual>
 }
 
 # ---------------------------------------------------------------- fixtures
-mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" \
+mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" "$V/013_selftest/docs" \
          "$V/000_common/facts" "$V/000_common/facts/machines" \
          "$V/000_common/patterns" "$V/000_common/policies"
 
@@ -98,6 +98,40 @@ printf -- '---\nkind: policy\n---\n'  > "$V/000_common/policies/policies-no-titl
 printf -- '---\nkind: fact\n---\n'     > "$V/000_common/facts/machines/machine-no-title.md"
 printf -- '---\ntitle: tool inventory\n---\n' > "$V/000_common/facts/tool-x.md"
 
+# Session-uid wikilinks on the shared surface. One positive fixture per scan root, so
+# dropping any root from the scope kills a specific assert. Every fixture carries a
+# `title:` so it stays silent for the knowledge-title rule and only the wikilink rule
+# can speak.
+printf -- '---\ntitle: doc with a session link\n---\n[[KJP-20260718-120000]] is the source.\n' \
+  > "$V/013_selftest/docs/wl-doc.md"                                   # NNN_*/docs — bare uid
+printf -- '---\ntitle: doc with a path-form link\n---\nsee [[sessions/KJP-20260718-120001]] and [[KJP-20260718-120002|the session]]\n' \
+  > "$V/013_selftest/docs/wl-path.md"                                  # path prefix + alias form
+printf -- '---\ntitle: knowledge with a session link\nsource_sessions: [KJP-20260718-120003]\n---\nbody cites [[KJP-20260718-120003#Progress]]\n' \
+  > "$V/013_selftest/knowledge/wl-know.md"                             # NNN_*/knowledge — heading form
+printf -- '---\ntitle: nested knowledge with a session link\n---\n[[KJP-20260718-120004]]\n' \
+  > "$V/013_selftest/knowledge/nested/wl-nested.md"                    # recursion: nested is IN scope here
+printf -- '---\ntitle: common fact with a session link\n---\n![[KJP-20260718-120005]]\n' \
+  > "$V/000_common/facts/wl-common.md"                                 # 000_common — embed form
+printf -- '---\ntitle: common root note\n---\ndream report [[20260719-005513]]\n' \
+  > "$V/000_common/wl-dreaming.md"                                     # 000_common root + PREFIX-less uid
+
+# Legal shared-surface references, all in one file. Two of these are load-bearing beyond
+# "no false positive":
+#   · the `history:` line reproduces the corrected `project-docs-convention.md:26` template
+#     (KJP-39 root cause — the template used to *prescribe* the wikilink), so the fixture
+#     fails the moment that template regresses to `[[…]]`;
+#   · `[[<PREFIX>-ADR-0000N]]` / `[[<ID>]]` are vault-internal doc-to-doc links that
+#     project-docs-convention:61·73·98 mandate — they must never be caught by this rule.
+printf -- '---\ntitle: doc citing sessions correctly\nsource_sessions: [KJP-20260718-120006]\nhistory:\n  - { date: 2026-07-26, change: one line, by: scribe, session: "KJP-20260718-120007" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
+  > "$V/013_selftest/docs/wl-plain.md"
+
+# A session note may wikilink other sessions — sessions/ is outside the shared surface
+# and deliberately outside this scan. Otherwise-valid so only the wikilink rule could
+# speak; it must not.
+session WL-20260718-120014 WL-20260718-120014 active
+printf -- 'follows [[KJP-20260718-120000]] and [[sessions/KJP-20260718-120001]]\n' \
+  >> "$V/sessions/WL-20260718-120014.md"
+
 # ---------------------------------------------------------------- run
 REPORT="$(/bin/bash "$VALIDATE" "$V")"; rc=$?
 echo "--- report ---"; printf '%s\n' "$REPORT"; echo "--- asserts ---"
@@ -126,7 +160,20 @@ assert_match   "000_common/facts/machines is scanned"        'machines/machine-n
 assert_match   "000_common/patterns is scanned"              'patterns/patterns-no-title.md:1: missing frontmatter key: title'
 assert_match   "000_common/policies is scanned"              'policies/policies-no-title.md:1: missing frontmatter key: title'
 
+# session-uid wikilinks on the shared surface — one positive per scan root
+assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:4: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
+assert_match   "docs/: sessions/-prefixed link is caught"    'docs/wl-path.md:4: .*\[\[sessions/KJP-20260718-120001\]\]'
+assert_match   "alias form (uid pipe label) is caught"       'docs/wl-path.md:4: .*\[\[KJP-20260718-120002|the session\]\]'
+assert_match   "knowledge/: heading form is caught"          'knowledge/wl-know.md:5: .*\[\[KJP-20260718-120003#Progress\]\]'
+assert_match   "wikilink scan recurses into nested/"         'knowledge/nested/wl-nested.md:4: .*\[\[KJP-20260718-120004\]\]'
+assert_match   "000_common: embed form (bang-link) is caught" 'facts/wl-common.md:4: .*\[\[KJP-20260718-120005\]\]'
+assert_match   "000_common root + PREFIX-less dreaming uid"  'wl-dreaming.md:4: .*\[\[20260719-005513\]\]'
+
 # quiet cases
+assert_no_match "plain uid + corrected history: template pass" 'wl-plain.md'
+assert_no_match "non-uid wikilinks are not flagged"          'another-note'
+assert_no_match "ADR/policy doc wikilinks are not session uids" 'KJP-\(ADR\|POL\)-0000'
+assert_no_match "session wikilinks inside sessions/ are legal" 'WL-20260718-120014'
 assert_no_match "clean session note produces no finding"     'CLEAN-20260718-120000'
 assert_no_match "parked is a legal session status"           'PARKED-20260718-120012'
 assert_no_match "quoted scalars are not false positives"     'QUOTED-20260718-12000[78]'
@@ -140,13 +187,28 @@ assert_no_match "titled knowledge note produces no finding"  'knowledge/good.md'
 assert_no_match "000_common facts note with title is quiet"  'tool-x.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
-# numbers are asserted (not just "some count"): 14 sessions (12 + 2 dreaming), and 7 knowledge
-# = 2 project (good + no-title; index/0.*/nested excluded) + 2 facts + 1 machines + 1 pattern + 1 policy.
-assert_match   "scanned counts appear in the summary"        '(14 sessions, 7 knowledge)'
+# numbers are asserted (not just "some count"): 15 sessions (12 + 2 dreaming + 1 wikilink
+# fixture); 9 knowledge = 3 project (good + no-title + wl-know; index/0.*/nested excluded)
+# + 3 facts + 1 machines + 1 pattern + 1 policy; 17 shared = 3 docs + 7 knowledge (all
+# meta files and nested/ included — no exclusions on this surface) + 7 under 000_common.
+assert_match   "scanned counts appear in the summary"        '(15 sessions, 9 knowledge, 17 shared)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
 assert_exit "--strict exits 1 when there are findings" 1 "$rc"
+
+# The vault above has many findings, so the assert just made cannot say *which* rule
+# blocked. This isolated vault has exactly one finding — a shared-surface wikilink —
+# so it pins that the new rule alone is enough to fail --strict.
+W="$(mktemp -d -t brain-selftest-wl)"; mkdir -p "$W/sessions" "$W/013_wl/docs"
+printf -- '---\ntitle: the only finding in this vault\n---\n[[KJP-20260718-120000]]\n' \
+  > "$W/013_wl/docs/only.md"
+REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
+assert_exit  "wikilink-only vault exits 0 in default mode" 0 "$rc"
+assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 knowledge, 1 shared)'
+/bin/bash "$VALIDATE" "$W" --strict > /dev/null 2>&1
+assert_exit  "a wikilink finding alone fails --strict" 1 $?
+rm -rf "$W"
 
 # unreadable file becomes a finding rather than a silent stderr warning
 CHMOD_OK=1
@@ -181,7 +243,7 @@ rm -rf "$GP"
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/sessions"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
-assert_match "empty vault reports a zero scan count" '(0 sessions, 0 knowledge)'
+assert_match "empty vault reports a zero scan count" '(0 sessions, 0 knowledge, 0 shared)'
 /bin/bash "$VALIDATE" "$E" --strict > /dev/null 2>&1
 assert_exit  "empty vault exits 0 even under --strict" 0 $?
 rm -rf "$E"

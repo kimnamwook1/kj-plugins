@@ -4,7 +4,8 @@
 #   validate.sh <vault-root> [--strict]
 #
 # Checks session-note frontmatter (required keys, uid format, uid/filename match,
-# status vocabulary) and knowledge-note `title:`. Reports as `file:line: message`.
+# status vocabulary), knowledge-note `title:`, and session-uid wikilinks on the
+# team-shared surface. Reports as `file:line: message`.
 # Findings alone never fail the run (exit 0); --strict turns any finding into exit 1.
 # Usage errors (bad args / unreadable root / mktemp failure) exit 2 in both modes.
 #
@@ -150,6 +151,73 @@ while IFS= read -r f; do
   ' "$f"
 done < "$LIST" >> "$OUT"
 
+# ------------------------------------------- session wikilinks on the shared surface
+# Canon: versioning-convention.md:6 (§Share scope) + knowledge-convention.md:14
+# (`source_sessions`). The shared surface is what a teammate pulls; `sessions/` sits
+# outside it and a team vault gitignores it, so a `[[<uid>]]` written on the shared
+# surface dangles in any vault that lacks that session. Shared notes cite a session as
+# plain uid text — frontmatter and body alike.
+#
+# Scope = the shared surface itself: NNN_*/docs/**, NNN_*/knowledge/**, 000_common/**.
+# 🔴 `sessions/` is deliberately NOT scanned — a session's own wikilinks are its record,
+# and the file is never pulled by anyone else.
+#
+# Two deliberate divergences from the knowledge-title scan above, both because the unit
+# differs (that scan checks per-note schema and mirrors what *recall* reads; this one
+# checks a tree a teammate *pulls*): it recurses (no -maxdepth), and it excludes no
+# meta files — a dangling link in `index.md` or `0.rejected.md` breaks for a teammate
+# exactly like one in a note. See knowledge note "validate 스코프는 recall 스코프의
+# 미러가 원칙" — divergence by decision, recorded, not drift.
+SDIRS=()
+while IFS= read -r d; do
+  # 000_common also matches [0-9][0-9][0-9]_*; it is added whole below, so skip it here
+  # rather than scanning its docs/ and knowledge/ twice.
+  case "$(basename "$d")" in 000_common) continue ;; esac
+  [ -d "$d/docs" ] && SDIRS[${#SDIRS[@]}]="$d/docs"
+  [ -d "$d/knowledge" ] && SDIRS[${#SDIRS[@]}]="$d/knowledge"
+done < <(find "$VAULT" -mindepth 1 -maxdepth 1 -type d -name '[0-9][0-9][0-9]_*' 2>/dev/null | sort)
+[ -d "$VAULT/000_common" ] && SDIRS[${#SDIRS[@]}]="$VAULT/000_common"
+
+# Empty array under `set -u` — same guard as KDIRS above.
+if [ ${#SDIRS[@]} -eq 0 ]; then
+  : > "$LIST"
+else
+  find "${SDIRS[@]}" -type f -name '*.md' 2>/dev/null | sort > "$LIST"
+fi
+n_shared="$(wc -l < "$LIST" | tr -d ' ')"
+
+while IFS= read -r f; do
+  [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
+  awk -v file="$f" '
+    BEGIN {
+      # Digit runs are spelled out rather than written {8}/{6}: one-true-awk (macOS
+      # /usr/bin/awk) has no ERE interval expressions, so a repetition count would not
+      # error — it would silently never match. Same discipline as the uid checks above.
+      D8 = "[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
+      D6 = "[0-9][0-9][0-9][0-9][0-9][0-9]"
+      # <PREFIX>-YYYYMMDD-HHMMSS; PREFIX optional because dreaming reports carry none
+      # (dreaming/SKILL.md §Report format).
+      UID = "([A-Z][A-Z0-9]*-)?" D8 "-" D6
+      # Covers [[uid]] · [[sessions/uid]] (any path prefix) · [[uid|alias]] ·
+      # [[uid#heading]] · ![[uid]] (the leading ! is simply outside the match).
+      # `[^]|#]` is POSIX-correct: a `]` right after `^` is a literal.
+      # ponytail: no fenced-code-block awareness. A vault doc quoting a violation as an
+      # example would be flagged; the conventions live in the plugin, not the vault, so
+      # that case has no instance today. Add fence tracking only when one appears.
+      LINK = "\\[\\[([^]|#]*/)?" UID "([|#][^]]*)?\\]\\]"
+    }
+    {
+      sub(/\r$/, "")
+      s = $0
+      while (match(s, LINK)) {
+        print file ":" NR ": session uid wikilink on the shared surface: " \
+              substr(s, RSTART, RLENGTH) " (cite the session as plain uid text)"
+        s = substr(s, RSTART + RLENGTH)
+      }
+    }
+  ' "$f"
+done < "$LIST" >> "$OUT"
+
 # ------------------------------------------------------------------------ report
 # The scanned counts print on every run so a collapsed scan (0 files) is visibly
 # different from a clean vault — "OK" on its own cannot distinguish the two.
@@ -159,7 +227,7 @@ done < "$LIST" >> "$OUT"
 #   · filenames containing newlines break the line-based file list and counts.
 #   · `awk -v base=...` interprets backslash escapes, so a filename with a backslash
 #     reaches awk mangled (the uid/filename comparison may misreport).
-scanned="$n_sessions sessions, $n_knowledge knowledge"
+scanned="$n_sessions sessions, $n_knowledge knowledge, $n_shared shared"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
   echo "validate.sh: OK — no issues ($scanned) $VAULT"
