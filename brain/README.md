@@ -323,7 +323,7 @@ table is a finding, not a convenience.
 | git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
 | PR/MR path (gate measured off the remote · draft by coder · ready by PM · topic-branch push carve-out) | `docs/versioning-convention.md` §Pull / merge requests | `agents/coder.md` §Last action · doc-catalog (§Delivery records the measured values) |
 | Agent branch naming (`<type>/<PREFIX>-<number>-<title-slug>` · type from the shared vocabulary) | `agents/coder.md` §First action | `docs/versioning-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |
-| Type vocabulary (the 11 types themselves) | `~/.claude/skills/at/SKILL.md` §타입 접두어 규약 (vault mirror: `000_common/policies/TYPE_VOCABULARY.md`) | 🔴 **never restated in this repo** — `agents/coder.md` · `docs/versioning-convention.md` · doc-catalog all point, none copy |
+| Type vocabulary (the 11 types themselves) | `~/.claude/skills/at/SKILL.md` §타입 접두어 규약 (vault mirror: `000_common/policies/DELIVERY_STRATEGY.md §5`) | 🔴 **never restated in this repo** — `agents/coder.md` · `docs/versioning-convention.md` · doc-catalog all point, none copy |
 | Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · dreaming |
 | Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |
 | Stub pre-creation and stub rules | `docs/project-docs-convention.md` | doc-catalog · `/brain:init` |
