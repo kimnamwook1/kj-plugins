@@ -227,7 +227,7 @@ Three profiles in `agents/`, differing only in isolation and permissions:
   worktree branch from `origin/<branch>`, not from local `main`, so a stale base is the default
   — behind with no local commits, the coder resets to the integration branch itself; behind
   *with* commits, it stops and reports. The `Agent` tool takes no name parameter, so the coder
-  also creates its own `<PREFIX>-<number>-<title-slug>` branch and reports it on the first line
+  also creates its own `<type>/<PREFIX>-<number>-<title-slug>` branch and reports it on the first line
   of `Outputs` — the PM merges by name, then deletes with `git branch -d` (never `-D`) so an
   unmerged branch cannot be dropped. Canon → `agents/coder.md`, `docs/versioning-convention.md`.
 - **A `coder`'s last action is a PR — but only if the remote demands one.** Whether a change
@@ -322,7 +322,8 @@ table is a finding, not a convenience.
 | Open-session scan + summary extract (`status: active\|parked` × `project` · `\|\| :` loop terminator) | `skills/_session-shared/active-sessions.md` | `skills/sl`·`sr` |
 | git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
 | PR/MR path (gate measured off the remote · draft by coder · ready by PM · topic-branch push carve-out) | `docs/versioning-convention.md` §Pull / merge requests | `agents/coder.md` §Last action · doc-catalog (§Delivery records the measured values) |
-| Agent branch naming (`<PREFIX>-<number>-<title-slug>` · no type prefix) | `agents/coder.md` §First action | `docs/versioning-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |
+| Agent branch naming (`<type>/<PREFIX>-<number>-<title-slug>` · type from the shared vocabulary) | `agents/coder.md` §First action | `docs/versioning-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |
+| Type vocabulary (the 11 types themselves) | `~/.claude/skills/at/SKILL.md` §타입 접두어 규약 (vault mirror: `000_common/policies/TYPE_VOCABULARY.md`) | 🔴 **never restated in this repo** — `agents/coder.md` · `docs/versioning-convention.md` · doc-catalog all point, none copy |
 | Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · dreaming |
 | Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |
 | Stub pre-creation and stub rules | `docs/project-docs-convention.md` | doc-catalog · `/brain:init` |

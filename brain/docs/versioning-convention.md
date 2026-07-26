@@ -15,7 +15,7 @@
 **Confirm the merge, then delete. Never the reverse.**
 
 1. **`git worktree remove <path>`** — a branch checked out in a worktree cannot be deleted at all, so this comes first.
-2. **Merge** the coder's conventional branch (`<PREFIX>-<number>-<title-slug>`, reported on the first line of the Handoff's `Outputs`) into the integration branch.
+2. **Merge** the coder's conventional branch (`<type>/<PREFIX>-<number>-<title-slug>`, reported on the first line of the Handoff's `Outputs`) into the integration branch. **Merge by the reported name, never by a reconstructed one** — the `<type>` segment means the branch is no longer derivable from the ticket ID alone.
 3. **Delete with `git branch -d` — never `-D`.** `-d` refuses a branch that is not fully merged, so the tool enforces step 2 before step 3 on its own; that refusal *is* the confirmation. `-D` deletes the guard along with the branch, and an unmerged commit becomes unreachable the instant its last ref is gone.
 4. The harness's leftover **`worktree-agent-<hash>`** branch goes the same way. It carries no commits of its own — it points at the base, an ancestor of the integration branch — so plain `-d` takes it, no force needed.
 
@@ -41,9 +41,14 @@ gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" >/dev/null 2>&1 && echo 
 - **Draft is submission, not publication** — a draft PR cannot be merged, and the merge is the act this canon reserves for the PM. So "the committer is the PM" survives intact; the coder never lands anything.
 - **Same axis as `Docs draft`** (`agents/*.md` Handoff): **content = whoever did the work · release = the PM.** The coder writes the PR body because the coder is the only party that knows what happened; the PM converts to ready because the PM is the only party that has verified it.
 - **It removes a PM bottleneck rather than adding one.** CI fires on the draft's first push, so checks are already green (or already failing) by the time the PM looks. Holding PR creation until after review would serialize the machine behind the human for no gain.
-- **The PR title follows the vault's type vocabulary** (`type(scope): 요약`) — the same message canon as the commit. This document does not restate that vocabulary; the vault policy note owns it.
+**Naming, on both surfaces.** The branch and the PR title carry the **same type vocabulary** as the ticket and the commit — user decision 2026-07-26, extending to the branch a vocabulary that previously bound three surfaces.
 
-**The push carve-out, stated narrowly.** "Push only when the user explicitly says so" governs **published history — the integration branch**. On a gated repo it cannot also govern the coder's own topic branch, or the work could never be delivered at all: the gate forbids the direct push, and the PR requires the branch to exist on the remote. So the coder may push **its own `<PREFIX>-<number>-<title-slug>` branch, and only that branch, and only when the measurement above shows a gate.** `main` is never pushed without the user's word, on any repo, ever.
+- **Branch = `<type>/<PREFIX>-<number>-<title-slug>`**, 40 characters max including the prefix (`agents/coder.md` §First action owns the rule and the slug mechanics).
+- **PR/MR title = `<type>(scope): 요약 (<PREFIX>-<number>)`** — the same message canon as the commit, ticket key included.
+- 🔴 **Neither this document nor any other file in this repo restates the vocabulary itself.** The canon is `~/.claude/skills/at/SKILL.md` §타입 접두어 규약, mirrored in the vault policy note; everything here points at it. A local copy is a local drift.
+- **Known friction, recorded on purpose.** The type is mutable, and **the branch is the only one of the four surfaces that cannot be renamed once a PR is open on it.** A re-classification is cheap on the ticket, the commit, and the PR title, and impossible on a pushed branch under review. The chosen resolution is that the **PR title carries the correction and the branch keeps its original name** — a stale type in a branch name is accepted noise, not a re-push. If this turns out to bite often, this bullet is the entry point for revisiting it.
+
+**The push carve-out, stated narrowly.** "Push only when the user explicitly says so" governs **published history — the integration branch**. On a gated repo it cannot also govern the coder's own topic branch, or the work could never be delivered at all: the gate forbids the direct push, and the PR requires the branch to exist on the remote. So the coder may push **its own `<type>/<PREFIX>-<number>-<title-slug>` branch, and only that branch, and only when the measurement above shows a gate.** `main` is never pushed without the user's word, on any repo, ever.
 
 ## Exception to the PM No-Write Rule
 

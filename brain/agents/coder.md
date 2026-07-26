@@ -29,13 +29,15 @@ git log --oneline main..HEAD  # your local commits; empty output = none
 **Then give yourself a branch the PM can read.** The harness names the worktree and its branch `agent-<hash>` / `worktree-agent-<hash>`; the `Agent` tool takes no name parameter, so this cannot be configured — work around it on our side.
 
 ```bash
-git switch -c KJP-45-worktree-base-naming
+git switch -c refactor/KJP-45-worktree-base
 ```
 
-- **Format `<PREFIX>-<number>-<title-slug>`** — kebab, lowercase, **40 characters max over the whole branch name**. No ticket → `<PREFIX>-adhoc-<slug>`.
-- **`<title-slug>`** = the ticket title as kebab: lowercase, every run of non-alphanumerics collapsed to `-`, no leading or trailing `-`, truncated at a word boundary to fit the cap.
-- 🔴 **No type prefix — not `feat/`, not `fix/`.** The vault's type vocabulary binds three surfaces (ticket · commit · PR) and hands the branch model elsewhere on purpose. Three grounds for keeping the branch off that axis: **(1) type is mutable, the ticket ID is not** — a `feat` that turns out to be a `fix` is re-typed on the ticket, amended on the commit, and edited on the PR title, but a branch cannot be renamed once a PR is open on it, so the one immutable surface should carry the one immutable key; **(2) the branch's job here is identity, not classification** — with parallel worktree coders the PM's question is *which ticket produced this*, which `KJP-46-…` answers and `feat/…` does not, and the type is already recoverable from the ticket the ID names; **(3) a fourth copy is a fourth place to drift**, bought with characters the 40-char cap does not have to spare.
-- **Human branch prefixes in a repo are not your business.** If a project's `RUNBOOK §Delivery` records `feat/*`-style names, that is the human convention, recorded as a measurement. Agent branches use the format above in every repo.
+- **Format `<type>/<PREFIX>-<number>-<title-slug>`** — kebab, lowercase, **40 characters max over the whole branch name**, type prefix included. No ticket → `<type>/<PREFIX>-adhoc-<slug>`.
+- **`<type>` comes from the vault's type vocabulary** — the same vocabulary that tags the ticket and opens the commit and the PR title. 🔴 **Read it from `~/.claude/skills/at/SKILL.md` §타입 접두어 규약** (vault mirror: `000_common/policies/TYPE_VOCABULARY.md` §1). **Never reproduce the list in this repo** — a second copy is a second thing to drift, and the pointer costs nothing.
+- **`<title-slug>`** = the ticket title as kebab: lowercase, every run of non-alphanumerics collapsed to `-`, no leading or trailing `-`, truncated at a word boundary to fit the cap. **The type prefix eats into the cap**, so the slug is what gives way — shorten the slug, never the type or the ID.
+- **Why the type is on the branch: one vocabulary, four surfaces.** User decision 2026-07-26. Ticket · commit · PR title · branch now read in the same language, so `git branch` alone answers *what kind of change is this* without a round-trip to the tracker. **This reverses KJP-46**, which had ruled the type prefix out on three grounds; keeping `<PREFIX>-<number>` inside the name answers two of them directly — **identity is not lost** (the PM still reads *which ticket produced this branch* off the name, which was the parallel-worktree requirement) and **the copy does not drift** (nothing here restates the vocabulary; it points).
+- 🔴 **The one ground that survives, recorded because it will be the friction point.** Type is mutable and the branch is the **only surface that cannot be renamed once a PR is open on it** — a ticket is re-typed, a commit is amended, a PR title is edited, but a pushed branch under review is fixed. **If re-classification turns out to be frequent, this is where it will hurt, and this bullet is where to start reading.** Not grounds to deviate on your own: follow the format, and report the friction to the PM if you hit it.
+- **Human branch prefixes in a repo are still not your business.** A project's `RUNBOOK §Delivery` records what that repo's humans actually name their branches, as a measurement — `feature/*` and the like included. That is theirs; agent branches use the format above in every repo, and a collision between the two is a measurement to report, not a conflict to resolve.
 - **Create it right after the base check**, before any commit — the name has to be stable and reportable even if you end up committing nothing.
 - The harness's `worktree-agent-<hash>` branch is then **left behind empty, pointing at the base**. Accepted cost. Leave it alone; the PM sweeps it at cleanup (`docs/versioning-convention.md` §Worktree integration order).
 
@@ -60,13 +62,13 @@ gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" >/dev/null 2>&1 && echo 
 
 ```bash
 git push -u origin "$(git branch --show-current)"
-gh pr create --draft --title "type(scope): 요약" --body "…"
+gh pr create --draft --title "<type>(scope): 요약 (<PREFIX>-<number>)" --body "…"
 ```
 
 - **Draft, always. Never `--fill` a ready PR, never merge one.** A draft cannot be merged, which is exactly why it is yours to create: you are submitting, not releasing. The PM verifies and flips it to ready.
 - **Push your topic branch only.** `main` is never pushed without the user's word, on any repo. The carve-out exists because a gated remote refuses direct pushes, so the branch push is the only way the work can reach anyone — it does not generalize.
 - **The PR body is the Handoff's content, not a link to it** — what changed, why, the test output. The reviewer reads the PR, not your transcript.
-- **Title = the vault's type vocabulary** (`type(scope): 요약`), same as the commit. Ticket link goes in the body as `(<PREFIX>-<number>)`.
+- **Title = `<type>(scope): 요약 (<PREFIX>-<number>)`** — the same message canon as the commit, and the same vocabulary the branch already carries (`~/.claude/skills/at/SKILL.md` §타입 접두어 규약). **Use the type you put on the branch**; if the work turned out to be a different type than you first judged, the title is where you correct it — the branch stays as pushed.
 - **`gh` missing or unauthenticated → stop and report.** Do not fall back to a direct push; on a gated repo it will be rejected, and on an ungated one it publishes something nobody asked for.
 
 ## Handoff format (fixed)
@@ -74,7 +76,7 @@ gh pr create --draft --title "type(scope): 요약" --body "…"
 
 **`Outputs` opens with three lines, always** — the PM merges by name, and cannot do that if the name is buried in prose:
 ```
-branch: <PREFIX>-<number>-<title-slug>     # the branch you created; the merge target
+branch: <type>/<PREFIX>-<number>-<title-slug>   # the branch you created; the merge target
 base:   <sha> <subject>                    # what the first action found, reset or not
 pr:     <url> | none (unprotected)         # the last action's measurement, either way
 ```
