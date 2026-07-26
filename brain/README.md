@@ -39,6 +39,7 @@ exactly as the brain defers consolidation to sleep.
                  │  000_common/          NNN_<project>/           │
                  │    facts/ patterns/     knowledge/  docs/      │
                  │    policies/                                   │
+                 │  999_tools/           ← machine-global, ignored│
                  │  sessions/<uid>.md    ← episodic capture       │
                  └───────▲───────────────────────────┬────────────┘
                          │ writes                    │ recall at session start
@@ -96,7 +97,7 @@ Brain-to-harness mapping (the design-consistency anchor):
 # 3. Content setup (once per project)
 /brain:onboard   # 5-question interview (ticket system · goal · stack · regulation · deploy
                  # target) — fills stub docs to draft for answered questions only — plus a
-                 # measured environment check that builds 000_common/facts/ tool inventories
+                 # measured environment check → 999_tools/ inventories + facts/machines/
 
 # 4. Daily loop — one verb, one skill
 /brain:ss        # start a NEW tracked session — recall injects relevant knowledge and past
@@ -137,11 +138,12 @@ frontmatter keys (`uid` `project` `created` `updated` `status` `writer`), `uid` 
 `active|parked|done` (a document status such as `draft` leaking into a session note is called
 out specifically, as is the retired `cancel` — whose message carries the migration instruction:
 an abandoned session is `done` + an `abandoned` tag). **Knowledge notes** — the top level of each `NNN_<project>/knowledge/` and
-of `000_common/{facts,patterns,policies}/`: `title:` present. Subdirectories are not scanned,
-matching the flat scan in
+of `000_common/{facts,patterns,policies}/` and of `999_tools/`: `title:` present. Subdirectories
+are not scanned, matching the flat scan in
 `skills/_session-shared/recall.md`, which also supplies the `index.md` + `0.*` meta exclusion —
 with one surgical exception, `000_common/facts/machines/`, added as an explicit scan root
-(one note per machine, which recall reads).
+(one note per machine, which recall reads). This scan is the recall mirror, so it tracks recall's
+roots exactly; `999_tools/` is here because recall scans it as a `[C]` source.
 
 **Session-uid wikilinks on the shared surface** — every `*.md` under `NNN_*/docs/`,
 `NNN_*/knowledge/` and `000_common/` (recursive, no meta-file exclusion): a `[[…]]` whose
@@ -150,7 +152,8 @@ target is a session uid is a finding. Canon is `docs/versioning-convention.md` �
 dangles in a teammate's vault; a shared note cites a session as **plain uid text**. Catches
 `[[uid]]`, `[[sessions/uid]]`, `[[uid|alias]]`, `[[uid#heading]]`, `![[uid]]`, for both the
 `<PREFIX>-YYYYMMDD-HHMMSS` form and the PREFIX-less dreaming-report form. 🔴 **`sessions/`
-itself is not scanned** — a session's own wikilinks are its record. Wikilinks between vault
+itself is not scanned** — a session's own wikilinks are its record, and neither is `999_tools/`,
+which is gitignored and therefore not shared surface at all. Wikilinks between vault
 *documents* (`[[<PREFIX>-ADR-0000N]]`, `[[<ID>]]`) are untouched; only session targets are
 banned.
 
@@ -174,19 +177,31 @@ Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — summary
 ```
 <vault-root>/
   000_common/            # cross-project knowledge
-    facts/               #   environment facts, tool inventories (measured, not remembered)
+    facts/               #   environment facts incl. machines/ (measured, not remembered)
     patterns/            #   distilled cross-project lessons (promoted by Dreaming)
     policies/            #   org-wide norms (mandatory; wins document conflicts)
     dream-log.md         #   incremental baseline for the next Dreaming run
-  NNN_<project>/         # one folder per project (NNN = sort order, slug = identity)
+  NNN_<project>/         # one folder per project (NNN = 001–899 project band, slug = identity)
     index.md             #   project hub — pointer index + project PREFIX
     knowledge/           #   project-scoped reusable knowledge (semantic, atomic notes)
     docs/                #   official docs — tech-design/ · adr/ · research/ · business/
                          #   policy/ · feature/<F>/ (FRD · TDC — diagrams live in its
                          #   §Diagrams — · feature policies)
+  999_tools/             # machine-global tool inventory — git-untracked, 9xx = reserved band
+    tool-{mcp,skill,cli,plugin}.md
   sessions/
     <uid>.md             # one file per session (episodic); uid = PREFIX-YYYYMMDD-HHMMSS
 ```
+
+`000_common/` is *vault* scope ("common to every project here"); `999_tools/` is *machine* scope
+("true of this box, whatever vault you opened"). Keeping tool inventories on the vault axis gave
+N vaults N diverging copies of one truth — measured 2026-07-25, the same `tool-mcp.md` was 31KB in
+one vault and 3KB in another. `machines/` stays under `facts/`: machine *configuration* is a vault
+fact (which boxes this vault's work runs on), machine *tool surface* is not.
+
+The `9xx` band is reserved for vault infrastructure and is **never** allocated to a project — the
+`[0-9]*_*` glob matches it, so anything computing the next project number must exclude it or the
+next project becomes `1000_`.
 
 The three axes of `000_common/`:
 

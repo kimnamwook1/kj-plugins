@@ -129,6 +129,11 @@ done
 # so add it as an explicit scan root. -maxdepth 1 (below) is kept, so arbitrary deeper nesting
 # — and project knowledge/ subfolders — stay out of scope. Surgical, not a blanket recurse.
 [ -d "$VAULT/000_common/facts/machines" ] && KDIRS[${#KDIRS[@]}]="$VAULT/000_common/facts/machines"
+# `999_tools/` = machine-global tool inventory (vault-tree.md §999_tools). recall scans it as a [C]
+# source at the facts tier (recall.md source 2), and *this* scan is the recall mirror — so it is a
+# scan root here too. It does not arrive via the [0-9][0-9][0-9]_* sweep above: that sweep requires a
+# knowledge/ subfolder, which no 9xx infra folder has (measured — the sweep is a no-op on it).
+[ -d "$VAULT/999_tools" ] && KDIRS[${#KDIRS[@]}]="$VAULT/999_tools"
 
 # An empty array expanded under `set -u` is an unbound-variable error in bash 3.2 — guard it.
 if [ ${#KDIRS[@]} -eq 0 ]; then
@@ -168,6 +173,12 @@ done < "$LIST" >> "$OUT"
 # meta files — a dangling link in `index.md` or `0.rejected.md` breaks for a teammate
 # exactly like one in a note. See knowledge note "validate 스코프는 recall 스코프의
 # 미러가 원칙" — divergence by decision, recorded, not drift.
+#
+# 🔴 `999_tools/` is NOT scanned here, and that is not a mirror divergence — this scan was never the
+# recall mirror (the knowledge-title scan above is). Its axis is *share scope*, and `999_tools/` is
+# gitignored machine-local content, so it is outside the shared surface by definition: no teammate
+# ever pulls it, so no link in it can dangle for one. It needs no exclusion either — it has neither
+# docs/ nor knowledge/, so the sweep below never picks it up (measured).
 SDIRS=()
 while IFS= read -r d; do
   # 000_common also matches [0-9][0-9][0-9]_*; it is added whole below, so skip it here

@@ -36,11 +36,15 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 
    **(a) PM — existence check + number computation (read-only):**
    ```bash
-   PROJDIR=$(find "$VAULT" -maxdepth 1 -type d -name "*_<project>" 2>/dev/null | head -1)   # existing NNN_<project>
+   # Both steps below exclude the reserved `9xx` infra band (`999_tools` and the like) — numeric-prefixed,
+   # but not projects (vault-tree.md §Reserved number bands). Without the filter a project slugged `tools`
+   # resolves straight onto `999_tools/` and scribe writes its knowledge into the gitignored tool inventory.
+   PROJDIR=$(find "$VAULT" -maxdepth 1 -type d -name "*_<project>" 2>/dev/null | grep -Ev '/9[0-9][0-9]_[^/]*$' | head -1)   # existing NNN_<project>
    if [ -z "$PROJDIR" ]; then
-     # `[0-9]*_*` counts every numeric-prefixed folder — including `000_common`. Numbering is max-based,
-     # so common (000) is the minimum and never bumps the number, and with zero projects next=001.
-     n=$(find "$VAULT" -maxdepth 1 -type d -name '[0-9]*_*' 2>/dev/null | sed 's|.*/||;s|_.*||' | sort -n | tail -1)
+     # Numbering is max-based over the project band only. `000_common` is the minimum so it never bumps the
+     # number, and with zero projects next=001. `[0-8][0-9][0-9]` is what holds the 3-digit `NNN_` convention:
+     # without it a `999_tools/` in the vault makes next=**1000** — a 4-digit prefix (measured on a fixture).
+     n=$(find "$VAULT" -maxdepth 1 -type d -name '[0-9]*_*' 2>/dev/null | sed 's|.*/||;s|_.*||' | grep -E '^[0-8][0-9][0-9]$' | sort -n | tail -1)
      next=$(printf '%03d' $((10#${n:-0} + 1)))
      PROJDIR="$VAULT/${next}_<project>"   # project folders are **always NNN_-prefixed** (next number, 3 digits). Plain names forbidden.
    fi

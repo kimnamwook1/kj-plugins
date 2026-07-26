@@ -24,8 +24,11 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
 4. **Any regulation or sensitive data?** — personal data, payments, AI disclosure
 5. **Any deployment target?**
 
-6. **Environment check — measurement, not interview.** Delegate as **one** `worker` brief — investigate via commands and create/update the `000_common/facts/` notes (canonical tree vault-tree.md). **Idempotent** — refresh existing notes with live measurements and stamp `verified: <date>`.
-   - Investigation → note mapping: OS, hostname, main tools → `machines/<hostname>.md` · MCP inventory (`claude mcp list` and the like) → `tool-mcp.md` · skill list → `tool-skill.md` · installed CLIs (batched `command -v`) → `tool-cli.md` · plugin list → `tool-plugin.md`
+6. **Environment check — measurement, not interview.** Delegate as **one** `worker` brief — investigate via commands and create/update the notes below (canonical tree vault-tree.md). **Idempotent** — refresh existing notes with live measurements and stamp `verified: <date>`.
+   - Investigation → note mapping, **two destinations by scope**:
+     - **machine *configuration* → `000_common/facts/`** — OS, hostname, main tools → `machines/<hostname>.md`. Which boxes this vault's work runs on is a vault fact.
+     - **tool *surface* → `999_tools/`** — MCP inventory (`claude mcp list` and the like) → `tool-mcp.md` · skill list → `tool-skill.md` · installed CLIs (batched `command -v`) → `tool-cli.md` · plugin list → `tool-plugin.md`. These describe `~/.claude/**`, which is machine-global and belongs to no vault (vault-tree.md §`999_tools/`).
+   - 🔴 **Do not write tool inventories into `000_common/facts/`.** That is vault scope; two vaults on one machine then keep two copies of one truth and they drift (measured 2026-07-25: 31KB vs 3KB for the same `tool-mcp.md`). If `/brain:init` has not created `999_tools/` yet, have the brief create it **and** add the vault `.gitignore` entry before writing — the notes are machine-local and must never reach the shared surface.
    - `organization.md` comes **from interview answers**, not measurement (org info around question ②).
    - Rationale: **tools go unused not because the inventory is missing but because it is not recalled** — creation is measurement (this step), recall is the router (the tool-inventory line `/brain:init` put into CLAUDE.local.md), checking is worker discipline (worker).
 
@@ -43,4 +46,4 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
 8. **Fill only what was answered** — delegate the corresponding stub→draft filling as worker briefs. Include the **verbatim answers** in the brief, and follow the doc-catalog.md **owner column** for per-document labels. Once filled, change frontmatter to `status: draft` immediately (stub rule).
    - **If unknown, mark "TBD" — keep the stub. Never force-fill** (stub = no-information rule, project-docs-convention.md).
 
-9. **Report** — list of filled documents + remaining stubs + paths of facts notes created/updated by the environment check.
+9. **Report** — list of filled documents + remaining stubs + paths of the notes created/updated by the environment check (both destinations — `000_common/facts/` and `999_tools/`).

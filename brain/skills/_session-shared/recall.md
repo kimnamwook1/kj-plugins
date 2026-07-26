@@ -47,17 +47,25 @@ emit() {
   find "$PROJDIR/knowledge" -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '0.*' 2>/dev/null | while read -r f; do
     t=$(fm "$f" title); [ -n "$t" ] && emit K "$f" "$t"
   done
-  # 2) [C] common (facts + patterns + policies) — cross-project knowledge (infra facts, shared patterns, norms):
-  #    The folder name is `000_common` (canonical tree: docs/vault-tree.md).
+  # 2) [C] common (facts + patterns + policies) + machine-global tools — knowledge above the current project:
+  #    The folder names are `000_common` and `999_tools` (canonical tree: docs/vault-tree.md).
   #    policies = the normative axis (top priority on document conflicts — docs/project-docs-convention.md) → high recall value, so scan it on par with facts and patterns.
+  #    `999_tools` (tool-mcp/skill/cli/plugin) is IN scope, at the facts tier — emit's C branch gives it sec=3, since it is descriptive inventory, not a norm. Ground:
+  #      a) It preserves measured behavior. Those 4 notes lived in `000_common/facts/` and were already scanned here; KJP-44 moved a folder on the
+  #         scope-of-truth axis, and did not decide to stop priming tool facts. Dropping them would be an unvoted capability regression.
+  #      b) The cost is bounded: +4 candidate files, and only `title:` + the first `## Trigger` line ever enter the pipeline — the 31KB body never does.
+  #         W_OVERLAP gates injection, so a goal that never mentions the tool surface never spends budget on them.
+  #      c) Router lookup and recall are not exclusive. Router answers "where do I look this up"; recall answers "what should I already know".
+  #         A tool note serves both, and being well-suited to one is not an argument for blinding the other.
   #    ⚠ The `${t:-basename}` fallback here exists to keep notes without `title:` alive, so [K]'s `[ -n "$t" ]` guard is absent
   #      → name-based exclusion is the **only line of defense**. Do not delete the exclusion convention above (index.md would surface straight into recall).
-  find "$VAULT/000_common/facts" "$VAULT/000_common/patterns" "$VAULT/000_common/policies" -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '0.*' 2>/dev/null | while read -r f; do
+  find "$VAULT/000_common/facts" "$VAULT/000_common/patterns" "$VAULT/000_common/policies" "$VAULT/999_tools" -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '0.*' 2>/dev/null | while read -r f; do
     t=$(fm "$f" title); emit C "$f" "${t:-$(basename "$f" .md)}"
   done
   # 3) [X] cross-membership — other projects' knowledge notes whose projects: includes the current project:
-  #    `[0-9]*_*` sweeps every numeric-prefixed folder — project folders (NNN_<project>) are the target,
-  #    and `000_common` matches the glob too but has no knowledge/ subfolder, so it is a no-op. common is 2)'s job (intended division of labor).
+  #    `[0-9]*_*` sweeps every numeric-prefixed folder — project folders (NNN_<project>) are the target. The reserved bands
+  #    (`000_common`, `9xx` infra such as `999_tools` — vault-tree.md §Reserved number bands) match the glob too, but neither has a
+  #    knowledge/ subfolder, so the shell never expands the pattern onto them: no-op, no guard needed. Both are 2)'s job (intended division of labor).
   find "$VAULT"/[0-9]*_*/knowledge -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '0.*' 2>/dev/null | while read -r f; do
     case "$f" in "$PROJDIR"/*) continue ;; esac   # the current project is handled in 1)
     grep -Eq "^projects:.*<project>" "$f" 2>/dev/null || continue
@@ -105,7 +113,7 @@ The pipeline scores every candidate with a fixed integer weighted sum, sorts des
 
 | Weight | Term (normalized 0–100) | Computation | Source |
 |---|---|---|---|
-| **W_SECTION 10** | section axis | `sec*20` — M=5 · C-policies=4 · C-facts/patterns=3 · K=2 · X=1, then ±1 by `type:` (gotcha/decision > lesson > reference), clamped 1..5 | source prefix + `type:` |
+| **W_SECTION 10** | section axis | `sec*20` — M=5 · C-policies=4 · C-facts/patterns/999_tools=3 · K=2 · X=1, then ±1 by `type:` (gotcha/decision > lesson > reference), clamped 1..5 | source prefix + `type:` |
 | **W_CONFIDENCE 5** | net-help feedback | `min(useful,10)*10` — the `useful:` feedback counter (sessions that actually used the note; bumped by `sh`/`sc`, canon `docs/knowledge-convention.md` §Feedback counters — KJP-7); field absent (pre-KJP-7 note) = 0 | `useful:` |
 | **W_OVERLAP 4** | goal overlap | `overlap_count*100/goal_tokens` — distinct goal tokens (≥2 chars) present in title+Trigger | `$GOAL` ↔ `title:`/`## Trigger` |
 | **W_PRIORITY 1** | priority | `min(prio,5)*20` — if present; else 0 | `priority:` |
@@ -123,4 +131,4 @@ The ranker's **top-N** (default 8) **is** the recall set — no manual re-pickin
 - **On a policies (C) conflict**: `common/policies/` is the normative axis — when it contradicts facts or patterns, **policies wins** (`docs/project-docs-convention.md` §Document Conflict Precedence). If you spot a contradiction, do not silently pick one — call it out in the recall block.
 - **New session (`ss`)**: add as a recall block to `## Context`. **This block doubles as the session's canonical injected-notes record** (each line already carries its source path — no separate list is kept): `sh`/`sc` read it to bump the injected notes' `recalled:`/`useful:` feedback counters (canon: `docs/knowledge-convention.md` §Feedback counters).
 - **Resume (`sr`)**: present recall **together with** the resume summary (live context priming). Do not overwrite the session note's `## Context`. (Feedback counters count injection **once per session** — the resume re-presentation is screen-only and extends neither the injected-notes record nor any counter.)
-> Marker: `<!-- recall: recall.md · K+common(facts/patterns/policies)+cross+Mistake · deterministic weighted-sum ranker (S10/C5/O4/P1/rec0.5 · C=useful feedback) · top-N cap · 1-hop related · source paths · Context block = injected-notes record · graphify first -->`
+> Marker: `<!-- recall: recall.md · K+common(facts/patterns/policies)+tools(999_tools)+cross+Mistake · deterministic weighted-sum ranker (S10/C5/O4/P1/rec0.5 · C=useful feedback) · top-N cap · 1-hop related · source paths · Context block = injected-notes record · graphify first -->`

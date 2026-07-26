@@ -31,7 +31,8 @@ assert_exit() {    # <desc> <expected> <actual>
 # ---------------------------------------------------------------- fixtures
 mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" "$V/013_selftest/docs" \
          "$V/000_common/facts" "$V/000_common/facts/machines" \
-         "$V/000_common/patterns" "$V/000_common/policies"
+         "$V/000_common/patterns" "$V/000_common/policies" \
+         "$V/999_tools"
 
 session() {  # <basename> <uid> <status>
   printf -- '---\nuid: %s\nproject: selftest\ncreated: 2026-07-18\nupdated: 2026-07-18\nstatus: %s\nwriter: nwkim\n---\n\n## Goal\n' \
@@ -96,7 +97,23 @@ printf -- '---\nkind: policy\n---\n'  > "$V/000_common/policies/policies-no-titl
 # as an explicit scan root. Positive fixture: reverting that expansion drops it from scope and
 # kills the assert below, while the deeper project nested/ note stays out of scope regardless.
 printf -- '---\nkind: fact\n---\n'     > "$V/000_common/facts/machines/machine-no-title.md"
-printf -- '---\ntitle: tool inventory\n---\n' > "$V/000_common/facts/tool-x.md"
+# Named misc-*, not tool-*: since KJP-44 a `tool-*.md` under facts/ would contradict the canon
+# (tool inventories live in 999_tools/). This fixture only has to be a titled facts note.
+printf -- '---\ntitle: a titled fact\n---\n' > "$V/000_common/facts/misc-x.md"
+
+# 999_tools/ — machine-global tool inventory (KJP-44). It sits on BOTH sides of a deliberate
+# scope split, so it takes fixtures in both directions:
+#   · knowledge-title scan (the recall mirror) — IN scope, because recall scans it as a [C]
+#     source. Dropping the KDIRS root kills the no-title assert below.
+#   · shared-surface wikilink scan — OUT of scope, because the folder is gitignored and no
+#     teammate ever pulls it. Adding it to SDIRS makes wl-tools.md fire and kills its quiet assert.
+# Note it reaches KDIRS only via its own explicit root: the [0-9][0-9][0-9]_* sweep demands a
+# knowledge/ subfolder, which this folder deliberately does not have.
+printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/tools-no-title.md"
+printf -- '---\ntitle: MCP inventory\n---\n'    > "$V/999_tools/tool-mcp.md"
+printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/index.md"   # excluded (meta) — same rule as knowledge/
+printf -- '---\ntitle: tool note citing a session\n---\n[[KJP-20260718-120011]]\n' \
+  > "$V/999_tools/wl-tools.md"
 
 # Session-uid wikilinks on the shared surface. One positive fixture per scan root, so
 # dropping any root from the scope kills a specific assert. Every fixture carries a
@@ -159,6 +176,7 @@ assert_match   "000_common/facts is scanned"                 'facts/facts-no-tit
 assert_match   "000_common/facts/machines is scanned"        'machines/machine-no-title.md:1: missing frontmatter key: title'
 assert_match   "000_common/patterns is scanned"              'patterns/patterns-no-title.md:1: missing frontmatter key: title'
 assert_match   "000_common/policies is scanned"              'policies/policies-no-title.md:1: missing frontmatter key: title'
+assert_match   "999_tools is scanned (recall mirror)"        '999_tools/tools-no-title.md:1: missing frontmatter key: title'
 
 # session-uid wikilinks on the shared surface — one positive per scan root
 assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:4: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
@@ -184,14 +202,23 @@ assert_no_match "nested knowledge note is out of scope"      'deep-no-title.md'
 assert_no_match "knowledge index.md is excluded"             'knowledge/index.md'
 assert_no_match "knowledge 0.* meta file is excluded"        '0.rejected.md'
 assert_no_match "titled knowledge note produces no finding"  'knowledge/good.md'
-assert_no_match "000_common facts note with title is quiet"  'tool-x.md'
+assert_no_match "000_common facts note with title is quiet"  'misc-x.md'
+assert_no_match "999_tools note with title is quiet"         'tool-mcp.md'
+assert_no_match "999_tools index.md is excluded (meta rule)" '999_tools/index.md'
+# The load-bearing one for the scope split: 999_tools is gitignored, so it is NOT the shared
+# surface and a session wikilink there is legal. Adding it to SDIRS makes this line fire.
+assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
 # numbers are asserted (not just "some count"): 15 sessions (12 + 2 dreaming + 1 wikilink
-# fixture); 9 knowledge = 3 project (good + no-title + wl-know; index/0.*/nested excluded)
-# + 3 facts + 1 machines + 1 pattern + 1 policy; 17 shared = 3 docs + 7 knowledge (all
-# meta files and nested/ included — no exclusions on this surface) + 7 under 000_common.
-assert_match   "scanned counts appear in the summary"        '(15 sessions, 9 knowledge, 17 shared)'
+# fixture); 12 knowledge = 3 project (good + no-title + wl-know; index/0.*/nested excluded)
+# + 3 facts + 1 machines + 1 pattern + 1 policy + 3 tools (999_tools, index.md excluded);
+# 17 shared = 3 docs + 7 knowledge (all meta files and nested/ included — no exclusions on
+# this surface) + 7 under 000_common.
+# 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: 999_tools
+# raises the knowledge count (recall mirror) and leaves the shared count untouched (gitignored,
+# so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
+assert_match   "scanned counts appear in the summary"        '(15 sessions, 12 knowledge, 17 shared)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?

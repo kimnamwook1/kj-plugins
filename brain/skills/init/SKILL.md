@@ -18,7 +18,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - `PREFIX` — 2–4 uppercase letters for uid/ID issuance (suggested default = an uppercase abbreviation of the project slug)
 
    **Branch — adopt-existing-vault mode**: if `vault-root` is an **already-existing directory**, proceed as adopting an existing vault rather than creating a new one (e.g. a shared company vault the team already uses):
-   1. **Structure diff (read-only)** — compare reality against the canonical tree in `${CLAUDE_SKILL_DIR}/../../docs/vault-tree.md`: presence of `sessions/` (lowercase) · presence of `000_common/{facts,patterns,policies}` · project folder naming (`NNN_<project>`) · `docs/tech-design/` structure.
+   1. **Structure diff (read-only)** — compare reality against the canonical tree in `${CLAUDE_SKILL_DIR}/../../docs/vault-tree.md`: presence of `sessions/` (lowercase) · presence of `000_common/{facts,patterns,policies}` · presence of `999_tools/` **and its vault `.gitignore` entry** · project folder naming (`NNN_<project>`, reserved bands excluded) · `docs/tech-design/` structure.
    2. **Mismatches are report-only** — present them as a table (e.g. `Sessions/ uppercase — canonical is sessions/`). 🔴 **Migration (rename/move) only after user approval** — a shared vault may be in use by other people. Without approval, leave the existing structure as is, and make the vault paths in the step 2 router point to the **actual paths** (not the canonical tree).
    3. The scaffold (step 4) is idempotent anyway — skip existing entries and create **only what is missing** (anything newly created still uses canonical naming).
 
@@ -76,7 +76,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    Also include the vault paths: `<vault-root>/sessions/` (sessions) · `<vault-root>/<NNN>_<project>/knowledge/` (knowledge) · `<vault-root>/<NNN>_<project>/docs/` (documents).
 
    Plus one tool-inventory line:
-   - When wondering which tools, CLIs, or MCPs are available → `<vault-root>/000_common/facts/tool-*.md` (if missing, `/brain:onboard` step 6)
+   - When wondering which tools, CLIs, or MCPs are available → `<vault-root>/999_tools/tool-*.md` (if missing, `/brain:onboard` step 6)
 
    **Migration on re-run (pre-split projects)** — projects initialized before the split hold all 4 sections in `CLAUDE.local.md`. No special case needed: each file's brain block is fully regenerated between its own markers, so a re-run writes the shared sections (shared config keys · PM role · Worker profiles) into the `CLAUDE.md` block and leaves only `vault-root` + Router in the `CLAUDE.local.md` block — carrying existing values over (e.g. a settled `ticket-system`) instead of resetting them to defaults. Report the move in step 5.
 
@@ -89,7 +89,10 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
 
 4. **Delegate the vault scaffold** — delegate as **one** `scribe` brief. If `<vault-root>` does not exist, confirm creation with the user before proceeding. **Idempotent — skip folders/files that already exist (no overwriting).** What to create (canonical tree vault-tree.md):
    - `000_common/{facts,patterns,policies}/index.md`
-   - `<NNN>_<project>/knowledge/index.md` — NNN = the next number (max numeric-prefixed folder + 1, 3 digits — same computation as `/brain:ss` §Ensure the project folder)
+   - `999_tools/index.md` — machine-global tool inventory (vault-tree.md §`999_tools/`). **Created empty here and populated only by `/brain:onboard` step 6** (live measurement).
+     - 🔴 **Register it in the *vault's* `.gitignore` in the same step** (idempotent, `grep -qxF '999_tools/' || echo`; create the file if the vault is a git repo and has none). The order matters: the entry must exist **before** step 6 first writes there, because gitignoring a path after it has been committed does not remove it. Contents are machine-local, so they never belong on the shared surface (`versioning-convention.md` §Share scope).
+     - This is the vault repo's ignore file — distinct from step 3, which ignores `CLAUDE.local.md` in the **project** repo.
+   - `<NNN>_<project>/knowledge/index.md` — NNN = the next number (max folder in the **project band `000`–`899`** + 1, 3 digits — same computation as `/brain:ss` §Ensure the project folder; the `9xx` infra band is excluded, or `999_tools/` would make the next project `1000`)
    - `<NNN>_<project>/docs/{tech-design,business,policy,adr,research,feature}/index.md`
    - **6 stubs** — 5 tech-design (`PRD` · `ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`) + 1 business (`BUSINESS`). Each file = frontmatter (`status: stub` — the standard is project-docs-convention.md) + H1 **only**; the H1 carries abbreviation + full name (e.g. `# PRD (Product Requirements Doc — 제품 요구사항)` — naming canon doc-catalog.md). Canonical list doc-catalog.md — former standalone kinds live on as sections of these 6, and `API_SPEC` is **not** pre-created (repo-spec mirror; dreaming generates it once an API exists).
      - **Exception — `RUNBOOK.md` gets a seeded `## Delivery` section** (the rest of the file stays H1-only): a pointer to **the vault's delivery classification note** (the classification table project type → git flow; its path differs per vault — binding vaults keep it in `000_common/policies/`, e.g. `DELIVERY_STRATEGY.md`; a stabilizing vault may hold a non-binding reference in `000_common/facts/`. 🔴 Resolve and point — never hardcode a path as canon and never restate a flow value; restate → drift) + the delivery bucket (**server-SaaS / server-personal / client** — TBD, set at `/brain:onboard` from Q1/Q2) + an exceptions line defaulting to **"예외: 없음 — 분류표 준수"**. This is a factual pointer, not an empty-heading skeleton, so it is exempt from doc-templates.md's "only DESIGN/MILESTONE get a body template" rule. Idempotency unchanged — the skip-if-exists rule above still governs.
