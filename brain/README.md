@@ -208,6 +208,13 @@ Three profiles in `agents/`, differing only in isolation and permissions:
 
 - **Ticket loop**: non-trivial tickets run plan → code (`coder`) → verify (`verifier`); small
   changes go direct on a single `worker`.
+- **A `coder`'s first action is a base check, before any brief work.** The harness cuts the
+  worktree branch from `origin/<branch>`, not from local `main`, so a stale base is the default
+  — behind with no local commits, the coder resets to the integration branch itself; behind
+  *with* commits, it stops and reports. The `Agent` tool takes no name parameter, so the coder
+  also creates its own `<PREFIX>-<number>-<title-slug>` branch and reports it on the first line
+  of `Outputs` — the PM merges by name, then deletes with `git branch -d` (never `-D`) so an
+  unmerged branch cannot be dropped. Canon → `agents/coder.md`, `docs/versioning-convention.md`.
 - **Nested spawning**: workers may spawn sub-workers when parallelism, isolation, or a
   fresh-eyes verification pays off. Reports flow upward only (recursive star) — a sub-worker
   reports to its parent, never sideways.
