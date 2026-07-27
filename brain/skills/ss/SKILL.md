@@ -36,17 +36,17 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 
    **(a) PM — existence check + number computation (read-only):**
    ```bash
-   # Both steps below exclude the reserved `9xx` infra band (`999_tools` and the like) — numeric-prefixed,
-   # but not projects (vault-tree.md §Reserved number bands). Without the filter a project slugged `tools`
-   # resolves straight onto `999_tools/` and scribe writes its knowledge into the gitignored tool inventory.
-   PROJDIR=$(find "$VAULT" -maxdepth 1 -type d -name "*_<project>" 2>/dev/null | grep -Ev '/9[0-9][0-9]_[^/]*$' | head -1)   # existing NNN_<project>
+   # Where project folders live is a per-vault fact (`.brain-paths` → projects_root), not a literal here:
+   # in one vault they sit at the vault root, in another under `projects/`. Hardcoding it is what made this
+   # lookup return nothing after a restructure — the session then created a duplicate project folder.
+   . "${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh"   # → brain_project_dir · brain_next_project_num · BRAIN_PROJECTS
+   # Both helpers exclude the reserved `9xx` infra band (`999_tools` and the like) — numeric-prefixed, but not
+   # projects (vault-tree.md §Reserved number bands). Without that a project slugged `tools` resolves straight
+   # onto `999_tools/` and scribe writes its knowledge into the gitignored tool inventory; and the number
+   # computation yields next=**1000**, a 4-digit prefix the `NNN_` convention does not allow (measured).
+   PROJDIR=$(brain_project_dir "<project>")               # existing NNN_<project>, empty if absent
    if [ -z "$PROJDIR" ]; then
-     # Numbering is max-based over the project band only. `000_common` is the minimum so it never bumps the
-     # number, and with zero projects next=001. `[0-8][0-9][0-9]` is what holds the 3-digit `NNN_` convention:
-     # without it a `999_tools/` in the vault makes next=**1000** — a 4-digit prefix (measured on a fixture).
-     n=$(find "$VAULT" -maxdepth 1 -type d -name '[0-9]*_*' 2>/dev/null | sed 's|.*/||;s|_.*||' | grep -E '^[0-8][0-9][0-9]$' | sort -n | tail -1)
-     next=$(printf '%03d' $((10#${n:-0} + 1)))
-     PROJDIR="$VAULT/${next}_<project>"   # project folders are **always NNN_-prefixed** (next number, 3 digits). Plain names forbidden.
+     PROJDIR="$BRAIN_PROJECTS/$(brain_next_project_num)_<project>"   # always NNN_-prefixed. Plain names forbidden.
    fi
    [ -d "$PROJDIR/knowledge" ] && [ -f "$PROJDIR/index.md" ] && echo OK || echo NEEDS_SCRIBE
    ```

@@ -2,6 +2,7 @@
 
 > The recall procedure invoked by **`ss`** (new session creation — result **written** into `## Context`) and by **`sr`** (resume — result **presented on screen only, never written**). Primes relevant accumulated memory at session start. Recall-layer overview is `docs/memory-control-convention.md` §Recall — the canonical procedure is this document. Not executed standalone.
 > Prerequisites: `VAULT` (vault root — the vault-root value in the project `CLAUDE.local.md`, recorded by `/brain:init` onboarding. No hardcoding) · `PROJDIR` (the current project folder inside the vault, `NNN_<project>`) · `<project>` (slug) · `GOAL` (the session goal string — feeds the ranker's overlap term) are set.
+> Tree axes (common layer · projects root) are **not** prerequisites and **not** literals in this file — `scripts/vault-paths.sh` resolves them from the vault's `.brain-paths` manifest, defaulting to the pre-restructure layout when the manifest is absent.
 
 ## graphify first
 If the vault has `graphify-out/graph.json`, pull with `graphify query "<session goal>" --budget 800` (includes source_location) instead of grep. Otherwise use the grep priming below.
@@ -16,6 +17,11 @@ Each of the 4 source scans (structure unchanged — same find roots, same exclus
 
 RECALL_N="${RECALL_N:-8}"                                    # injection cap N (default 8; tune via env). See "## ranker".
 : "${GOAL:?recall: set GOAL to the session goal string (the ss goal — drives the overlap term)}"
+
+# Tree axes come from the vault's own `.brain-paths` manifest, never from literals here — the common
+# layer and the projects root do not sit in the same place in every vault, and copying their names
+# into each consumer is what made this scan silently return zero after a restructure.
+. "${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh"         # → BRAIN_COMMON · brain_projects · brain_find_notes
 
 # --- field helpers (single frontmatter scalar · first Trigger line · type→section delta · date→YYYYMMDD int) ---
 fm() { grep -h "^$2:" "$1" 2>/dev/null | head -1 | sed "s/^$2:[[:space:]]*//" | tr -d '\r'; }
@@ -48,7 +54,7 @@ emit() {
     t=$(fm "$f" title); [ -n "$t" ] && emit K "$f" "$t"
   done
   # 2) [C] common (facts + patterns + policies) + machine-global tools — knowledge above the current project:
-  #    The folder names are `000_common` and `999_tools` (canonical tree: docs/vault-tree.md).
+  #    The common root comes from `.brain-paths` (vault-paths.sh); `999_tools` is a fixed machine-scope folder (canonical tree: docs/vault-tree.md).
   #    policies = the normative axis (top priority on document conflicts — docs/project-docs-convention.md) → high recall value, so scan it on par with facts and patterns.
   #    `999_tools` (tool-mcp/skill/cli/plugin) is IN scope, at the facts tier — emit's C branch gives it sec=3, since it is descriptive inventory, not a norm. Ground:
   #      a) It preserves measured behavior. Those 4 notes lived in `000_common/facts/` and were already scanned here; KJP-44 moved a folder on the
@@ -59,14 +65,24 @@ emit() {
   #         A tool note serves both, and being well-suited to one is not an argument for blinding the other.
   #    ⚠ The `${t:-basename}` fallback here exists to keep notes without `title:` alive, so [K]'s `[ -n "$t" ]` guard is absent
   #      → name-based exclusion is the **only line of defense**. Do not delete the exclusion convention above (index.md would surface straight into recall).
-  find "$VAULT/000_common/facts" "$VAULT/000_common/patterns" "$VAULT/000_common/policies" "$VAULT/999_tools" -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '0.*' 2>/dev/null | while read -r f; do
-    t=$(fm "$f" title); emit C "$f" "${t:-$(basename "$f" .md)}"
-  done
+  #    🔴 The common layer is scanned **recursively** and its root comes from the manifest, not from a literal here.
+  #      Its sub-axes are not the same shape in every vault — flat `{facts,patterns,policies}/` in one, `patterns/` plus
+  #      `_company/<folder>/` in another — so naming them would put the tree back into this file, which is what made
+  #      this scan return zero after a restructure. brain_find_notes owns the exclusions (meta files, _templates/, archives, dreaming logs).
+  CROOTS=()   # indexed arrays are bash 3.2-safe; an empty one under `set -u` would be an error, so guard the expansion
+  [ -n "$BRAIN_COMMON" ]      && CROOTS[${#CROOTS[@]}]="$BRAIN_COMMON"
+  [ -d "$VAULT/999_tools" ]   && CROOTS[${#CROOTS[@]}]="$VAULT/999_tools"
+  if [ ${#CROOTS[@]} -gt 0 ]; then
+    brain_find_notes "${CROOTS[@]}" | while read -r f; do
+      t=$(fm "$f" title); emit C "$f" "${t:-$(basename "$f" .md)}"
+    done
+  fi
   # 3) [X] cross-membership — other projects' knowledge notes whose projects: includes the current project:
-  #    `[0-9]*_*` sweeps every numeric-prefixed folder — project folders (NNN_<project>) are the target. The reserved bands
-  #    (`000_common`, `9xx` infra such as `999_tools` — vault-tree.md §Reserved number bands) match the glob too, but neither has a
-  #    knowledge/ subfolder, so the shell never expands the pattern onto them: no-op, no guard needed. Both are 2)'s job (intended division of labor).
-  find "$VAULT"/[0-9]*_*/knowledge -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '0.*' 2>/dev/null | while read -r f; do
+  #    brain_projects enumerates the project band only — it drops the common root and the reserved `9xx` infra band
+  #    (vault-tree.md §Reserved number bands), both of which are 2)'s job (intended division of labor).
+  brain_projects | while read -r d; do
+    find "$d/knowledge" -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '_index.md' ! -name '0.*' 2>/dev/null
+  done | while read -r f; do
     case "$f" in "$PROJDIR"/*) continue ;; esac   # the current project is handled in 1)
     grep -Eq "^projects:.*<project>" "$f" 2>/dev/null || continue
     t=$(fm "$f" title); [ -n "$t" ] && emit X "$f" "$t"

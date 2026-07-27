@@ -19,9 +19,11 @@ Adopts an existing parked session as the current work session. **Never creates a
 3. **Verify the vault exists** — check that `VAULT` is a directory. If not, stop and tell the user to run `/brain:init`. **This skill creates no folders** — a session to resume implies the project folder already exists.
 4. **Locate `PROJDIR`** (read-only, needed by recall in step 4):
    ```bash
-   # Excludes the reserved `9xx` infra band, same guard and same reason as `ss` §Ensure the project folder
-   # (vault-tree.md §Reserved number bands) — a project slugged `tools` otherwise resolves to `999_tools/`.
-   PROJDIR=$(find "$VAULT" -maxdepth 1 -type d -name "*_<project>" 2>/dev/null | grep -Ev '/9[0-9][0-9]_[^/]*$' | head -1)
+   # Project location comes from the vault's `.brain-paths` (projects_root), not a literal — same resolver and
+   # same reason as `ss` §Ensure the project folder. brain_project_dir also excludes the reserved `9xx` infra
+   # band (vault-tree.md §Reserved number bands) — a project slugged `tools` otherwise resolves to `999_tools/`.
+   . "${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh"
+   PROJDIR=$(brain_project_dir "<project>")
    ```
    If it comes back empty, continue anyway but say so — recall's project-knowledge scan will be empty.
 

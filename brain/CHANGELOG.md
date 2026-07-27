@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- **Vault tree axes move out of five consumers and into the vault's own `.brain-paths` manifest (KJP-adhoc).** The common layer and the projects root were literals in `scripts/validate.sh` (4 sites), `skills/_session-shared/recall.md` (2), `skills/ss/SKILL.md` (2) and `skills/sr/SKILL.md` (1). One vault restructured — `000_common/` → `_primary/`, `NNN_*` → `projects/NNN_*` — and every one of those scans went to zero **without saying anything**. Measured 2026-07-27 before the fix: `validate.sh <techtainment>` reported `OK — no issues (37 sessions, 0 knowledge, 0 shared)`, and `ss` failed to find `projects/013_kj-plugins` and would have minted a duplicate project folder.
+  - 🔴 **The failure mode is the point, not the paths.** A collapsed scan reported `OK`, so the harness looked healthy while its memory layer was switched off; the same session that fixed it had been running with zero recall priming. `scripts/vault-paths.sh` now **warns on stderr** when a declared root does not resolve, and the selftest pins that warning.
+  - **Absent manifest = the old layout**, so a vault that never restructured needs no file and no migration. Verified against the real `beafter` vault: `19 sessions, 102 knowledge, 321 shared, 24 issues` before and after, byte-identical.
+  - **The common layer is now scanned recursively.** Its sub-axes are not the same shape in every vault (flat `{facts,patterns,policies}/` vs `patterns/` plus `_company/<folder>/`), so enumerating them is what re-hardcodes the tree. Two consequences, both measured and both deliberate: a note sitting at the common *root* is scanned now (it never was — the old scan named three subfolders), and `recall` finally reads `facts/machines/`, which **`validate.sh:128` had been asserting it read while `recall.md:62` capped that scan at `-maxdepth 1`**. The mirror claim was false; the scans now actually mirror.
+  - Exclusions live in code, not the manifest, because they are structural rather than per-vault: `index.md` · `_index.md` · `0.*` · `_templates/` (skeletons with placeholder frontmatter lint as broken notes) · `999_Archive/` · `Archive/` · `_dreaming_logs/` · `dream-log.md` (one vault keeps dreaming output as a folder, the other as a single file).
+  - Reserved-band handling is preserved, now in one helper instead of four copies: `brain_projects` drops the `9xx` band and the common root, so a project slugged `tools` cannot resolve onto `999_tools/` and `brain_next_project_num` cannot yield a 4-digit `1000`.
+  - ⚠ **Not in scope, and still outstanding:** the structure *prose* in `docs/vault-tree.md`, `README.md`, `docs/doc-catalog.md` and `skills/init/SKILL.md` still describes the pre-restructure tree. Separately, project-internal document paths (`docs/tech-design` in 5 files, `docs/policy` in 6) are restated outside their canon `doc-catalog.md` — a second duplication layer whose fix is deleting the restatements, not adding config.
+  - Touches `scripts/vault-paths.sh` (new), `scripts/validate.sh`, `scripts/validate-selftest.sh` (restructured-vault fixture + missing-root warning case), `skills/_session-shared/recall.md`, `skills/ss/SKILL.md`, `skills/sr/SKILL.md`.
+
 ## 0.1.6 — 2026-07-27
 
 ### Added

@@ -211,14 +211,20 @@ assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
 # numbers are asserted (not just "some count"): 15 sessions (12 + 2 dreaming + 1 wikilink
-# fixture); 12 knowledge = 3 project (good + no-title + wl-know; index/0.*/nested excluded)
-# + 3 facts + 1 machines + 1 pattern + 1 policy + 3 tools (999_tools, index.md excluded);
+# fixture); 13 knowledge = 3 project (good + no-title + wl-know; index/0.*/nested excluded)
+# + 3 facts + 1 machines + 1 pattern + 1 policy + 1 common-root note + 3 tools (999_tools,
+# index.md excluded);
 # 17 shared = 3 docs + 7 knowledge (all meta files and nested/ included — no exclusions on
 # this surface) + 7 under 000_common.
 # 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: 999_tools
 # raises the knowledge count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
-assert_match   "scanned counts appear in the summary"        '(15 sessions, 12 knowledge, 17 shared)'
+# The common-root note (`wl-dreaming.md`) counts from the vault-paths change on: the common
+# layer is scanned recursively now, because its sub-axes are not the same shape in every vault.
+# The old scan named `{facts,patterns,policies}` and so silently skipped notes sitting at the
+# common root — a gap, not a rule. Measured on the real beafter vault: every other count is
+# byte-identical before and after (19 sessions, 102 knowledge, 321 shared, 24 issues).
+assert_match   "scanned counts appear in the summary"        '(15 sessions, 13 knowledge, 17 shared)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -274,6 +280,34 @@ assert_match "empty vault reports a zero scan count" '(0 sessions, 0 knowledge, 
 /bin/bash "$VALIDATE" "$E" --strict > /dev/null 2>&1
 assert_exit  "empty vault exits 0 even under --strict" 0 $?
 rm -rf "$E"
+
+# restructured vault: `.brain-paths` moves the two tree axes, and every scan must follow.
+# This is the layout that used to return a silent zero — the whole reason vault-paths.sh exists.
+R="$(mktemp -d -t brain-selftest-restructured)"
+mkdir -p "$R/sessions" "$R/_primary/patterns" "$R/_primary/_company/machines" \
+         "$R/projects/013_restructured/knowledge" "$R/999_Archive" "$R/_templates/machines"
+printf -- 'common_root: _primary\nprojects_root: projects\n'  > "$R/.brain-paths"
+printf -- '---\nkind: pattern\n---\n'  > "$R/_primary/patterns/rs-pattern-no-title.md"
+printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/machines/rs-nested-no-title.md"
+printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/_index.md"        # excluded (meta)
+printf -- '---\nkind: lesson\n---\n'   > "$R/projects/013_restructured/knowledge/rs-know-no-title.md"
+printf -- '---\nkind: fact\n---\n'     > "$R/999_Archive/rs-archived-no-title.md"   # excluded (retired)
+printf -- '---\nkind: fact\n---\n'     > "$R/_templates/machines/hardware.md"       # excluded (skeleton)
+REPORT="$(/bin/bash "$VALIDATE" "$R" 2>&1)"
+assert_match    "restructured: common root under _primary is scanned"   'rs-pattern-no-title.md'
+assert_match    "restructured: nested common subtree is scanned"        'rs-nested-no-title.md'
+assert_match    "restructured: projects/ NNN_* knowledge is scanned"    'rs-know-no-title.md'
+assert_no_match "restructured: _index.md is excluded (meta rule)"       '_index.md'
+assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-title.md'
+assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
+assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 3 knowledge, 4 shared)'
+
+# a manifest pointing at a root that does not exist must say so, not scan zero in silence
+printf -- 'common_root: nope\n' > "$R/.brain-paths"
+REPORT="$(/bin/bash "$VALIDATE" "$R" 2>&1)"
+assert_match    "missing common root warns on stderr"                   'common root not found'
+rm -rf "$R"
 
 # usage errors exit 2 (documented separately from the findings exit codes)
 /bin/bash "$VALIDATE" > /dev/null 2>&1;                  assert_exit "no argument exits 2" 2 $?

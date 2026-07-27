@@ -27,6 +27,11 @@ done
 [ -n "$VAULT" ] || { echo "usage: validate.sh <vault-root> [--strict]" >&2; exit 2; }
 [ -d "$VAULT" ] || { echo "validate.sh: not a directory: $VAULT" >&2; exit 2; }
 
+# Tree axes come from the vault's own `.brain-paths` manifest (defaults = the pre-restructure
+# layout), never from literals here. See scripts/vault-paths.sh for why.
+# shellcheck source=vault-paths.sh
+. "$(dirname "$0")/vault-paths.sh"
+
 OUT="$(mktemp -t brain-validate)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
 LIST="$(mktemp -t brain-validate-list)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
 trap 'rm -f "$OUT" "$LIST"' EXIT
@@ -121,28 +126,29 @@ done < "$LIST" >> "$OUT"
 KDIRS=()
 while IFS= read -r d; do
   [ -d "$d/knowledge" ] && KDIRS[${#KDIRS[@]}]="$d/knowledge"
-done < <(find "$VAULT" -mindepth 1 -maxdepth 1 -type d -name '[0-9][0-9][0-9]_*' 2>/dev/null | sort)
-for sub in facts patterns policies; do
-  [ -d "$VAULT/000_common/$sub" ] && KDIRS[${#KDIRS[@]}]="$VAULT/000_common/$sub"
-done
-# facts/machines/ is the one nested knowledge subtree recall reads (one note per machine),
-# so add it as an explicit scan root. -maxdepth 1 (below) is kept, so arbitrary deeper nesting
-# — and project knowledge/ subfolders — stay out of scope. Surgical, not a blanket recurse.
-[ -d "$VAULT/000_common/facts/machines" ] && KDIRS[${#KDIRS[@]}]="$VAULT/000_common/facts/machines"
+done < <(brain_projects)
 # `999_tools/` = machine-global tool inventory (vault-tree.md §999_tools). recall scans it as a [C]
 # source at the facts tier (recall.md source 2), and *this* scan is the recall mirror — so it is a
-# scan root here too. It does not arrive via the [0-9][0-9][0-9]_* sweep above: that sweep requires a
-# knowledge/ subfolder, which no 9xx infra folder has (measured — the sweep is a no-op on it).
+# scan root here too. It does not arrive via brain_projects: that helper excludes the reserved 9xx
+# band outright, and a 9xx folder has no knowledge/ subfolder anyway (measured).
 [ -d "$VAULT/999_tools" ] && KDIRS[${#KDIRS[@]}]="$VAULT/999_tools"
 
+: > "$LIST"
 # An empty array expanded under `set -u` is an unbound-variable error in bash 3.2 — guard it.
-if [ ${#KDIRS[@]} -eq 0 ]; then
-  : > "$LIST"
-else
+if [ ${#KDIRS[@]} -gt 0 ]; then
+  # Project knowledge/ stays -maxdepth 1: its subfolders are deliberately out of scope.
   # Meta-file exclusion (`index.md` + `0.*`) mirrors skills/_session-shared/recall.md:11-14.
   find "${KDIRS[@]}" -maxdepth 1 -type f -name '*.md' \
-    ! -name 'index.md' ! -name '0.*' 2>/dev/null | sort > "$LIST"
+    ! -name 'index.md' ! -name '_index.md' ! -name '0.*' 2>/dev/null >> "$LIST"
 fi
+# The common layer recurses instead. Its sub-axes are not the same shape in every vault — flat
+# `{facts,patterns,policies}/` in one, `patterns/` plus `_company/<folder>/` in another — so
+# enumerating them here would put the tree back into this file. brain_find_notes owns the
+# exclusions (meta files, _templates/, archives, dreaming logs).
+if [ -n "$BRAIN_COMMON" ]; then
+  brain_find_notes "$BRAIN_COMMON" >> "$LIST"
+fi
+sort -o "$LIST" "$LIST"
 n_knowledge="$(wc -l < "$LIST" | tr -d ' ')"
 
 while IFS= read -r f; do
@@ -163,7 +169,8 @@ done < "$LIST" >> "$OUT"
 # surface dangles in any vault that lacks that session. Shared notes cite a session as
 # plain uid text — frontmatter and body alike.
 #
-# Scope = the shared surface itself: NNN_*/docs/**, NNN_*/knowledge/**, 000_common/**.
+# Scope = the shared surface itself: NNN_*/docs/**, NNN_*/knowledge/**, and the whole common
+# layer (whichever folder `.brain-paths` names — `000_common/` by default).
 # 🔴 `sessions/` is deliberately NOT scanned — a session's own wikilinks are its record,
 # and the file is never pulled by anyone else.
 #
@@ -181,13 +188,12 @@ done < "$LIST" >> "$OUT"
 # docs/ nor knowledge/, so the sweep below never picks it up (measured).
 SDIRS=()
 while IFS= read -r d; do
-  # 000_common also matches [0-9][0-9][0-9]_*; it is added whole below, so skip it here
-  # rather than scanning its docs/ and knowledge/ twice.
-  case "$(basename "$d")" in 000_common) continue ;; esac
+  # brain_projects already drops the common root (it matches NNN_ when it sits at the vault
+  # root), so its docs/ and knowledge/ are not scanned twice — it is added whole below.
   [ -d "$d/docs" ] && SDIRS[${#SDIRS[@]}]="$d/docs"
   [ -d "$d/knowledge" ] && SDIRS[${#SDIRS[@]}]="$d/knowledge"
-done < <(find "$VAULT" -mindepth 1 -maxdepth 1 -type d -name '[0-9][0-9][0-9]_*' 2>/dev/null | sort)
-[ -d "$VAULT/000_common" ] && SDIRS[${#SDIRS[@]}]="$VAULT/000_common"
+done < <(brain_projects)
+[ -n "$BRAIN_COMMON" ] && SDIRS[${#SDIRS[@]}]="$BRAIN_COMMON"
 
 # Empty array under `set -u` — same guard as KDIRS above.
 if [ ${#SDIRS[@]} -eq 0 ]; then
