@@ -40,7 +40,7 @@
 > - **Branch naming** — the prefixes this repo's branches actually carry, and whether they are a rule or an observation. The *model* (trunk, short-lived branches, merge style) stays the vault note's; the *names* are local.
 > - **Branch cleanup judgment** — how "already merged" is decided, which is squash-dependent and therefore per-repo (`git cherry` patch-equivalence, not SHA ancestry, wherever the merge squashes).
 >
-> **Agent branch names are not this section's call** — the coder's `<type>/<PREFIX>-<number>-<title-slug>` is harness canon (`agents/coder.md` §First action) and applies in every repo the harness runs in. `<type>` is the shared type vocabulary (canon: `~/.claude/skills/at/SKILL.md` §타입 접두어 규약 — **never restated here**). §Delivery records the *human* convention alongside it when one exists. **A repo whose humans use type-shaped prefixes too does not merge the two** — the agent format is fixed by the harness, the human one is a measurement, and they coexist unreconciled.
+> **Agent branch names are not this section's call** — the coder's `<type>/<PREFIX>-<number>-<title-slug>` is harness canon (`agents/coder.md` §First action) and applies in every repo the harness runs in. `<type>` is the shared type vocabulary (canon: `docs/git-convention.md` — **never restated here**). §Delivery records the *human* convention alongside it when one exists. **A repo whose humans use type-shaped prefixes too does not merge the two** — the agent format is fixed by the harness, the human one is a measurement, and they coexist unreconciled.
 
 **1 business document** — pre-created as a stub at project creation (5 tech-design + 1 business = **6**)
 
