@@ -17,8 +17,9 @@
 |---|---|---|
 | 티켓 제목 | `[type] 대상+증상` | `[fix] ArgoCD 앱 11개 상시 Progressing` |
 | 커밋 제목 | `type(scope): 요약` | `ci(youtube-stts): bump image to 4426c48f` |
-| PR 제목 | `type(scope): 요약 (<PREFIX>-<번호>)` | `feat(brain): recall 랭커 신설 (KJP-4)` |
+| PR 제목 | `type(<PREFIX>-<번호>): 요약` | `feat(KJP-4): recall 랭커 신설` |
 | 브랜치 | `<type>/<PREFIX>-<번호>-<slug>` | `feat/KJP-46-pr-mr-canon` |
+| 워크트리 | `<PREFIX>-<번호>-<slug>` | `KJP-46-pr-mr-canon` |
 
 - 티켓에 `type(scope):` 금지, 커밋에 `[type]` 금지.
 - 제목은 "무엇이"까지. 원인·왜는 description·댓글.
@@ -41,5 +42,5 @@
 ## 워크트리
 
 - 코더 격리 = worktree. 브랜치는 위 형식.
-- 워크트리 이름 = `<title-slug>` (kebab).
+- 워크트리 이름 = `<PREFIX>-<번호>-<slug>` — kebab · 소문자 · type 없음 (2026-07-28 사용자 확정).
 - 사람 브랜치 접두어(`feature/*` 등)는 측정 대상이지 충돌 대상이 아니다 — 에이전트는 위 형식만 쓴다.

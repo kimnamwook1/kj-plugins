@@ -68,7 +68,7 @@ gh pr create --draft --title "<type>(scope): 요약 (<PREFIX>-<number>)" --body 
 - **Draft, always. Never `--fill` a ready PR, never merge one.** A draft cannot be merged, which is exactly why it is yours to create: you are submitting, not releasing. The PM verifies and flips it to ready.
 - **Push your topic branch only.** `main` is never pushed without the user's word, on any repo. The carve-out exists because a gated remote refuses direct pushes, so the branch push is the only way the work can reach anyone — it does not generalize.
 - **The PR body is the Handoff's content, not a link to it** — what changed, why, the test output. The reviewer reads the PR, not your transcript.
-- **Title = `<type>(scope): 요약 (<PREFIX>-<number>)`** — the same message canon as the commit, and the same vocabulary the branch already carries (`docs/git-convention.md`). **Use the type you put on the branch**; if the work turned out to be a different type than you first judged, the title is where you correct it — the branch stays as pushed.
+- **Title = `<type>(<PREFIX>-<number>): 요약`** — PR notation per `docs/git-convention.md` (the ticket ID sits in the scope slot; user decision 2026-07-28). **Use the type you put on the branch**; if the work turned out to be a different type than you first judged, the title is where you correct it — the branch stays as pushed.
 - **`gh` missing or unauthenticated → stop and report.** Do not fall back to a direct push; on a gated repo it will be rejected, and on an ungated one it publishes something nobody asked for.
 
 ## Handoff format (fixed)
