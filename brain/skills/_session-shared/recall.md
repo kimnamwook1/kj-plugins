@@ -37,7 +37,12 @@ ymd() { printf '%s' "$1" | tr -cd '0-9' | cut -c1-8 | grep -E '^[0-9]{8}$' || ec
 emit() {
   _s=$1; _p=$2; _l=$(printf '%s' "$3" | tr '\t\n' '  ')
   case "$_s" in
-    C) case "$_p" in */policies/*) _sec=4 ;; *) _sec=3 ;; esac ;;   # policies outranks facts/patterns (ticket section axis)
+    # policies outranks facts/patterns (ticket section axis). Matched on any *directory segment containing*
+    # "policies", not the exact folder `policies/`: measured 2026-07-27, that folder was split into
+    # `org_policies/{compliance,secret_management,service_operation}/` and the exact-match glob silently
+    # demoted every policy note to the facts tier. A file merely named `…policies….md` still does not match —
+    # the trailing `/` requires the hit to be a directory.
+    C) case "$_p" in */*policies*/*) _sec=4 ;; *) _sec=3 ;; esac ;;
     K) _sec=2 ;; X) _sec=1 ;; *) _sec=1 ;;
   esac
   _sec=$(( _sec + $(sec_delta "$(fm "$_p" type)") ))               # type refinement: gotcha/decision > lesson > reference
