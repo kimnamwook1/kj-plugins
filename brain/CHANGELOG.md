@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.6 — 2026-07-27
 
 ### Added
 - **The `obsidian` CLI ban is split into a write ban and a read allowance, and the two programs sharing the name are told apart (KJP-adhoc).** Five sites carried the same sentence — `obsidian create` / `obsidian-cli create` "absolutely forbidden — duplicate-file bug" (`skills/sr:68` · `sc:115` · `ss:122` · `_session-shared/knowledge-promotion.md:69` · `dreaming:167`). It was wrong in one direction and over-broad in the other, and it was copied five times.
