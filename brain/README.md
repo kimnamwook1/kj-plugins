@@ -320,6 +320,7 @@ table is a finding, not a convenience.
 | dream-log format (run heading · project field · cumulative read) | `skills/dreaming/SKILL.md` §7 | root index · vault-tree |
 | Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss`·`sr` · memory-control-convention |
 | Open-session scan + summary extract (`status: active\|parked` × `project` · `\|\| :` loop terminator) | `skills/_session-shared/active-sessions.md` | `skills/sl`·`sr` |
+| Vault I/O boundary (writes = `Write`/`Edit` only · `obsidian create` banned for the silent `X 1.md` fork · CLI reads·link diagnostics allowed, `unresolved`/`orphans`/`deadends` canonical) | `skills/_session-shared/vault-io.md` | `skills/ss`·`sr`·`sc` · knowledge-promotion · dreaming |
 | git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
 | PR/MR path (gate measured off the remote · draft by coder · ready by PM · topic-branch push carve-out) | `docs/versioning-convention.md` §Pull / merge requests | `agents/coder.md` §Last action · doc-catalog (§Delivery records the measured values) |
 | Agent branch naming (`<type>/<PREFIX>-<number>-<title-slug>` · type from the shared vocabulary) | `agents/coder.md` §First action | `docs/versioning-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |

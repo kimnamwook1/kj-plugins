@@ -112,6 +112,6 @@ Session closed: <VAULT>/sessions/<uid>.md (status: done) · vault committed
 
 ## Hard rules
 
-- **`obsidian create` / `obsidian-cli create` CLI is absolutely forbidden** — `Write`/`Edit` tools only (duplicate-file bug). **An existing file is changed with `Edit`; `Write` is for creating a file that does not exist yet** — `Edit`'s `old_string` is a compare-and-swap, so if a concurrent session moved the anchor the edit fails loudly instead of silently swallowing their work. The party doing that write is the `scribe` worker.
+- **The closing writes go through `Write`/`Edit`, never a CLI write** — canon: `${CLAUDE_SKILL_DIR}/../_session-shared/vault-io.md` §1. The party doing that write is the `scribe` worker.
 - Touch only **the paths under `vault-root` in `CLAUDE.local.md` + the `<project>/knowledge/` that `scribe` writes during promotion**. All other folders·other vaults are off-limits.
 - **The `status` vocabulary is exactly** `active` / `parked` / `done`. Abandoned·pending-verification·blocked go in tags/`## To-Do-List` open items, not in status.

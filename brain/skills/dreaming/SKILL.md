@@ -164,4 +164,4 @@ grep-based (graphify later). dedup·staleness·secondary promotion·CLAUDE.local
 ## Forbidden
 - **No automatic application** of destructive changes (merge·delete·move) — propose·approve.
 - **Never record secret values in the vault** — even during Facts rescans, locations·conventions only, never values.
-- `obsidian-cli create` forbidden → Write/Edit tools only.
+- **No CLI writes** → `Write`/`Edit` tools only. Canon: `skills/_session-shared/vault-io.md` §1–2. The `obsidian` CLI's **read** side is open to this skill and is where its link-integrity input comes from — `unresolved` · `orphans` · `deadends` are the canonical verdict (§2), so do not hand-roll a regex scan for the orphan·cross-ref check (§1) or the `index.md` dead-wikilink pass (§4).

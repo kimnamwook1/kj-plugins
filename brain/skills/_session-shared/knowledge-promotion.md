@@ -66,6 +66,6 @@ Intuition is only framing — **the gate is decided by score** (subjective → q
 
 ## Forbidden
 
-- **No `obsidian-cli create`** → the `Write`/`Edit` tools only (`Edit` for an existing file, `Write` only to create one). And pointing that write at vault content happens **only inside a scribe worker's brief** — the PM (main session) does not write directly even though it has the tool (single-scribe discipline, "Write boundary" above). Do not bypass; delegate.
+- **No CLI writes** — every promotion write goes through the `Write`/`Edit` tools (canon: `vault-io.md` §1, alongside this file). And pointing that write at vault content happens **only inside a scribe worker's brief** — the PM (main session) does not write directly even though it has the tool (single-scribe discipline, "Write boundary" above). Do not bypass; delegate.
 - Never record secret values in plaintext.
 - The old claude-obsidian procedures (`/save`·`allocate-address.sh`·`legacy-pages.txt`·`concepts/meta/entities`·`log.md`·`hot.md`) are **not used** — in the new vault graphify is the read index (`README.md` §Architecture); no need to reinvent hand-rolled index/log. Only the one-line folder `index.md` append.

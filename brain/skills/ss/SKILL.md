@@ -119,7 +119,7 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 ## Hard rules
 
 - **Create only. `ss` never resumes and never lists.** No parked-session scan, no fork question, **not even a "you have N parked sessions" notice** — that is `sr` and `sl` (KJP-43). If the user actually wanted to resume, name `sr` and stop; do not resume from here.
-- **`obsidian create` / `obsidian-cli create` CLI is absolutely forbidden** — duplicate-file bug. `Write`/`Edit` tools only. **An existing file is changed with `Edit`; `Write` is for creating a file that does not exist yet** — `Edit`'s `old_string` is a compare-and-swap, so if a concurrent session moved the anchor the edit fails loudly instead of silently swallowing their work. **The party doing that write is the `scribe` worker** — the PM never writes vault **content** directly (governance canon: memory-control-convention §Governance).
+- **The session file is created with `Write`, never `obsidian create`** — canon: `${CLAUDE_SKILL_DIR}/../_session-shared/vault-io.md` (§1 write rule · §2 why `create` is banned · §3 which CLI this is). **The party doing that write is the `scribe` worker** — the PM never writes vault **content** directly (governance canon: memory-control-convention §Governance).
 - **Write only under the `vault-root` in `CLAUDE.local.md`** — any other path or other vault is off-limits.
 - **The `status` vocabulary is exactly:** `active` / `parked` / `done` (3 values). **`ss` only ever writes `active`** — `parked` is `sh`'s, `done` is `sc`'s. Other states (abandoned·pending-verification·blocked) go in `tags` or as open `## To-Do-List` items, not in status.
 - **Session = a single file** — `sessions/<uid>.md` (uid = `<PREFIX>-YYYYMMDD-HHMMSS`). Not a folder.
