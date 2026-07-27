@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- **Type vocabulary, surface notation, and branch/worktree naming move into the harness as `docs/git-convention.md` (user decision 2026-07-28).** The 11-type canon previously lived in the user's personal `~/.claude/skills/at/SKILL.md` with a vault mirror — a distributed plugin cannot depend on either. Flow choice (GitHub Flow vs GitFlow) deliberately stays out: it is per-project (`docs/tech-design/GIT.md`, recommended at onboard), while the vocabulary and naming are project-type-invariant. `agents/coder.md` and the README single-source map now point at the new doc.
+
 ### Fixed
 - **Vault tree axes move out of five consumers and into the vault's own `.brain-paths` manifest (KJP-adhoc).** The common layer and the projects root were literals in `scripts/validate.sh` (4 sites), `skills/_session-shared/recall.md` (2), `skills/ss/SKILL.md` (2) and `skills/sr/SKILL.md` (1). One vault restructured — `000_common/` → `_primary/`, `NNN_*` → `projects/NNN_*` — and every one of those scans went to zero **without saying anything**. Measured 2026-07-27 before the fix: `validate.sh <techtainment>` reported `OK — no issues (37 sessions, 0 knowledge, 0 shared)`, and `ss` failed to find `projects/013_kj-plugins` and would have minted a duplicate project folder.
   - 🔴 **The failure mode is the point, not the paths.** A collapsed scan reported `OK`, so the harness looked healthy while its memory layer was switched off; the same session that fixed it had been running with zero recall priming. `scripts/vault-paths.sh` now **warns on stderr** when a declared root does not resolve, and the selftest pins that warning.
