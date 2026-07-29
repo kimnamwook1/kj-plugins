@@ -8,7 +8,7 @@
 - `git_branch` — working branch (empty for non-code sessions). `ss` fills it from `git rev-parse --abbrev-ref HEAD`.
 - `git_worktree` — working worktree. **`ss` always writes this empty** — a PM session runs in the current tree, and worktree isolation belongs to the `coder` agent (`agents/coder.md` `isolation: worktree`), not to session start. The field stays in the schema so a coder's worktree path can be recorded later if something needs it (KJP-42).
 - `created`
-- `updated`
+- `updated` — **new writes and edits use `YYYY-MM-DDTHH:MM:SS`** (local time — the same clock the uid is minted from). This format rule is the canon for `updated` across note kinds (docs · knowledge point here). **Existing `YYYY-MM-DD` values are legacy-legal — never force-rewrite them.** Backward-compat is measured, not assumed: recall's `ymd()` strips non-digits and reads the first 8 (`skills/_session-shared/recall.md`), so a datetime parses identically to a date.
 - `status` — `active` | `parked` | `done` — **hard rule: these 3 values are all there is. No extensions**
   - `active` — in progress. Written by `ss` at creation and restored by `sr` on resume.
   - `parked` — suspended, resumable. Written by `sh`. **A first-class status, not a flavour of `active`** — it is the machine-readable answer to "is this session running or waiting", and the only one (KJP-48).

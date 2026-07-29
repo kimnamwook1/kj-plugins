@@ -7,6 +7,7 @@
 - **Cross-device sync uses a single channel only** — if two systems both sync across devices, conflicts follow (`git pull` = dirty/merge conflicts).
 - **Two concurrency layers**: within a machine = `scribe` discipline (no locks — the PM delegates without overlap) / between machines = git merge (member integration).
 - **Committer = the PM**, timing = the session lifecycle (handoff · complete). `scribe` never commits — a commit swallows the whole repo, sweeping in other `scribe` workers' unfinished work.
+- **The boundary commit message includes the session uid.** Docs frontmatter carries no `session` key ([[project-docs-convention]] §history & session linkage), so the commit message is the sole session↔document linkage channel.
 - **No auto-commits** — committing via per-write hooks (PostToolUse) turns history into tool-call-level noise and erases revert points.
 - **Push only when the user explicitly says so.**
 

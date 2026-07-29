@@ -6,9 +6,10 @@
 > - **tier = universal (baseline)**: laid down by default for any non-trivial project.
 > - **tier = situational**: created only when the trigger actually occurs.
 > - Location conventions: project-wide = `docs/` · **per-feature = `docs/feature/<F>/`** (feature lives **under** docs) · reusable knowledge = `knowledge/` · project hub = root `index.md` · shared across all projects = `common/`. (Structure & naming canon: [[vault-tree]])
-> - **owner = a PM routing label** — which brief that document's updates ride on. Not a resident agent. The label names a brief — spawn defaults to `worker`; only code-implementation documents get `coder`.
-> - **The owner column = the single party responsible for updating that document.** 🔴 **Work is not accepted as complete unless you update the documents you own** ([[project-docs-convention]]).
-> - **All documents follow the [[project-docs-convention]] frontmatter standard** — `status: stub|draft|approved|deprecated` · `owner` · `history`. 🔴 **`status: stub` means "no information" — never cite as evidence. The moment it gains content, switch to `draft`.**
+> - **owner = a PM routing label — not a frontmatter field.** It is the brief-routing *default*, and **this table is its only original** (re-judged by the PM at brief time — [[project-docs-convention]] §deleted fields). The label names a brief, not a resident agent — spawn defaults to `worker`; only code-implementation documents get `coder`.
+> - **The owner column feeds the brief's DoD** — the PM writes "update document X" into the DoD of the brief the owner label routes ([[project-docs-convention]] §Rules that outlived their fields).
+> - **kind = a vocabulary label in this table — not a frontmatter field either.** Derivation canon: [[project-docs-convention]] §kind ← path matrix (the sole copy — never restate it here).
+> - **All documents follow the [[project-docs-convention]] frontmatter standard v2** — `status: stub|draft|approved|deprecated` (the only required key) + optional `history`. 🔴 **`status: stub` means "no information" — never cite as evidence. The moment it gains content, switch to `draft`.**
 > - **ID issuance for multi-instance documents (POL·ADR) = the PM issues in advance** ([[project-docs-convention]]). Workers never pick their own numbers.
 
 ## Selection Table
@@ -28,7 +29,7 @@
 | **API_SPEC (API Specification — repo spec 미러)** | `api` | content=backend / sync=scribe (dreaming) | `docs/tech-design/` | When exposing an API/service boundary. ⚠️ **Read-only mirror — SSOT is the repo spec** ([[project-docs-convention]]). **Not pre-created** — dreaming's api-mirror audit generates it once an API exists (a stub mirror of nothing would be noise) | universal |
 | **THREAT_MODEL (위협 모델)** ★stub | `threat-model` | security | `docs/tech-design/` | When handling user data or authentication (mandatory once before launch). **Kept independent** — security/evidence character; never folded into another document | universal |
 | **CODE_CONVENTION (코드 규약)** ★stub | `code-convention` | architecture | `docs/tech-design/` | When the stack/language is decided (early in the project). Differs per project, so it is not common. Absorbs as a section: **§테스트 규율 (test discipline)** — project-wide test strategy only; per-feature acceptance criteria belong to each FRD | universal |
-| **RUNBOOK (배포·운영 절차)** ★stub | `runbook` | devops | `docs/tech-design/` | When there is something to deploy. Absorbs as sections: **§Delivery** — how a change gets from a branch to the trunk, measured (note below) · **§관측 (Observability)** — on entering production · **§재해 복구 (DR)** — when data loss is a business risk · **§마이그레이션 (Migration)** — schema-change/migration procedures | universal |
+| **RUNBOOK (배포·운영 절차)** ★stub | `runbook` | devops | `docs/tech-design/` | When there is something to deploy. Absorbs as sections: **§Delivery** — how a change gets from a branch to the trunk, measured (note below) · **§관측 (Observability)** — on entering production · **§재해 복구 (DR)** — when data loss is a business risk · **§마이그레이션 (Migration)** — schema-change/migration procedures. **All 4 sections record verification command + output (excerpt)** — §Delivery's measurement pattern extended to every section. 🔴 **No standalone date fields (`last-verified` and kin)** — a date is subordinate metadata of a recorded output, never a claim on its own | universal |
 | **COMPLIANCE (컴플라이언스 — 규제 대응)** | `compliance` | compliance | `docs/tech-design/` | Regulated user data or AI features (regulated/non-trivial projects) | situational |
 | **DESIGN (디자인 시스템 스펙 — FRD급)** | `design` | design | `docs/tech-design/` | When the product has a UI. **Design-system spec — FRD-grade**: design tokens · component inventory · states · interaction rules. **SSOT = the design tool if one is used, else the repo component source (code-first — git history = the change history); this document holds the links AND the rules** (body template → [[doc-templates]]) | situational |
 
@@ -65,7 +66,7 @@
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **POLICY (Project Policy — 프로젝트 공통 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (document frontmatter) | `docs/policy/<PREFIX>-POL-0000N.md` | When a rule applies to **2 or more features** (`scope: project`) — criteria, ID, promotion canon: [[project-docs-convention]] | situational |
+| **POLICY (Project Policy — 프로젝트 공통 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/policy/<PREFIX>-POL-0000N.md` | When a rule applies to **2 or more features** (`scope: project`) — criteria, ID, promotion canon: [[project-docs-convention]] | situational |
 | **ADR (Architecture Decision Record — 결정 기록)** | `adr` | architecture (ID issued by PM) | `docs/adr/<PREFIX>-ADR-0000N.md` | One per hard-to-reverse code/design decision. 🔴 **Never pre-created** | universal |
 | **research (folder)** | folder (free-form) | research | `docs/research/` | When research/benchmarking outputs appear | situational |
 
@@ -74,8 +75,8 @@
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
 | **FRD (Feature Requirements Doc — 기능 요구사항)** | `frd` | planning | `docs/feature/<F>/` | When expanding one PRD feature into an executable spec (per feature). **The "what"** | universal |
-| **TDC (Technical Design & Concept — 구현 설계)** | `tdc` | **architecture** | `docs/feature/<F>/` | When expanding the FRD into an implementation approach. **The "how".** Absorbs as a **§Diagrams** section the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files (only diagrams remained there — "prose goes in the TDC" was already the rule). Diagrams only in §Diagrams; prose only in the prose sections; a state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.). Canon: [[project-docs-convention]] §TDC | universal |
-| **POLICY (Feature Policy — 기능 한정 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (document frontmatter) | `docs/feature/<F>/policy/` | When a rule applies **to this feature only** (`scope: feature`) — [[project-docs-convention]] | situational |
+| **TDC (Technical Design & Concept — 구현 설계)** | `tdc` | **architecture** | `docs/feature/<F>/` | When expanding the FRD into an implementation approach. **The "how".** Absorbs as a **§Diagrams** section the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files (only diagrams remained there — "prose goes in the TDC" was already the rule). Diagrams only in §Diagrams; prose only in the prose sections; a state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.). **ADR promotion test: if reverting the decision would break payments, data, or an external contract — promote it to an ADR.** Canon: [[project-docs-convention]] §TDC | universal |
+| **POLICY (Feature Policy — 기능 한정 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/feature/<F>/policy/` | When a rule applies **to this feature only** (`scope: feature`) — [[project-docs-convention]] | situational |
 
 **On-demand**
 

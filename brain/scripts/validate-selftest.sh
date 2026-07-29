@@ -134,13 +134,29 @@ printf -- '---\ntitle: common root note\n---\ndream report [[20260719-005513]]\n
 
 # Legal shared-surface references, all in one file. Two of these are load-bearing beyond
 # "no false positive":
-#   · the `history:` line reproduces the corrected `project-docs-convention.md:26` template
-#     (KJP-39 root cause — the template used to *prescribe* the wikilink), so the fixture
-#     fails the moment that template regresses to `[[…]]`;
+#   · the `history:` line reproduces the v2 template (project-docs-convention §frontmatter
+#     Standard v2: `{ at, change, ticket }` — the KJP-39-era `session:` key is banned
+#     outright now), so the fixture fails the moment that template regresses;
+#   · `source_sessions:` pins the underscore guard — the session-key rule must not match
+#     the key "session" inside "source_sessions" (a knowledge-axis key, legal as plain uid);
 #   · `[[<PREFIX>-ADR-0000N]]` / `[[<ID>]]` are vault-internal doc-to-doc links that
-#     project-docs-convention:61·73·98 mandate — they must never be caught by this rule.
-printf -- '---\ntitle: doc citing sessions correctly\nsource_sessions: [KJP-20260718-120006]\nhistory:\n  - { date: 2026-07-26, change: one line, by: scribe, session: "KJP-20260718-120007" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
+#     project-docs-convention mandates — they must never be caught by the wikilink rule.
+printf -- '---\ntitle: doc citing sessions correctly\nsource_sessions: [KJP-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
   > "$V/013_selftest/docs/wl-plain.md"
+
+# Docs frontmatter v2 (project-docs-convention §frontmatter Standard v2). The session key
+# is banned in docs frontmatter *as a key* — plain uid included — so both YAML shapes are
+# positive fixtures (inline map line 5, top-level line 6). Unknown keys are the opposite
+# severity: stderr warn only, never a finding (--strict must not fail on an imported doc),
+# pinned by fm-legacy below staying out of the findings stream while warning on stderr.
+printf -- '---\nstatus: draft\nupdated: 2026-07-28T10:00:00\nhistory:\n  - { at: 2026-07-28T10:00:00, change: adds x, session: "KJP-20260718-120000" }\nsession: KJP-20260718-120000\n---\nbody\n' \
+  > "$V/013_selftest/docs/fm-session.md"
+printf -- '---\nstatus: draft\nupdated: 2026-07-28T10:00:00\nhistory:\n  - { at: 2026-07-28T10:00:00, change: one line, ticket: "KJP-41" }\n---\nv2 body citing KJP-20260718-120000 as plain text.\n' \
+  > "$V/013_selftest/docs/fm-v2.md"                                    # clean v2 — must stay silent
+# Legacy v1 doc: deleted keys (kind/title/owner) + date-only `updated`. Migration is
+# "no longer written", never a forced rewrite — so none of this may become a finding.
+printf -- '---\nkind: prd\ntitle: legacy doc\nstatus: approved\nupdated: 2026-07-18\nowner: planning\n---\nlegacy body.\n' \
+  > "$V/013_selftest/docs/fm-legacy.md"
 
 # A session note may wikilink other sessions — sessions/ is outside the shared surface
 # and deliberately outside this scan. Otherwise-valid so only the wikilink rule could
@@ -150,7 +166,10 @@ printf -- 'follows [[KJP-20260718-120000]] and [[sessions/KJP-20260718-120001]]\
   >> "$V/sessions/WL-20260718-120014.md"
 
 # ---------------------------------------------------------------- run
-REPORT="$(/bin/bash "$VALIDATE" "$V")"; rc=$?
+# Findings (stdout) and warns (stderr) are separate channels by design — captured
+# separately so each can be asserted, and so warns never pollute the findings asserts.
+REPORT="$(/bin/bash "$VALIDATE" "$V" 2>/dev/null)"; rc=$?
+WARNS="$(/bin/bash "$VALIDATE" "$V" 2>&1 >/dev/null)"
 echo "--- report ---"; printf '%s\n' "$REPORT"; echo "--- asserts ---"
 
 assert_exit    "default mode exits 0 even with findings" 0 "$rc"
@@ -187,8 +206,18 @@ assert_match   "wikilink scan recurses into nested/"         'knowledge/nested/w
 assert_match   "000_common: embed form (bang-link) is caught" 'facts/wl-common.md:4: .*\[\[KJP-20260718-120005\]\]'
 assert_match   "000_common root + PREFIX-less dreaming uid"  'wl-dreaming.md:4: .*\[\[20260719-005513\]\]'
 
+# docs frontmatter — session key = finding (both YAML shapes); unknown keys = stderr warn
+assert_match   "docs fm: inline-map session key is caught"   'fm-session.md:5: session key in docs frontmatter'
+assert_match   "docs fm: top-level session key is caught"    'fm-session.md:6: session key in docs frontmatter'
+assert_no_match "docs fm: clean v2 frontmatter passes"       'fm-v2.md'
+assert_no_match "docs fm: legacy keys + date-only updated are never findings" 'fm-legacy.md'
+SAVED_REPORT="$REPORT"; REPORT="$WARNS"
+assert_match   "docs fm: unknown key warns on stderr"        'fm-legacy.md:2: unknown docs frontmatter key: kind'
+assert_no_match "docs fm: session key is never demoted to a warn" 'session key in docs frontmatter'
+REPORT="$SAVED_REPORT"
+
 # quiet cases
-assert_no_match "plain uid + corrected history: template pass" 'wl-plain.md'
+assert_no_match "plain uid + v2 history: template pass"      'wl-plain.md'
 assert_no_match "non-uid wikilinks are not flagged"          'another-note'
 assert_no_match "ADR/policy doc wikilinks are not session uids" 'KJP-\(ADR\|POL\)-0000'
 assert_no_match "session wikilinks inside sessions/ are legal" 'WL-20260718-120014'
@@ -214,8 +243,9 @@ assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 # fixture); 13 knowledge = 3 project (good + no-title + wl-know; index/0.*/nested excluded)
 # + 3 facts + 1 machines + 1 pattern + 1 policy + 1 common-root note + 3 tools (999_tools,
 # index.md excluded);
-# 17 shared = 3 docs + 7 knowledge (all meta files and nested/ included — no exclusions on
-# this surface) + 7 under 000_common.
+# 20 shared = 6 docs + 7 knowledge (all meta files and nested/ included — no exclusions on
+# this surface) + 7 under 000_common; 6 docs = the same 6 files counted again by the docs
+# frontmatter scan (wl-doc · wl-path · wl-plain · fm-session · fm-v2 · fm-legacy).
 # 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: 999_tools
 # raises the knowledge count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
@@ -224,7 +254,7 @@ assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 # The old scan named `{facts,patterns,policies}` and so silently skipped notes sitting at the
 # common root — a gap, not a rule. Measured on the real beafter vault: every other count is
 # byte-identical before and after (19 sessions, 102 knowledge, 321 shared, 24 issues).
-assert_match   "scanned counts appear in the summary"        '(15 sessions, 13 knowledge, 17 shared)'
+assert_match   "scanned counts appear in the summary"        '(15 sessions, 13 knowledge, 20 shared, 6 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -234,11 +264,11 @@ assert_exit "--strict exits 1 when there are findings" 1 "$rc"
 # blocked. This isolated vault has exactly one finding — a shared-surface wikilink —
 # so it pins that the new rule alone is enough to fail --strict.
 W="$(mktemp -d -t brain-selftest-wl)"; mkdir -p "$W/sessions" "$W/013_wl/docs"
-printf -- '---\ntitle: the only finding in this vault\n---\n[[KJP-20260718-120000]]\n' \
+printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]]\n' \
   > "$W/013_wl/docs/only.md"
 REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
 assert_exit  "wikilink-only vault exits 0 in default mode" 0 "$rc"
-assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 knowledge, 1 shared)'
+assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 knowledge, 1 shared, 1 docs)'
 /bin/bash "$VALIDATE" "$W" --strict > /dev/null 2>&1
 assert_exit  "a wikilink finding alone fails --strict" 1 $?
 rm -rf "$W"
@@ -250,7 +280,7 @@ printf -- '---\nuid: LOCKED-20260718-120011\nproject: s\ncreated: c\nupdated: u\
 chmod 000 "$V/sessions/LOCKED-20260718-120011.md" 2>/dev/null || CHMOD_OK=0
 [ -r "$V/sessions/LOCKED-20260718-120011.md" ] && CHMOD_OK=0   # running as root defeats the test
 if [ "$CHMOD_OK" -eq 1 ]; then
-  REPORT="$(/bin/bash "$VALIDATE" "$V")"
+  REPORT="$(/bin/bash "$VALIDATE" "$V" 2>/dev/null)"
   assert_match "unreadable file is reported as a finding" 'LOCKED-20260718-120011.md:1: cannot read file'
   /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1
   assert_exit  "--strict fails on an unreadable file" 1 $?
@@ -262,7 +292,7 @@ rm -f "$V/sessions/LOCKED-20260718-120011.md"
 
 # path robustness: trailing slashes and glob metacharacters must not collapse the scan
 for suffix in "" "/" "//"; do
-  REPORT="$(/bin/bash "$VALIDATE" "$V$suffix")"
+  REPORT="$(/bin/bash "$VALIDATE" "$V$suffix" 2>/dev/null)"
   assert_match "knowledge scan survives vault path suffix '$suffix'" 'facts/facts-no-title.md'
 done
 GP="$(mktemp -d -t brain-selftest-glob)"; G="$GP/my[vault]"
@@ -276,7 +306,7 @@ rm -rf "$GP"
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/sessions"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
-assert_match "empty vault reports a zero scan count" '(0 sessions, 0 knowledge, 0 shared)'
+assert_match "empty vault reports a zero scan count" '(0 sessions, 0 knowledge, 0 shared, 0 docs)'
 /bin/bash "$VALIDATE" "$E" --strict > /dev/null 2>&1
 assert_exit  "empty vault exits 0 even under --strict" 0 $?
 rm -rf "$E"
@@ -285,7 +315,8 @@ rm -rf "$E"
 # This is the layout that used to return a silent zero — the whole reason vault-paths.sh exists.
 R="$(mktemp -d -t brain-selftest-restructured)"
 mkdir -p "$R/sessions" "$R/_primary/patterns" "$R/_primary/_company/machines" \
-         "$R/projects/013_restructured/knowledge" "$R/999_Archive" "$R/_templates/machines"
+         "$R/projects/013_restructured/knowledge" "$R/projects/013_restructured/docs" \
+         "$R/999_Archive" "$R/_templates/machines"
 printf -- 'common_root: _primary\nprojects_root: projects\n'  > "$R/.brain-paths"
 printf -- '---\nkind: pattern\n---\n'  > "$R/_primary/patterns/rs-pattern-no-title.md"
 printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/machines/rs-nested-no-title.md"
@@ -293,15 +324,20 @@ printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/_index.md"       
 printf -- '---\nkind: lesson\n---\n'   > "$R/projects/013_restructured/knowledge/rs-know-no-title.md"
 printf -- '---\nkind: fact\n---\n'     > "$R/999_Archive/rs-archived-no-title.md"   # excluded (retired)
 printf -- '---\nkind: fact\n---\n'     > "$R/_templates/machines/hardware.md"       # excluded (skeleton)
+# The docs frontmatter scan resolves its roots through the same manifest — a session key
+# under projects/<NNN_*>/docs must be found, or the scan silently missed the moved tree.
+printf -- '---\nstatus: draft\nhistory:\n  - { at: 2026-07-28T10:00:00, change: x, session: "RS-20260718-120000" }\n---\n' \
+  > "$R/projects/013_restructured/docs/rs-fm-session.md"
 REPORT="$(/bin/bash "$VALIDATE" "$R" 2>&1)"
 assert_match    "restructured: common root under _primary is scanned"   'rs-pattern-no-title.md'
 assert_match    "restructured: nested common subtree is scanned"        'rs-nested-no-title.md'
 assert_match    "restructured: projects/ NNN_* knowledge is scanned"    'rs-know-no-title.md'
+assert_match    "restructured: docs frontmatter scan follows the manifest" 'rs-fm-session.md:4: session key in docs frontmatter'
 assert_no_match "restructured: _index.md is excluded (meta rule)"       '_index.md'
 assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-title.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 3 knowledge, 4 shared)'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 3 knowledge, 5 shared, 1 docs)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
 printf -- 'common_root: nope\n' > "$R/.brain-paths"

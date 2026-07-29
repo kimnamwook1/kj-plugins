@@ -4,8 +4,9 @@
 #   validate.sh <vault-root> [--strict]
 #
 # Checks session-note frontmatter (required keys, uid format, uid/filename match,
-# status vocabulary), knowledge-note `title:`, and session-uid wikilinks on the
-# team-shared surface. Reports as `file:line: message`.
+# status vocabulary), knowledge-note `title:`, session-uid wikilinks on the
+# team-shared surface, and docs frontmatter (`session:` key = violation; unknown
+# keys = stderr warn only). Reports as `file:line: message`.
 # Findings alone never fail the run (exit 0); --strict turns any finding into exit 1.
 # Usage errors (bad args / unreadable root / mktemp failure) exit 2 in both modes.
 #
@@ -235,6 +236,57 @@ while IFS= read -r f; do
   ' "$f"
 done < "$LIST" >> "$OUT"
 
+# ----------------------------------------------------- docs frontmatter (v2 schema)
+# Canon: project-docs-convention.md §frontmatter Standard v2 + §history & session linkage.
+# Two rules, two severities — deliberately asymmetric:
+#   · `session:` key anywhere in docs frontmatter = a FINDING. Upgraded from the old
+#     "no session wikilink" rule: team vaults gitignore sessions/, so even a *plain uid*
+#     is a reference no teammate can resolve. Team provenance = history `ticket`; the
+#     session uid rides the boundary commit message (versioning-convention.md).
+#   · unknown top-level keys = stderr WARN only, never a finding — --strict must not
+#     fail on them (protects docs imported from outside; migration off the v1 schema is
+#     "no longer written", never a forced rewrite). Known set = the v2 vocabulary only;
+#     the kind ← path derivation matrix stays in project-docs-convention (never here).
+# Scope = NNN_*/docs/** recursive (the docs trees only — knowledge `source_sessions` is a
+# separate, legal axis and its dirs are not scanned). index/_index are folder meta
+# (`next_id`, TOC titles), so they skip the unknown-key warn but not the session check.
+DDIRS=()
+while IFS= read -r d; do
+  [ -d "$d/docs" ] && DDIRS[${#DDIRS[@]}]="$d/docs"
+done < <(brain_projects)
+
+if [ ${#DDIRS[@]} -eq 0 ]; then
+  : > "$LIST"
+else
+  find "${DDIRS[@]}" -type f -name '*.md' 2>/dev/null | sort > "$LIST"
+fi
+n_docs="$(wc -l < "$LIST" | tr -d ' ')"
+
+while IFS= read -r f; do
+  [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
+  case "$(basename "$f")" in index.md|_index.md) meta=1 ;; *) meta=0 ;; esac
+  awk -v file="$f" -v meta="$meta" '
+    { sub(/\r$/, "") }
+    NR == 1 && $0 == "---" { fm = 1; next }
+    fm && $0 == "---" { exit }
+    fm {
+      # Matches the key in every YAML shape: top-level `session:`, nested-map
+      # `    session:`, inline-map `{ ..., session: ... }`. The leading class keeps
+      # `source_sessions:` (underscore before) and `sessions:` (no colon after
+      # "session") out of the match.
+      if ($0 ~ /(^|[ \t{,])session:/) {
+        print file ":" NR ": session key in docs frontmatter (banned — team provenance = history ticket:, the session uid goes in the boundary commit message)"
+        next
+      }
+      if (!meta && match($0, /^[A-Za-z_][A-Za-z0-9_]*:/)) {
+        k = substr($0, 1, RLENGTH - 1)
+        if (k !~ /^(status|updated|id|source|readonly|synced|history)$/)
+          print file ":" NR ": unknown docs frontmatter key: " k " (warn only — never a finding)" > "/dev/stderr"
+      }
+    }
+  ' "$f"
+done < "$LIST" >> "$OUT"
+
 # ------------------------------------------------------------------------ report
 # The scanned counts print on every run so a collapsed scan (0 files) is visibly
 # different from a clean vault — "OK" on its own cannot distinguish the two.
@@ -244,7 +296,7 @@ done < "$LIST" >> "$OUT"
 #   · filenames containing newlines break the line-based file list and counts.
 #   · `awk -v base=...` interprets backslash escapes, so a filename with a backslash
 #     reaches awk mangled (the uid/filename comparison may misreport).
-scanned="$n_sessions sessions, $n_knowledge knowledge, $n_shared shared"
+scanned="$n_sessions sessions, $n_knowledge knowledge, $n_shared shared, $n_docs docs"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
   echo "validate.sh: OK — no issues ($scanned) $VAULT"

@@ -6,7 +6,7 @@
 
 - The **body-section skeletons** for document kinds that have earned one. This is the first such canon (before it, only the frontmatter standard existed — no body templates).
 - **Home = here.** A template is a copyable body skeleton, not a separate `.md` on disk. When the scribe creates or fills a stub of a listed kind, it copies the skeleton below into the document body.
-- **Frontmatter is not repeated per template** — every document follows the one [[project-docs-convention]] frontmatter standard. Each template lists only its **required frontmatter keys**; the shapes live in that convention.
+- **Frontmatter is not repeated per template** — every document follows the one [[project-docs-convention]] §frontmatter Standard v2; the required keys, shapes, and extensions (multi-instance `id` · optional `history`) live there and only there. Templates below are **body skeletons only** — the former per-template required-key lists left with the v1 deleted fields.
 
 ## Scope — only two kinds have a body template
 
@@ -27,7 +27,7 @@
 - **Role**: the design-system contract for a UI product — tokens, components, states, interaction rules — **plus links to the SSOT**.
 - **SSOT = the design tool if one is used (Figma, Pencil, …); if code-first, the repo component source (git history = the change history).** The pixels/source live there; this document holds the **links + the rules the SSOT cannot enforce in prose** (token names, state matrices, interaction invariants). Never paste screenshots as the source of truth — link. This is the **same shape as the API_SPEC repo-mirror pattern** ([[project-docs-convention]] §The Only Exception): the authoritative artifact lives outside the vault; the vault document links and rules, never overrides.
 - **Component-confirmation record = 3 layers, one home each**: ① pixels & change history = the SSOT (tool or repo) · ② the confirmed spec = that component's row in §Components + §States & Interactions · ③ the confirmed *why* = the row's Notes + one `history:` line — an ADR when the decision is hard to reverse. 🔴 **No per-component `.md` files** — a second document per component is a second SSOT, and two SSOTs drift.
-- **Required frontmatter keys**: `kind: design` · `title` · `project` · `status` · `owner: design` · `updated` · `history`. (Singleton — no `id`. No `scope`/`feature`.)
+- **Frontmatter**: §frontmatter Standard v2 ([[project-docs-convention]]) — singleton, so no `id`. Owner routing = the [[doc-catalog]] DESIGN row (a routing label, not a frontmatter field).
 
 ```markdown
 ## Overview
@@ -65,7 +65,7 @@
 
 - **Role**: the roadmap. Sequences already-defined scope across time. Records **when**, never **what/why** (PRD) or **why-we-decided** (ADR).
 - **Boundaries** (owner of overlap — [[doc-catalog]] MILESTONE note): references PRD/FRD scope via wikilinks (never restates it); links ADRs for rationale; leaves fluid task/sprint status to the tracker. This doc is the **durable** plan, not a task mirror. Home = `docs/` root ([[doc-catalog]]).
-- **Required frontmatter keys**: `kind: milestone` · `title` · `project` · `status` · `owner: pm` · `updated` · `history`. (Singleton — no `id`.)
+- **Frontmatter**: §frontmatter Standard v2 ([[project-docs-convention]]) — singleton, so no `id`. Owner routing = the [[doc-catalog]] MILESTONE row (a routing label, not a frontmatter field).
 
 ```markdown
 ## Overview

@@ -9,26 +9,89 @@
 - **living doc** (no v1/v2 copies).
 - **linking docs** (link to each other as needed)
 
-## frontmatter Standard (all Docs documents)
+## frontmatter Standard v2 (all Docs body documents)
 
 ```yaml
-id: <PREFIX>-<TYPE>-0000N   # multi-instance documents (POL·ADR etc.) only. Omitted for singleton documents (PRD·ARCHITECTURE…)
-kind: prd | frd | tdc | adr | policy | ...   # document kind (doc-catalog "kind" column)
-title: <document title>
-project: <project-slug>
-status: stub | draft | approved | deprecated
-owner: <label>              # responsible for updating this document (for brief routing — not a resident agent)
-scope: project | feature    # policy only
-feature: <feature-name>      # only when scope: feature (+ feature documents FRD·TDC etc.)
-updated: YYYY-MM-DD
-tags: []
+# ── base: every docs body document ──
+status: stub | draft | approved | deprecated   # the only required key
+updated: YYYY-MM-DDTHH:MM:SS                   # scribe machine-stamp (local time, same basis as session uids — format & legacy rule: [[sessions-note-convention]])
+
+# ── multi-instance extension: POL · ADR ──
+id: <PREFIX>-POL-0000N                         # required & immutable — promotion completes as a file move alone
+
+# ── mirror extension: API_SPEC ──
+source: <repo path|URL>                        # required — SSOT pointer
+readonly: true                                 # required constant
+synced: <datetime>                             # optional — generator stamp; freshness is judged against the repo, not this field
+
+# ── optional, any document ──
 history:
-  - { date: YYYY-MM-DD, change: <one line>, by: <agent>, session: "PROJECT_PREFIX-YYYYMMDD-HHMMSS" }
+  - { at: <datetime>, change: <one line>, ticket: "KJP-41" }   # ticket also optional
 ```
 
-- **`session:` is the session uid verbatim, as plain text** — `PROJECT_PREFIX-YYYYMMDD-HHMMSS`. 🔴 **Never a `[[wikilink]]`**: a document lives on the team-shared surface but `sessions/` sits outside it (a team vault gitignores it), so a session wikilink dangles in every teammate's vault that lacks that session — canon → [[versioning-convention]] §Share scope, enforced by `scripts/validate.sh`. Never abbreviate either — the uid is the lookup key for finding the session. Canon → [[sessions-note-convention]]
-- **owner rule**: **work is not accepted as complete without updating the documents you own.**
+**Everything else is derived — deleted fields (10) and where each one's truth lives:**
+
+| Deleted field | Derived from (the original) |
+|---|---|
+| `kind` | path + filename (§kind ← path matrix below) |
+| `title` | H1 |
+| `project` | the `NNN_<slug>/` folder |
+| `owner` | doc-catalog default + PM re-judgment at brief time ([[doc-catalog]] — the sole source) |
+| `scope` / `feature` | the path is the tier — promotion completes as **one** change (the file move) |
+| `tags` | no consumer |
+| `description` | first paragraph under the H1 |
+| `history.session` | banned outright (§history & session linkage below) |
+| `history.by` | git author |
+
+**Absence semantics:**
+
+| Case | Meaning |
+|---|---|
+| `status` absent | illegal |
+| `id` absent on a multi-instance document (POL·ADR) | illegal |
+| any other key absent | normal (derived or defaulted) |
+| unknown key present | **warn only — never a hard fail** (protects documents imported from outside, e.g. open-source) |
+
+### kind ← path matrix
+
+🔴 **This matrix lives here and only here — never replicate it in another document or a script** (a second copy is a second thing to drift).
+
+| Path | kind |
+|---|---|
+| `docs/tech-design/<SINGLETON>.md` | singleton filename mapping: `PRD.md`→`prd` · `ARCHITECTURE.md`→`architecture` · `API_SPEC.md`→`api` · `THREAT_MODEL.md`→`threat-model` · `CODE_CONVENTION.md`→`code-convention` · `RUNBOOK.md`→`runbook` · `COMPLIANCE.md`→`compliance` · `DESIGN.md`→`design` (likewise `docs/business/BUSINESS.md`→`business` · `docs/MILESTONE.md`→`milestone`) |
+| `docs/feature/<F>/FRD.md` | `frd` |
+| `docs/feature/<F>/TDC.md` | `tdc` |
+| `docs/policy/<PREFIX>-POL-*` · `docs/feature/<F>/policy/<PREFIX>-POL-*` | `policy` (scope = the path: `docs/policy/` ⇒ project · `feature/<F>/policy/` ⇒ feature) |
+| `docs/adr/*` | `adr` |
+| `docs/research/**` | free-form (no kind) |
+
+- **Path vs an explicit field: the path wins.** A leftover `kind:`/`scope:` disagreeing with the path is stale metadata, not a second truth.
+
+### history & session linkage
+
+- 🔴 **The `session` key is banned in docs frontmatter altogether** — not merely the wikilink form; the key itself, plain uid included. A team vault gitignores `sessions/` ([[versioning-convention]] §Share scope), so even a plain uid is a reference no teammate can resolve. Enforced by `scripts/validate.sh`.
+- **Team provenance = `ticket`** in `history` entries — a tracker ID resolves for everyone.
+- **Session↔document linkage lives in the vault boundary commit message** (the PM's commit carries the session uid) — canon: [[versioning-convention]].
+- Knowledge notes' `source_sessions` is a **separate axis** (promotion-source tracing) and unchanged — canon: [[knowledge-convention]]. Do not read this ban as applying there.
+
+### Rules that outlived their fields
+
+- **owner rule (moved)**: the former "your own documents unupdated = work not complete" rule left with the `owner` field — **it now rides as brief DoD wording** (the PM writes the document update into the brief's DoD; routing default = the [[doc-catalog]] owner column).
 - **stub rule**: **treat as "no information" — never cite as evidence.** **The moment content is filled in, switch to `draft` immediately**.
+
+## Value Axes — one value kind, one home
+
+**Other documents never copy a value — they link to its original.**
+
+| Value kind | The only original |
+|---|---|
+| pricing · tiers · unit economics | BUSINESS §BM |
+| security normative statements | POL (`docs/policy/` or feature policy) |
+| threat · mitigation tables | THREAT_MODEL |
+| logical data model | ARCHITECTURE §데이터 모델 |
+| physical schema | repo `migrations/` / schema |
+| API contract | repo machine-readable spec (API_SPEC is a mirror) |
+| UI pixels | design tool or component code (DESIGN holds links + rules) |
 
 ## stub Pre-creation Rules
 
@@ -50,14 +113,14 @@ history:
 
 **The (single) criterion**: *"Does this rule apply to **2 or more features**?"*
 
-| Answer | Location | frontmatter |
+| Answer | Location | Tier (path-derived — §kind ← path matrix) |
 |---|---|---|
-| **Yes** | `<project>/docs/policy/` | `scope: project` |
-| **No** | `<project>/docs/feature/<F>/policy/` | `scope: feature` + `feature: <F>` |
+| **Yes** | `<project>/docs/policy/` | project |
+| **No** | `<project>/docs/feature/<F>/policy/` | feature |
 | (shared across all projects) | `common/policies/` | 3-axis definition → [[knowledge-convention]] |
 
 - **ID = `<PREFIX>-POL-0000N`** — **a single per-project sequence. Independent of tier/location, and immutable.**
-- **Never put the feature name in the filename or ID.** Tier is expressed solely by the frontmatter `scope`. (Baking the feature name into the ID means the ID changes on promotion → every reference breaks. ID immutability is the mechanism that lets promotion finish as **a file move alone**.)
+- **Never put the feature name in the filename or ID.** Tier is expressed solely by the path (§kind ← path matrix — no `scope` field). (Baking the feature name into the ID means the ID changes on promotion → every reference breaks. ID immutability is the mechanism that lets promotion finish as **a file move alone**.)
 - **FRD·TDC never copy policy values** — reference only via `[[<ID>]]` wikilinks.
 - **Promotion** → [[knowledge-escalate-convention]]
 - **No separate policy changelog document** — history lives in `history:` + git.
@@ -83,6 +146,7 @@ common/policies (global)  >  docs/policy  >  PRD §비기능 요구(NFR)  >  PRD
 - 🔴 **This table is the PM's arbitration tool — not for workers.** Worker instructions carry only one line: "on conflict, don't judge on your own — report to the PM". Hand workers the pecking order and it becomes "I won, so ignore that one", and fixing the losing document never happens.
 - 🔴 **A conflict is usually a signal that one of the two is wrong.** Follow the winner and **fix the loser** — left alone, the next person hits the same conflict again.
 - The logic of the order: norms (must be followed) > constraints (the PRD's NFR section) > the what (PRD→FRD) > the how (TDC). **The lower you go the more concrete it gets, and the concrete never beats the abstract.** (A section outranking the rest of its own document is intentional — a constraint binds the requirements written next to it.)
+- **A new rank is added only when a real conflict occurs — one line at a time, never pre-emptively.** The 6-tier order stays as-is; no full-spectrum (12-tier) expansion.
 
 ## What Not to Put in the Vault (boundaries)
 
@@ -96,6 +160,6 @@ Only **memory and design documents** live in this vault. Keep the two classes be
 **`docs/tech-design/API_SPEC.md` is the sole exception to the "repo = code only" principle.**
 
 - **SSOT = the repo's OpenAPI/JSON Schema** (CI-linted). The vault document is a **read-only mirror** — preservation against folder deletion + a wikilink target inside the vault.
-- Mirror frontmatter: `source: <repo path>` · `synced: <datetime>` · `readonly: true` (⚠️ **informational — hooks do not enforce it**).
+- Mirror frontmatter → §frontmatter Standard v2 mirror extension (`source` · `readonly: true` required, `synced` optional). `readonly` is ⚠️ **informational — hooks do not enforce it**.
 - 🔴 **When working from the API contract, always read the repo's spec. The vault mirror is for viewing only, up to 24h stale.**
 - Why the exception: the contract must be verified next to the code (CI), yet the vault's design documents need a target their links can point at. **The mirror is the cost of bridging those two, and that is why "read-only" is the condition** — the moment you edit the mirror, the exception turns into drift.

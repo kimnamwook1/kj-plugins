@@ -9,7 +9,7 @@ Recall is symptom-driven, so **the trigger goes first**.
 type: lesson | gotcha | decision | reference
 title: <title containing the trigger>
 uid: <anchor; same generator as session uids>
-created / updated
+created / updated           # updated (new writes) = YYYY-MM-DDTHH:MM:SS local; date-only = legacy-legal — format canon: [[sessions-note-convention]]
 projects: [x, y]            # tags, not folders (cross-membership allowed)
 source_sessions: [uid...]   # vertical backlink: source sessions (required). Plain uid strings — a session may sit outside the shared surface (a team vault gitignores sessions/; per-vault choice), so never `[[wikilink]]` a session from a knowledge note (body included); it dangles for any teammate who lacks it
 source_items: ["<verbatim line>", ...]   # item-level provenance (optional) — the raw Mistake/Learned line(s) this note restates, verbatim. See §Item-level provenance
