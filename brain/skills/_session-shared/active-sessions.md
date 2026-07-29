@@ -12,9 +12,10 @@ A session is **open** when its frontmatter `status:` is `active` (running) **or*
 
 ```bash
 # zsh: a glob with no match errors out → enumerate with find (safe even on an empty vault).
+# index.md / _index.md = folder TOCs, not sessions — exclude both spellings.
 PROJ_RE="${PROJ_RE:-<project>}"   # project slug. Set PROJ_RE='.*' to sweep every project (`sl all`).
 
-find "$VAULT/sessions" -maxdepth 1 -name "*.md" ! -name "index.md" 2>/dev/null | while read -r f; do
+find "$VAULT/sessions" -maxdepth 1 -name "*.md" ! -name "index.md" ! -name "_index.md" 2>/dev/null | while read -r f; do
   grep -q '^session_type: dreaming' "$f" && continue
   st=$(sed -n 's/^status:[[:space:]]*//p' "$f" | head -1 | tr -d '"'\''[:space:]')
   case "$st" in active|parked) ;; *) continue ;; esac
@@ -61,4 +62,4 @@ Render each candidate as **one line**: **state** · `<uid>` · `## Goal` one-lin
 - Under `PROJ_RE='.*'` prefix each line with its `project:` value, otherwise the list is ambiguous.
 - The newest `### YYYY-MM-DD` heading may also carry a `(parked)` / `(completed)` suffix. It is **history, not state** — quote it inside the Progress clause if useful, but the `[state]` marker is what the frontmatter says (canon: `docs/sessions-note-convention.md` §Progress entry status suffix).
 
-> Marker: `<!-- active-sessions: shared scan + extract · status active|parked × project · dreaming skip · `|| :` loop terminator (KJP-41) · used by sl + sr only -->`
+> Marker: `<!-- active-sessions: shared scan + extract · status active|parked × project · dreaming skip · index/_index excluded · `|| :` loop terminator (KJP-41) · used by sl + sr only -->`

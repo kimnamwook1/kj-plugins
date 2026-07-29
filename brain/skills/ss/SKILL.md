@@ -84,7 +84,7 @@ Creates a session in the vault as a **single file**. A session is a self-contain
    git_branch: <current branch or empty>
    git_worktree:                       # always empty from `ss` — see step 1 (KJP-42)
    created: <YYYY-MM-DD>
-   updated: <YYYY-MM-DD>
+   updated: <YYYY-MM-DDTHH:MM:SS>
    status: active
    writer: <the actual human user, e.g. whoami output>
    cc_session_ids:

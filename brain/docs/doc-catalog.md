@@ -5,7 +5,7 @@
 > - **Naming = abbreviation + full name, everywhere a document is titled** — this table's Document column and every stub H1: `# PRD (Product Requirements Doc — 제품 요구사항)`.
 > - **tier = universal (baseline)**: laid down by default for any non-trivial project.
 > - **tier = situational**: created only when the trigger actually occurs.
-> - Location conventions: project-wide = `docs/` · **per-feature = `docs/feature/<F>/`** (feature lives **under** docs) · reusable knowledge = `knowledge/` · project hub = root `index.md` · shared across all projects = `common/`. (Structure & naming canon: [[vault-tree]])
+> - Location conventions: project-wide = `docs/` · **per-feature = `docs/feature/<F>/`** (feature lives **under** docs) · reusable knowledge = `knowledge/` · project hub = root `index.md` (an existing `_index.md` is recognized as its equal — [[vault-tree]]) · shared across all projects = `common/`. (Structure & naming canon: [[vault-tree]])
 > - **owner = a PM routing label — not a frontmatter field.** It is the brief-routing *default*, and **this table is its only original** (re-judged by the PM at brief time — [[project-docs-convention]] §deleted fields). The label names a brief, not a resident agent — spawn defaults to `worker`; only code-implementation documents get `coder`.
 > - **The owner column feeds the brief's DoD** — the PM writes "update document X" into the DoD of the brief the owner label routes ([[project-docs-convention]] §Rules that outlived their fields).
 > - **kind = a vocabulary label in this table — not a frontmatter field either.** Derivation canon: [[project-docs-convention]] §kind ← path matrix (the sole copy — never restate it here).
@@ -18,7 +18,7 @@
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **Project hub** | `type: project` | pm | root `index.md` | Once at onboarding. **One-line definition + PREFIX + TOC pointers only** — no content prose (index.md pointer principle, [[vault-tree]]) | universal |
+| **Project hub** | `project` | pm | root `index.md` | Once at onboarding. **One-line definition + PREFIX + TOC pointers only** — no content prose (index.md pointer principle, [[vault-tree]]) | universal |
 
 **Tech-design documents** — the 5 marked ★stub are pre-created at project creation ([[project-docs-convention]]); the rest are created on trigger
 
@@ -34,7 +34,7 @@
 | **DESIGN (디자인 시스템 스펙 — FRD급)** | `design` | design | `docs/tech-design/` | When the product has a UI. **Design-system spec — FRD-grade**: design tokens · component inventory · states · interaction rules. **SSOT = the design tool if one is used, else the repo component source (code-first — git history = the change history); this document holds the links AND the rules** (body template → [[doc-templates]]) | situational |
 
 > **RUNBOOK §Delivery (absorbs the former `GIT_STRATEGY` file).** Records this project's delivery bucket (from `/brain:onboard` Q1/Q2) + a git-flow pointer + an exceptions line (default "예외: 없음 — 분류표 준수"), **and the measured values below.**
-> 🔴 **The git flow is decided by the vault's delivery classification note** — a classification table mapping **project type → flow**. There is no single org-default flow; org is only where documents live (one org legitimately runs different flows per project type). The note's **path differs per vault**: a binding vault keeps it in `000_common/policies/` (e.g. `DELIVERY_STRATEGY.md`); a vault still stabilizing may keep it in `000_common/facts/` as a non-binding reference and promote it to `policies/` when stable. **Never hardcode the path or restate a flow value — refer to "the vault's delivery classification note" and point** (restate → drift).
+> 🔴 **The git flow is decided by the vault's delivery classification note** — a classification table mapping **project type → flow**. There is no single org-default flow; org is only where documents live (one org legitimately runs different flows per project type). The note's **path differs per vault**: a binding vault keeps it in the common layer's `policies/` (e.g. `DELIVERY_STRATEGY.md`); a vault still stabilizing may keep it in the common layer's `facts/` as a non-binding reference and promote it to `policies/` when stable (common-layer location = the vault's `.brain-paths` manifest — [[vault-tree]]). **Never hardcode the path or restate a flow value — refer to "the vault's delivery classification note" and point** (restate → drift).
 >
 > **The split that keeps the two from drifting: the vault note holds the *policy*, §Delivery holds *what this repo's remote actually enforces*.** Restating a policy value here is drift; recording a measurement is the entire job — a measurement has no second copy to disagree with, because the repo is its own source. So §Delivery owns, for **this** repo:
 > - **The PR/MR gate, as measured** — is a pull/merge request structurally required, how many approvals, which merge methods survive, whether any status check actually blocks the merge, and who may bypass. 🔴 **Read it off the host, never off memory or off the workflow file** — a CI workflow proves what *runs*, not what *blocks*. Record the query used, so the next reader can re-run it. **An absent gate is a finding, not a blank**: write "protection: none (measured `<command>`, `<date>`)" rather than leaving the line out.
@@ -66,7 +66,7 @@
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **POLICY (Project Policy — 프로젝트 공통 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/policy/<PREFIX>-POL-0000N.md` | When a rule applies to **2 or more features** (`scope: project`) — criteria, ID, promotion canon: [[project-docs-convention]] | situational |
+| **POLICY (Project Policy — 프로젝트 공통 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/policy/<PREFIX>-POL-0000N.md` | When a rule applies to **2 or more features** (tier `project` — the path is the tier) — criteria, ID, promotion canon: [[project-docs-convention]] | situational |
 | **ADR (Architecture Decision Record — 결정 기록)** | `adr` | architecture (ID issued by PM) | `docs/adr/<PREFIX>-ADR-0000N.md` | One per hard-to-reverse code/design decision. 🔴 **Never pre-created** | universal |
 | **research (folder)** | folder (free-form) | research | `docs/research/` | When research/benchmarking outputs appear | situational |
 
@@ -76,7 +76,7 @@
 |---|---|---|---|---|---|
 | **FRD (Feature Requirements Doc — 기능 요구사항)** | `frd` | planning | `docs/feature/<F>/` | When expanding one PRD feature into an executable spec (per feature). **The "what"** | universal |
 | **TDC (Technical Design & Concept — 구현 설계)** | `tdc` | **architecture** | `docs/feature/<F>/` | When expanding the FRD into an implementation approach. **The "how".** Absorbs as a **§Diagrams** section the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files (only diagrams remained there — "prose goes in the TDC" was already the rule). Diagrams only in §Diagrams; prose only in the prose sections; a state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.). **ADR promotion test: if reverting the decision would break payments, data, or an external contract — promote it to an ADR.** Canon: [[project-docs-convention]] §TDC | universal |
-| **POLICY (Feature Policy — 기능 한정 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/feature/<F>/policy/` | When a rule applies **to this feature only** (`scope: feature`) — [[project-docs-convention]] | situational |
+| **POLICY (Feature Policy — 기능 한정 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/feature/<F>/policy/` | When a rule applies **to this feature only** (tier `feature` — the path is the tier) — [[project-docs-convention]] | situational |
 
 **On-demand**
 

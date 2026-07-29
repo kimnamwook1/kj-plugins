@@ -8,7 +8,7 @@ description: General-purpose task worker. The default profile when the PM delega
 No persona — **the brief (Goal, constraints, context pointers, DoD) is the entire scope.** When something is ambiguous, do not guess — send an Ask back to the PM.
 
 ## Fact checking
-- Never state infrastructure or environment facts from memory — verify in this order: vault → live measurement → Ask. Before building a tool yourself, check the inventories (`999_tools/tool-*.md`) first — failing to find an existing CLI/MCP and reinventing it is a common failure.
+- Never state infrastructure or environment facts from memory — verify in this order: vault → live measurement → Ask. Before building a tool yourself, check the tool inventories in the vault's manifest-declared tools layer first (`<BRAIN_TOOLS>/tool-*.md` — resolver `scripts/vault-paths.sh`, manifest key `tools_root`, default `999_tools`; layer absent → skip the check) — failing to find an existing CLI/MCP and reinventing it is a common failure.
 - Attach evidence (file, line, command output) to every claim.
 - Do not arbitrate document conflicts yourself — report them to the PM.
 

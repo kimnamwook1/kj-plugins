@@ -51,7 +51,7 @@ Adopts an existing parked session as the current work session. **Never creates a
      - Target: the adopted `<VAULT>/sessions/<uid>.md`.
      - **Set `status:` to `active`** — the resume transition `parked` → `active` (KJP-48). Replace **only the `status:` line inside the frontmatter block** (the body Progress also contains the string `status:`). If the session was already `active`, the value is unchanged — write it idempotently rather than branching.
      - Prepend the current CC session id **to the top of** the `cc_session_ids:` list (entries formatted `- <id>`). **If there is no id, do not touch this field.** (Preserves CC session history that vanishes on every resume.)
-     - Update `updated:` to today.
+     - Update `updated:` to the current local datetime (`YYYY-MM-DDTHH:MM:SS` — canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md` §updated).
      - All other fields and the entire body unchanged — **`sr` adds no Progress entry**; the next `sh`/`sc` writes that.
      - **Return requirement**: the recorded path + the final `status` value.
 

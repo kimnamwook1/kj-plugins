@@ -5,8 +5,10 @@
 #
 # Checks session-note frontmatter (required keys, uid format, uid/filename match,
 # status vocabulary), knowledge-note `title:`, session-uid wikilinks on the
-# team-shared surface, and docs frontmatter (`session:` key = violation; unknown
-# keys = stderr warn only). Reports as `file:line: message`.
+# team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
+# required + vocabulary; v1 history subkeys; policy/adr `id:` and index `next_id:`;
+# API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
+# only). Reports as `file:line: message`.
 # Findings alone never fail the run (exit 0); --strict turns any finding into exit 1.
 # Usage errors (bad args / unreadable root / mktemp failure) exit 2 in both modes.
 #
@@ -56,13 +58,14 @@ AWK_PRELUDE='
 '
 
 # ---------------------------------------------------------------- session notes
-# Excluded alongside index.md because neither is a session: index.md is the folder TOC, and
-# sample-session.md is the schema placeholder — its uid/status are literal `<active|parked|done>`
-# specimens, so validating it would flag the spec itself forever and make --strict unusable.
-# ponytail: if this exclusion list grows past these two, that is the signal to promote it to a
-# convention (a `meta:` frontmatter flag or a naming rule) instead of extending the -name chain.
+# Excluded alongside index.md because none is a session: index.md/_index.md are the folder TOC
+# (one rule, two spellings — same pair every scan excludes), and sample-session.md is the schema
+# placeholder — its uid/status are literal `<active|parked|done>` specimens, so validating it
+# would flag the spec itself forever and make --strict unusable.
+# ponytail: if this exclusion list grows past the TOC pair + the placeholder, that is the signal
+# to promote it to a convention (a `meta:` flag or a naming rule) instead of extending the chain.
 find "$VAULT/sessions" -maxdepth 1 -type f -name '*.md' \
-  ! -name 'index.md' ! -name 'sample-session.md' 2>/dev/null | sort > "$LIST"
+  ! -name 'index.md' ! -name '_index.md' ! -name 'sample-session.md' 2>/dev/null | sort > "$LIST"
 n_sessions="$(wc -l < "$LIST" | tr -d ' ')"
 
 while IFS= read -r f; do
@@ -128,11 +131,14 @@ KDIRS=()
 while IFS= read -r d; do
   [ -d "$d/knowledge" ] && KDIRS[${#KDIRS[@]}]="$d/knowledge"
 done < <(brain_projects)
-# `999_tools/` = machine-global tool inventory (vault-tree.md §999_tools). recall scans it as a [C]
-# source at the facts tier (recall.md source 2), and *this* scan is the recall mirror — so it is a
-# scan root here too. It does not arrive via brain_projects: that helper excludes the reserved 9xx
-# band outright, and a 9xx folder has no knowledge/ subfolder anyway (measured).
-[ -d "$VAULT/999_tools" ] && KDIRS[${#KDIRS[@]}]="$VAULT/999_tools"
+# The tools root (`999_tools/` by default) = machine-global tool inventory (vault-tree.md
+# §The tools root). recall scans it as a [C] source at the facts tier (recall.md source 2), and *this*
+# scan is the recall mirror — so it is a scan root here too. It does not arrive via brain_projects:
+# that helper excludes the reserved 9xx band outright, and a 9xx folder has no knowledge/ subfolder
+# anyway (measured). The root resolves through vault-paths (`tools_root` key / BRAIN_TOOLS_REL);
+# empty = the folder is absent, a legal state (machine-global, git-untracked), skipped silently —
+# unlike the common root, whose absence is loud.
+[ -n "$BRAIN_TOOLS" ] && KDIRS[${#KDIRS[@]}]="$BRAIN_TOOLS"
 
 : > "$LIST"
 # An empty array expanded under `set -u` is an unbound-variable error in bash 3.2 — guard it.
@@ -237,19 +243,38 @@ while IFS= read -r f; do
 done < "$LIST" >> "$OUT"
 
 # ----------------------------------------------------- docs frontmatter (v2 schema)
-# Canon: project-docs-convention.md §frontmatter Standard v2 + §history & session linkage.
-# Two rules, two severities — deliberately asymmetric:
-#   · `session:` key anywhere in docs frontmatter = a FINDING. Upgraded from the old
-#     "no session wikilink" rule: team vaults gitignore sessions/, so even a *plain uid*
-#     is a reference no teammate can resolve. Team provenance = history `ticket`; the
+# Canon: project-docs-convention.md §frontmatter Standard v2 + §history & session linkage
+# + §ID Issuance; status vocabulary: doc-catalog.md; `updated:` format canon:
+# sessions-note-convention.md. Findings vs warns — deliberately asymmetric:
+#   FINDINGS (schema violations — --strict blocks on them):
+#   · `session:` key anywhere in docs frontmatter. Upgraded from the old "no session
+#     wikilink" rule: team vaults gitignore sessions/, so even a *plain uid* is a
+#     reference no teammate can resolve. Team provenance = history `ticket`; the
 #     session uid rides the boundary commit message (versioning-convention.md).
-#   · unknown top-level keys = stderr WARN only, never a finding — --strict must not
-#     fail on them (protects docs imported from outside; migration off the v1 schema is
-#     "no longer written", never a forced rewrite). Known set = the v2 vocabulary only;
-#     the kind ← path derivation matrix stays in project-docs-convention (never here).
+#   · `status:` absent, or a value outside stub|draft|approved|deprecated — the only
+#     required key (meta files exempt; they are folder TOCs, not body documents).
+#   · v1 history subkeys `date:`/`by:` — the top-level key regex cannot see inside a
+#     `- { ... }` inline map or an indented block entry, which is exactly where the
+#     v1 vocabulary hid. v2 entry = { at, change, ticket } only.
+#   · `docs/policy/`·`docs/adr/`: body files without `id:` (multi-instance, PM-issued,
+#     immutable); their index/_index without `next_id:` (the issuance counter).
+#   · `docs/tech-design/API_SPEC.md` without `source:` + `readonly: true` (mirror contract).
+#   WARNS (stderr only, never a finding — --strict must not fail on them):
+#   · unknown top-level keys (protects docs imported from outside; migration off the v1
+#     schema is "no longer written", never a forced rewrite). Known set = the v2
+#     vocabulary only; the kind ← path derivation matrix stays in project-docs-convention.
+#   · `updated:` not YYYY-MM-DDTHH:MM:SS — date-only values are legacy-legal
+#     (sessions-note-convention.md), absence is normal (only `status:` is required).
+# Declared UNCOVERED, by choice: value-axis duplication (a price outside BUSINESS §BM, a
+# schema copied out of migrations/ — project-docs-convention §Value Axes). Judging "this
+# token is a price" is semantics, not schema; that audit stays with dreaming/PM review,
+# and this line exists so the gap reads as a decision, not an oversight.
 # Scope = NNN_*/docs/** recursive (the docs trees only — knowledge `source_sessions` is a
 # separate, legal axis and its dirs are not scanned). index/_index are folder meta
-# (`next_id`, TOC titles), so they skip the unknown-key warn but not the session check.
+# (`next_id`, TOC titles), so they skip the unknown-key warn and the body-document rules
+# (status·id·mirror·updated) but not the session check. Feature-tier policies
+# (`docs/feature/<F>/policy/`) are NOT under the id rule yet — deliberate scope, extend on
+# decision, not by drift.
 DDIRS=()
 while IFS= read -r d; do
   [ -d "$d/docs" ] && DDIRS[${#DDIRS[@]}]="$d/docs"
@@ -265,23 +290,113 @@ n_docs="$(wc -l < "$LIST" | tr -d ' ')"
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
   case "$(basename "$f")" in index.md|_index.md) meta=1 ;; *) meta=0 ;; esac
-  awk -v file="$f" -v meta="$meta" '
+  # Path-derived obligations — only the *paths* are matched here; the kind ← path matrix
+  # itself stays in project-docs-convention (never replicated):
+  #   docs/policy/ · docs/adr/         body → `id:` required; index/_index → `next_id:` required
+  #   docs/tech-design/API_SPEC.md     repo-spec mirror → `source:` + `readonly: true` required
+  idreq=0; nidreq=0; mirror=0
+  case "$f" in
+    */docs/policy/*|*/docs/adr/*) if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
+    */docs/tech-design/API_SPEC.md) mirror=1 ;;
+  esac
+  awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE"'
+    BEGIN {
+      # Spelled-out digit runs — one-true-awk has no ERE interval expressions (see the
+      # wikilink scan above for why {n} would silently never match).
+      D4 = "[0-9][0-9][0-9][0-9]"; D2 = "[0-9][0-9]"
+      DATEONLY = "^" D4 "-" D2 "-" D2 "$"
+      DATETIME = "^" D4 "-" D2 "-" D2 "T" D2 ":" D2 ":" D2 "$"
+      # A quoted key is the same key (`"session":` dodged both the ban and the key
+      # collector — verifier bypass 2026-07-29). Built as dynamic strings because a
+      # literal single quote cannot appear inside this single-quoted awk program (the
+      # same %c trick as unq() in the prelude). QC = one quote char, QK = an optional
+      # one; extracted keys are stripped of quotes so `"status"` registers as status.
+      QC = "[\"" sprintf("%c", 39) "]"; QK = QC "?"
+      SESSKEY = "(^|[ \t{,])" QK "session" QK ":"
+      TOPKEY  = "^" QK "[A-Za-z_][A-Za-z0-9_]*" QK ":"
+      V1DATE  = "(^|[ \t{,])" QK "date" QK ":"
+      V1BY    = "(^|[ \t{,])" QK "by" QK ":"
+    }
+    # v1 history vocabulary in one string — shared by the two call sites below: entry
+    # lines, and the value of the `history:` line itself (flow style).
+    # ponytail: value text containing ` date:`/` by:` inside an entry would false-
+    # positive — hand-written one-liners, not worth a YAML parser until one appears.
+    function v1hist(s, nr) {
+      if (s ~ V1DATE)
+        print file ":" nr ": v1 history key \"date:\" (v2 history entry = { at, change, ticket })"
+      if (s ~ V1BY)
+        print file ":" nr ": v1 history key \"by:\" (v2 history entry = { at, change, ticket } — author lives in git)"
+    }
     { sub(/\r$/, "") }
     NR == 1 && $0 == "---" { fm = 1; next }
     fm && $0 == "---" { exit }
     fm {
       # Matches the key in every YAML shape: top-level `session:`, nested-map
-      # `    session:`, inline-map `{ ..., session: ... }`. The leading class keeps
-      # `source_sessions:` (underscore before) and `sessions:` (no colon after
-      # "session") out of the match.
-      if ($0 ~ /(^|[ \t{,])session:/) {
+      # `    session:`, inline-map `{ ..., session: ... }`, and the quoted spelling of
+      # each (`"session":` — verifier bypass 2026-07-29). The leading class keeps
+      # `source_sessions:` (underscore before) and `sessions:` (no quote/colon right
+      # after "session") out of the match.
+      if ($0 ~ SESSKEY) {
         print file ":" NR ": session key in docs frontmatter (banned — team provenance = history ticket:, the session uid goes in the boundary commit message)"
         next
       }
-      if (!meta && match($0, /^[A-Za-z_][A-Za-z0-9_]*:/)) {
+      if (match($0, TOPKEY)) {
         k = substr($0, 1, RLENGTH - 1)
-        if (k !~ /^(status|updated|id|source|readonly|synced|history)$/)
+        gsub(QC, "", k)
+        v = substr($0, RLENGTH + 1)
+        sub(/^[ \t]+/, "", v); sub(/[ \t]+$/, "", v)
+        seen[k] = 1; ln[k] = NR; val[k] = unq(v)
+        inhist = (k == "history")
+        # Flow style keeps the entries in the *value* of the history: line itself
+        # (`history: [{ ... }]`) — the entry-line branch below never sees that line, so
+        # the v1 check runs on the value here too (verifier bypass 2026-07-29).
+        if (inhist && v != "")
+          v1hist(v, NR)
+        if (!meta && k !~ /^(status|updated|id|source|readonly|synced|history)$/)
           print file ":" NR ": unknown docs frontmatter key: " k " (warn only — never a finding)" > "/dev/stderr"
+      } else if (inhist) {
+        # history entry lines (inline map or indented block) — invisible to the top-level
+        # key regex above, which is exactly the hole the v1 vocabulary slipped through.
+        # v2 entry = { at, change, ticket } only; `session:` in the same position is
+        # already a finding via the ban above, so only the other two v1 keys match here.
+        v1hist($0, NR)
+      }
+    }
+    END {
+      if (meta) {
+        # index/_index are folder meta, not body documents — no status/id/mirror duty.
+        # In docs/policy/·docs/adr/ they carry the ID counter instead (§ID Issuance).
+        if (nidreq && !("next_id" in seen))
+          print file ":1: missing next_id: in policy/adr folder index (the ID issuance counter — the PM reads and bumps it)"
+        exit
+      }
+      if (!("status" in seen))
+        print file ":1: missing frontmatter key: status (the only required key — stub|draft|approved|deprecated)"
+      else {
+        s = val["status"]
+        if (s !~ /^(stub|draft|approved|deprecated)$/) {
+          if (s ~ /^(active|parked|done)$/)
+            print file ":" ln["status"] ": session status \"" s "\" used in a docs document (docs status = stub|draft|approved|deprecated)"
+          else
+            print file ":" ln["status"] ": invalid docs status \"" s "\" (expected stub|draft|approved|deprecated)"
+        }
+      }
+      if (idreq && !("id" in seen))
+        print file ":1: missing id: on a multi-instance document (docs/policy·docs/adr — the PM issues it; required & immutable)"
+      if (mirror) {
+        if (!("source" in seen))
+          print file ":1: missing source: on the API_SPEC mirror (required SSOT pointer to the repo spec)"
+        if (!("readonly" in seen) || val["readonly"] != "true")
+          print file ":1: API_SPEC mirror without readonly: true (required constant — the mirror is view-only)"
+      }
+      if ("updated" in seen) {
+        u = val["updated"]
+        if (u !~ DATETIME) {
+          if (u ~ DATEONLY)
+            print file ":" ln["updated"] ": date-only updated: (legacy-legal, warn only — new writes use YYYY-MM-DDTHH:MM:SS)" > "/dev/stderr"
+          else
+            print file ":" ln["updated"] ": updated: is not YYYY-MM-DDTHH:MM:SS: " u " (warn only)" > "/dev/stderr"
+        }
       }
     }
   ' "$f"

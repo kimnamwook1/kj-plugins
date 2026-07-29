@@ -59,6 +59,10 @@ exactly as the brain defers consolidation to sleep.
                       └────────────────────────────────────────────┘
 ```
 
+The vault box shows the **default layout** — each axis root (common · projects · tools) is a
+per-vault fact, declared in `<vault>/.brain-paths` and resolved by `scripts/vault-paths.sh`
+(see *The vault* below).
+
 Two layers, deliberately separated:
 
 | Layer | What it does | Mechanism |
@@ -76,7 +80,7 @@ Brain-to-harness mapping (the design-consistency anchor):
 | Working memory | LLM context / the live session |
 | **Hippocampus** — fast, lossy episodic encoding | session notes + `## Progress` (Done/Mistake/Fixed/Learned/Outputs) |
 | **Sleep consolidation** — replay, pruning, episodic→semantic | **Dreaming skill** (periodic batch) |
-| **Neocortex** — semantic long-term memory | `knowledge/` (per project) + `000_common/` (patterns/facts) |
+| **Neocortex** — semantic long-term memory | `knowledge/` (per project) + the common layer (patterns/facts — `000_common/` by default) |
 | **Cue-based recall** | recall step at session start + router pointers (trigger-first) |
 | **Synaptic pruning** (forgetting) | Dreaming staleness flags |
 | Episodic vs semantic separation | sessions (episodic) vs knowledge (semantic); promotion = the episodic→semantic conversion |
@@ -97,7 +101,7 @@ Brain-to-harness mapping (the design-consistency anchor):
 # 3. Content setup (once per project)
 /brain:onboard   # 5-question interview (ticket system · goal · stack · regulation · deploy
                  # target) — fills stub docs to draft for answered questions only — plus a
-                 # measured environment check → 999_tools/ inventories + facts/machines/
+                 # measured environment check → tools-root inventories + facts/machines/
 
 # 4. Daily loop — one verb, one skill
 /brain:ss        # start a NEW tracked session — recall injects relevant knowledge and past
@@ -133,27 +137,32 @@ not a clean one — CI should treat it as failure in both modes.
 
 What it checks — **sessions** (`sessions/*.md`, top level only; `index.md` and the
 `sample-session.md` schema placeholder excluded, since neither is a session): the six required
-frontmatter keys (`uid` `project` `created` `updated` `status` `writer`), `uid` matching
+frontmatter keys (`uid` `project` `created` `updated` `status` `writer` — `updated` carries a
+full `YYYY-MM-DDTHH:MM:SS` local datetime; date-only = legacy-legal, format canon
+`docs/sessions-note-convention.md`), `uid` matching
 `<PREFIX>-YYYYMMDD-HHMMSS` **and** the filename, and `status` being exactly one of
 `active|parked|done` (a document status such as `draft` leaking into a session note is called
 out specifically, as is the retired `cancel` — whose message carries the migration instruction:
-an abandoned session is `done` + an `abandoned` tag). **Knowledge notes** — the top level of each `NNN_<project>/knowledge/` and
-of `000_common/{facts,patterns,policies}/` and of `999_tools/`: `title:` present. Subdirectories
+an abandoned session is `done` + an `abandoned` tag). **Knowledge notes** — the top level of each project folder's `knowledge/`, of the
+common layer's `{facts,patterns,policies}/`, and of the tools root — all roots resolved through
+the vault's `.brain-paths` manifest (`scripts/vault-paths.sh`; the tree under *The vault* below
+shows the defaults): `title:` present. Subdirectories
 are not scanned, matching the flat scan in
 `skills/_session-shared/recall.md`, which also supplies the `index.md` + `0.*` meta exclusion —
-with one surgical exception, `000_common/facts/machines/`, added as an explicit scan root
+with one surgical exception, the common layer's `facts/machines/`, added as an explicit scan root
 (one note per machine, which recall reads). This scan is the recall mirror, so it tracks recall's
-roots exactly; `999_tools/` is here because recall scans it as a `[C]` source.
+roots exactly; the tools root is here because recall scans it as a `[C]` source.
 
-**Session-uid wikilinks on the shared surface** — every `*.md` under `NNN_*/docs/`,
-`NNN_*/knowledge/` and `000_common/` (recursive, no meta-file exclusion): a `[[…]]` whose
+**Session-uid wikilinks on the shared surface** — every `*.md` under each project folder's
+`docs/` and `knowledge/` and the common layer (roots per `.brain-paths`; recursive, no
+meta-file exclusion): a `[[…]]` whose
 target is a session uid is a finding. Canon is `docs/versioning-convention.md` §Share scope —
 `sessions/` sits outside the team-shared surface and a team vault gitignores it, so the link
 dangles in a teammate's vault; a shared note cites a session as **plain uid text**. Catches
 `[[uid]]`, `[[sessions/uid]]`, `[[uid|alias]]`, `[[uid#heading]]`, `![[uid]]`, for both the
 `<PREFIX>-YYYYMMDD-HHMMSS` form and the PREFIX-less dreaming-report form. 🔴 **`sessions/`
-itself is not scanned** — a session's own wikilinks are its record, and neither is `999_tools/`,
-which is gitignored and therefore not shared surface at all. Wikilinks between vault
+itself is not scanned** — a session's own wikilinks are its record, and neither is the tools
+root (`999_tools/` by default), which is gitignored and therefore not shared surface at all. Wikilinks between vault
 *documents* (`[[<PREFIX>-ADR-0000N]]`, `[[<ID>]]`) are untouched; only session targets are
 banned.
 
@@ -172,7 +181,8 @@ symlinks are skipped) — they are accepted, not unnoticed.
 
 ## The vault
 
-Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — summary only:
+Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — the summary below is the
+**default layout**, what the axes resolve to with no `.brain-paths` manifest:
 
 ```
 <vault-root>/
@@ -193,8 +203,16 @@ Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — summary
     <uid>.md             # one file per session (episodic); uid = PREFIX-YYYYMMDD-HHMMSS
 ```
 
-`000_common/` is *vault* scope ("common to every project here"); `999_tools/` is *machine* scope
-("true of this box, whatever vault you opened"). Keeping tool inventories on the vault axis gave
+Where the axes actually live is a per-vault fact, not canon: `<vault>/.brain-paths` (plain
+`key: value` lines — `common_root` · `projects_root` · `tools_root`) re-points the common,
+projects, and tools roots, and `scripts/vault-paths.sh` is the single resolver every scanner
+sources. A vault that never restructured needs no manifest and gets the defaults above; a
+restructured one declares, e.g., `common_root: org` + `projects_root: projects`. Keys, defaults,
+and resolver functions live in the script's header — the sole copy.
+
+The common layer (`000_common/` by default) is *vault* scope ("common to every project here");
+the tools root (`999_tools/` by default) is *machine* scope ("true of this box, whatever vault
+you opened"). Keeping tool inventories on the vault axis gave
 N vaults N diverging copies of one truth — measured 2026-07-25, the same `tool-mcp.md` was 31KB in
 one vault and 3KB in another. `machines/` stays under `facts/`: machine *configuration* is a vault
 fact (which boxes this vault's work runs on), machine *tool surface* is not.
@@ -203,7 +221,7 @@ The `9xx` band is reserved for vault infrastructure and is **never** allocated t
 `[0-9]*_*` glob matches it, so anything computing the next project number must exclude it or the
 next project becomes `1000_`.
 
-The three axes of `000_common/`:
+The three axes of the common layer:
 
 | Axis | Answers | Nature |
 |---|---|---|
@@ -273,13 +291,13 @@ so merging them is not a fix for anything.
 | Layer | What | Owner | Shared across vaults |
 |---|---|---|---|
 | **Rules** | session schema · promotion gate · the 3 `status` values · doc frontmatter · conflict precedence | `brain/` (this plugin) | yes — one copy for all vaults |
-| **Content** | git/dev/ops strategy · infra facts · knowledge notes · policies · session records | vault `000_common/` + `NNN_<project>/` | no — per vault |
+| **Content** | git/dev/ops strategy · infra facts · knowledge notes · policies · session records | vault common layer + project folders (roots per `.brain-paths`) | no — per vault |
 
 Rule: **a vault `index.md` points at a rule, it never restates one.** An index that repeats a
 threshold, a status set, or a naming rule is a fork waiting to happen — the copy ages, and the
 work downstream follows the aged copy rather than the canon.
 
-Pointer form, as used in `000_common/policies/index.md`:
+Pointer form, as used in the common layer's `policies/index.md`:
 
 ```
 > canonical (identification · IDs · promotion · precedence) =
@@ -311,6 +329,7 @@ table is a finding, not a convenience.
 |---|---|---|
 | Session schema (file-per-session · frontmatter · 3-value status) | `docs/sessions-note-convention.md` | root index · `skills/ss`·`sr` · dreaming |
 | Vault tree, paths, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
+| Tree axis roots (`common_root` · `projects_root` · `tools_root` — keys · defaults · resolver) | `scripts/vault-paths.sh` (values: each vault's `.brain-paths`) | vault-tree · validate · recall · `skills/ss`·`sr` |
 | External ticket system = canonical work queue | PM role statement (`CLAUDE.md`, written by `/brain:init`) | sessions-note-convention |
 | Promotion two-gate judgment (score sum ≥ 3 + verdict enum `promote/already_known/not_durable/unsupported` · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
 | Human sign-off gate for `common/policies/` (agents draft, the user signs) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sh`·`sc` · dreaming |

@@ -12,6 +12,7 @@
 # Manifest: `<vault>/.brain-paths`, `key: value` per line, `#` comments allowed.
 #   common_root:   path relative to the vault root   (default `000_common`)
 #   projects_root: path relative to the vault root   (default `.` — project folders at the root)
+#   tools_root:    path relative to the vault root   (default `999_tools` — machine-global tool inventory)
 # Absent file or absent key = the default, so a vault that never restructured needs no manifest.
 #
 # Portability: macOS stock bash 3.2 + POSIX find/sed/grep. No associative arrays, no mapfile,
@@ -34,12 +35,14 @@ _bp_get() {  # _bp_get <key> <default>
 # an escape hatch for a one-off scan. Unset in normal use, so the manifest is the operative source.
 BRAIN_COMMON_REL="${BRAIN_COMMON_REL:-$(_bp_get common_root 000_common)}"
 BRAIN_PROJECTS_REL="${BRAIN_PROJECTS_REL:-$(_bp_get projects_root .)}"
+BRAIN_TOOLS_REL="${BRAIN_TOOLS_REL:-$(_bp_get tools_root 999_tools)}"
 
 BRAIN_COMMON="$VAULT/$BRAIN_COMMON_REL"
 case "$BRAIN_PROJECTS_REL" in
   .|./) BRAIN_PROJECTS="$VAULT" ;;
   *)    BRAIN_PROJECTS="$VAULT/$BRAIN_PROJECTS_REL" ;;
 esac
+BRAIN_TOOLS="$VAULT/$BRAIN_TOOLS_REL"
 
 # 🔴 Loud, not silent. A missing common root is exactly the failure this file was written for:
 # the scan returns zero notes and every caller reports "no accumulated memory" as if that were
@@ -50,6 +53,15 @@ if [ ! -d "$BRAIN_COMMON" ]; then
 fi
 if [ ! -d "$BRAIN_PROJECTS" ]; then
   echo "vault-paths: projects root not found: $BRAIN_PROJECTS (projects_root=$BRAIN_PROJECTS_REL)" >&2
+fi
+
+# Silent, not loud — the deliberate opposite of the common root above. The tools layer
+# (`999_tools/` by default) is machine-global and git-untracked (vault-tree.md §The tools root):
+# a vault without it is a *legal* state (fresh machine, a teammate's clone), not a broken
+# path, so absence here means "nothing to scan", never "the tree moved under us". A warning
+# would cry wolf on every such vault; consumers test for the empty string and skip.
+if [ ! -d "$BRAIN_TOOLS" ]; then
+  BRAIN_TOOLS=""
 fi
 
 # Project folders, one per line. `NNN_` prefixed, reserved 9xx band excluded (a `999_*` folder

@@ -15,7 +15,7 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
 - **PM (this skill's executor) = reading·detection·judgment + the vault git commit.** Session discovery (`find`) · pending-marker scan (`grep`) · date check (`date`) · user Q&A · **deciding what to record** · **the vault commit (step 7)** are the PM's. (Commit executor = PM — canon: `${CLAUDE_SKILL_DIR}/../../docs/versioning-convention.md`. A commit is not content authorship but a **boundary record**, and it swallows the whole repo, so only the PM — who sees the whole — can do it safely. `scribe` never commits.)
 - **Vault content writes = all delegated to `scribe`.** Park entry · `## To-Do-List` update · frontmatter (`updated`) · knowledge promotion·`knowledge/index.md` — the PM does not write them directly (discipline — recording consistency + main-context economy).
-- **How to delegate**: spawn a subagent with the `Agent` tool and hand it a **writing brief**. What to pass = context (`vault-root` · `project` · session `uid` · today's date) + **what · to which path · with what content**. `scribe` returns the paths·content it recorded.
+- **How to delegate**: spawn a subagent with the `Agent` tool and hand it a **writing brief**. What to pass = context (`vault-root` · `project` · session `uid` · the current local datetime — `YYYY-MM-DDTHH:MM:SS`, what `updated:` stamps take) + **what · to which path · with what content**. `scribe` returns the paths·content it recorded.
 
 ## Hard rule — the sh vs sc boundary
 
@@ -34,23 +34,24 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
 3. **Knowledge promotion (`scribe` delegation, automatic)** (see "Knowledge Promotion" below) — run **before** delegating the park entry. Per the `${CLAUDE_SKILL_DIR}/../_session-shared/knowledge-promotion.md` procedure, **delegate to the `scribe` worker** for **automatic promotion** (`scribe` selects via the two-gate judgment, no approval asked). Put the `→ promoted: [[..]]` backlinks `scribe` returns into the step-4 Learned. (Scope: **knowledge promotion + feedback-counter bumps on the injected notes** (Feedback-counters paragraph below) — `<uid>.md` is delegated separately in step 4.)
 
-   **Policy signature batch** — if `scribe` returns `common-policy candidates`, present **the whole list once** here (knowledge-promotion Step 4) and hand only the approved ones to a follow-up `scribe` brief writing `000_common/policies/`. `common/policies/` is the sole tier no agent may write on its own — **agents draft, the user signs** (`${CLAUDE_SKILL_DIR}/../../docs/knowledge-escalate-convention.md`). No candidates → no prompt; **never ask per item.**
+   **Policy signature batch** — if `scribe` returns `common-policy candidates`, present **the whole list once** here (knowledge-promotion Step 4) and hand only the approved ones to a follow-up `scribe` brief writing the vault common layer's `policies/` (`BRAIN_COMMON/policies` — `.brain-paths`, resolved by `scripts/vault-paths.sh`). `common/policies/` is the sole tier no agent may write on its own — **agents draft, the user signs** (`${CLAUDE_SKILL_DIR}/../../docs/knowledge-escalate-convention.md`). No candidates → no prompt; **never ask per item.**
 
-   **Feedback counters (same delegation — KJP-7)** — the PM extracts the injected-note list from the session's `## Context` recall block (the canonical injected-notes record — `recall.md` §Injection; grep, read-only) and judges **which of those notes were actually used this session**. The brief has `scribe` bump `recalled:` +1 on every injected note and `useful:` +1 on the used subset — Edit-based (+1 on the literal current value; absent field → insert at 1), **once per session**, guarded by the Context counter-marker line. Semantics·marker format·exclusions (`[M]` session lines · `000_common/policies/`) canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. The marker line itself lands in `## Context` through the **step-4** brief (the session file is step 4's scope); if the marker already exists, only the `useful:` top-up applies.
+   **Feedback counters (same delegation — KJP-7)** — the PM extracts the injected-note list from the session's `## Context` recall block (the canonical injected-notes record — `recall.md` §Injection; grep, read-only) and judges **which of those notes were actually used this session**. The brief has `scribe` bump `recalled:` +1 on every injected note and `useful:` +1 on the used subset — Edit-based (+1 on the literal current value; absent field → insert at 1), **once per session**, guarded by the Context counter-marker line. Semantics·marker format·exclusions (`[M]` session lines · the common layer's `policies/` — `BRAIN_COMMON/policies`) canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. The marker line itself lands in `## Context` through the **step-4** brief (the session file is step 4's scope); if the marker already exists, only the `useful:` top-up applies.
 
 4. **Record park entry·To-Do·frontmatter → delegate to `scribe` (one delegation)** — the PM **decides the content**, and **`scribe` writes it**. Insert per the Park Entry Format below at the **top** of `## Progress` (newest on top). Factual, not verbose.
 
    **Writing brief** (hand over as-is):
-   - **Target file**: `<VAULT>/sessions/<uid>.md` (**this file only** — do not modify other vault files)
+   - **Target file**: `<VAULT>/sessions/<uid>.md` (plus, **only when the docs-`history:` bullet below applies**, the project `docs/` documents it names — no other vault files)
    - **`## Progress`**: insert the Park Entry Format block below **at the top** (preserve existing entries, no overwriting). The Learned line includes the step-3 backlinks (`→ promoted: [[..]]`) verbatim.
    - **`## To-Do-List`**: resume actions + the pending markers found in step 2 (Where·What·Who). **If step 5 captured user direction, it goes first.**
    - **`## Context`**: if step 3 bumped feedback counters, append (or extend, via Edit) the counter-marker line at the end of the recall block — format canon: `${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters. Touch nothing else in Context.
-   - **frontmatter**: `updated:` to today, and **flip `status:` to `parked`**. Replace **only the `status:` line inside the frontmatter block** — the body Progress may also contain the string `status:`, so a naive global replace misfires. **Never `done`** — that is `sc`'s alone.
-   - **Return requirement**: the recorded path + the inserted entry heading + the final `status` value.
+   - **frontmatter**: `updated:` to the current local datetime (`YYYY-MM-DDTHH:MM:SS` — canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md` §updated), and **flip `status:` to `parked`**. Replace **only the `status:` line inside the frontmatter block** — the body Progress may also contain the string `status:`, so a naive global replace misfires. **Never `done`** — that is `sc`'s alone.
+   - **Docs `history:` row (only when this session modified a project `docs/` document)**: for each such document, append one row to its frontmatter `history:` — `- {at: <datetime>, change: <one line>, ticket: <related ticket — omit when none>}` (canon: `${CLAUDE_SKILL_DIR}/../../docs/project-docs-convention.md` §history — frontmatter v2's only provenance channel, so a skipped row leaves the edit unattributable; `history.session` is banned, the session uid stays out).
+   - **Return requirement**: the recorded path + the inserted entry heading + the final `status` value + any docs paths that received a `history:` row.
 
 5. **Capture user direction** — if the user gave intent for the next session, put it **at the front of** `## To-Do-List`. User's words > agent analysis. (The PM captures·judges → ships it in the step-4 brief.)
 
-6. **Frontmatter update** — included in the step-4 delegation (`updated:` = today, `status:` → `parked`). The PM does not touch it separately, and never patches `status` with `sed`/redirection — vault content writes belong to `scribe`.
+6. **Frontmatter update** — included in the step-4 delegation (`updated:` = the current local datetime, `status:` → `parked`). The PM does not touch it separately, and never patches `status` with `sed`/redirection — vault content writes belong to `scribe`.
 
 7. **git commit (vault snapshot — commit-only, executor = PM)** — the PM commits directly **after** the step-3·4 `scribe` writes are done (**record → commit order** — committing first leaves the park entry out of the snapshot). The canon for commit executor·timing is versioning-convention — `scribe` never commits (a commit swallows the whole repo, sweeping in other `scribe` workers' unfinished work too — only the PM, who sees the whole, is safe).
 
@@ -105,8 +106,8 @@ Insert at the **top** of `## Progress` (above existing entries). Follow the cano
 **Always** grep the active session files for pending markers **before** settling the `## To-Do-List` content, so nothing slips silently between sessions. **This scan is read-only, so the PM runs it directly.**
 
 ```bash
-# zsh: a glob with no match errors out → enumerate with find
-find "$VAULT/sessions" -maxdepth 1 -name "*.md" ! -name "index.md" 2>/dev/null \
+# zsh: a glob with no match errors out → enumerate with find. index.md/_index.md = folder TOCs, not sessions — exclude both spellings.
+find "$VAULT/sessions" -maxdepth 1 -name "*.md" ! -name "index.md" ! -name "_index.md" 2>/dev/null \
   -exec grep -nH 'USER-COMMENT\|NEEDS USER INPUT\|TODO\|FIXME\|NEEDS CLARIFICATION' {} +
 ```
 

@@ -29,7 +29,9 @@ assert_exit() {    # <desc> <expected> <actual>
 }
 
 # ---------------------------------------------------------------- fixtures
-mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" "$V/013_selftest/docs" \
+mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" \
+         "$V/013_selftest/docs/policy" "$V/013_selftest/docs/adr" \
+         "$V/013_selftest/docs/tech-design" "$V/014_mirror/docs/tech-design" \
          "$V/000_common/facts" "$V/000_common/facts/machines" \
          "$V/000_common/patterns" "$V/000_common/policies" \
          "$V/999_tools"
@@ -55,6 +57,9 @@ printf -- '---\nuid: BAD-20260718-120005\ncreated: 2026-07-18\nstatus: active\n-
   > "$V/sessions/BAD-20260718-120005.md"                            # missing project/updated/writer
 printf -- '# just a body\n' > "$V/sessions/BAD-20260718-120006.md"   # no frontmatter
 printf -- '---\ntitle: sessions index\n---\n' > "$V/sessions/index.md"  # excluded (TOC)
+# _index.md is the same folder-TOC rule under its other name — broken as a session on purpose
+# (no uid/status), so silence can only mean the exclusion held.
+printf -- '---\ntitle: sessions toc\n---\n' > "$V/sessions/_index.md"   # excluded (TOC, _index form)
 
 # Quoted scalars must NOT be false positives (regression: `status: "active"` blocked --strict).
 session QUOTED-20260718-120007 '"QUOTED-20260718-120007"' '"active"'
@@ -117,11 +122,11 @@ printf -- '---\ntitle: tool note citing a session\n---\n[[KJP-20260718-120011]]\
 
 # Session-uid wikilinks on the shared surface. One positive fixture per scan root, so
 # dropping any root from the scope kills a specific assert. Every fixture carries a
-# `title:` so it stays silent for the knowledge-title rule and only the wikilink rule
-# can speak.
-printf -- '---\ntitle: doc with a session link\n---\n[[KJP-20260718-120000]] is the source.\n' \
+# `title:` so it stays silent for the knowledge-title rule, and the docs-tree ones carry
+# `status: draft` so the docs-status rule stays quiet too — only the wikilink rule can speak.
+printf -- '---\nstatus: draft\ntitle: doc with a session link\n---\n[[KJP-20260718-120000]] is the source.\n' \
   > "$V/013_selftest/docs/wl-doc.md"                                   # NNN_*/docs — bare uid
-printf -- '---\ntitle: doc with a path-form link\n---\nsee [[sessions/KJP-20260718-120001]] and [[KJP-20260718-120002|the session]]\n' \
+printf -- '---\nstatus: draft\ntitle: doc with a path-form link\n---\nsee [[sessions/KJP-20260718-120001]] and [[KJP-20260718-120002|the session]]\n' \
   > "$V/013_selftest/docs/wl-path.md"                                  # path prefix + alias form
 printf -- '---\ntitle: knowledge with a session link\nsource_sessions: [KJP-20260718-120003]\n---\nbody cites [[KJP-20260718-120003#Progress]]\n' \
   > "$V/013_selftest/knowledge/wl-know.md"                             # NNN_*/knowledge — heading form
@@ -141,7 +146,7 @@ printf -- '---\ntitle: common root note\n---\ndream report [[20260719-005513]]\n
 #     the key "session" inside "source_sessions" (a knowledge-axis key, legal as plain uid);
 #   · `[[<PREFIX>-ADR-0000N]]` / `[[<ID>]]` are vault-internal doc-to-doc links that
 #     project-docs-convention mandates — they must never be caught by the wikilink rule.
-printf -- '---\ntitle: doc citing sessions correctly\nsource_sessions: [KJP-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
+printf -- '---\nstatus: draft\ntitle: doc citing sessions correctly\nsource_sessions: [KJP-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
   > "$V/013_selftest/docs/wl-plain.md"
 
 # Docs frontmatter v2 (project-docs-convention §frontmatter Standard v2). The session key
@@ -157,6 +162,43 @@ printf -- '---\nstatus: draft\nupdated: 2026-07-28T10:00:00\nhistory:\n  - { at:
 # "no longer written", never a forced rewrite — so none of this may become a finding.
 printf -- '---\nkind: prd\ntitle: legacy doc\nstatus: approved\nupdated: 2026-07-18\nowner: planning\n---\nlegacy body.\n' \
   > "$V/013_selftest/docs/fm-legacy.md"
+
+# Docs frontmatter v2 — coverage extension (status · history subkeys · id · next_id · mirror).
+# status: required on every non-meta docs file; vocabulary = stub|draft|approved|deprecated
+# (doc-catalog.md). Three findings shapes (absent, foreign value, session vocabulary) plus a
+# quoted-scalar pass — the same regression class the session scan already pins.
+printf -- '---\nupdated: 2026-07-28T10:00:00\n---\nbody\n'  > "$V/013_selftest/docs/fm-nostatus.md"
+printf -- '---\nstatus: frozen\n---\nbody\n'                > "$V/013_selftest/docs/fm-badstatus.md"
+printf -- '---\nstatus: active\n---\nbody\n'                > "$V/013_selftest/docs/fm-sessionstatus.md"
+printf -- '---\nstatus: "draft"\n---\nbody\n'               > "$V/013_selftest/docs/fm-quoted.md"
+# v1 history subkeys hide where the top-level key regex cannot see — inside the `- { ... }`
+# inline map and the indented block entry. Both shapes are positive fixtures (date: + by:).
+printf -- '---\nstatus: draft\nhistory:\n  - { date: 2026-07-18, by: koreanjoker, change: adds x }\n  - at: 2026-07-19T10:00:00\n    by: someone\n    change: y\n---\nbody\n' \
+  > "$V/013_selftest/docs/fm-v1hist.md"
+# Verifier bypasses (2026-07-29), both pinned so they stay closed:
+#   · flow-style history keeps its entries in the *value* of the `history:` line itself,
+#     which the entry-line branch never saw; `"by":` doubles as the quoted-key spelling
+#     inside an entry.
+#   · quoted top-level keys (`"session":`) dodged the session ban AND the key collector —
+#     a quoted key is the same key: known ones must register (`"status":` here, or a false
+#     missing-status fires) and unknown ones must still warn (`"kind":`).
+printf -- '---\nstatus: draft\nhistory: [{ at: 2026-07-20T10:00:00, date: 2026-07-18, "by": kim }]\n---\nbody\n' \
+  > "$V/013_selftest/docs/fm-flowhist.md"
+printf -- '---\n"status": draft\n"session": KJP-20260718-120000\n"kind": prd\n---\nbody\n' \
+  > "$V/013_selftest/docs/fm-qsession.md"
+# docs/policy/ · docs/adr/ — body files need `id:` (multi-instance, PM-issued, immutable);
+# their index/_index carry the folder's `next_id:` counter instead. Both folder forms and
+# both index spellings get one fixture each, PASS and FAIL paired.
+printf -- '---\nstatus: draft\nid: KJP-POL-00001\n---\nrule\n' > "$V/013_selftest/docs/policy/KJP-POL-00001.md"
+printf -- '---\nstatus: draft\n---\nrule\n'                    > "$V/013_selftest/docs/policy/KJP-POL-00002.md"  # missing id
+printf -- '---\nnext_id: 3\n---\n'                             > "$V/013_selftest/docs/policy/index.md"          # counter present — quiet
+printf -- '---\nstatus: draft\n---\ndecision\n'                > "$V/013_selftest/docs/adr/KJP-ADR-00001.md"     # missing id
+printf -- '---\ntitle: adr toc\n---\n'                         > "$V/013_selftest/docs/adr/_index.md"            # missing next_id (_index form)
+# API_SPEC mirror contract: `source:` + `readonly: true`. PASS and FAIL live in two projects
+# because the singleton filename can exist only once per docs tree.
+printf -- '---\nstatus: draft\nsource: repo/openapi.yaml\nreadonly: true\nsynced: 2026-07-28T10:00:00\n---\nmirror\n' \
+  > "$V/013_selftest/docs/tech-design/API_SPEC.md"
+printf -- '---\nstatus: draft\n---\nmirror\n' > "$V/014_mirror/docs/tech-design/API_SPEC.md"
 
 # A session note may wikilink other sessions — sessions/ is outside the shared surface
 # and deliberately outside this scan. Otherwise-valid so only the wikilink rule could
@@ -198,9 +240,9 @@ assert_match   "000_common/policies is scanned"              'policies/policies-
 assert_match   "999_tools is scanned (recall mirror)"        '999_tools/tools-no-title.md:1: missing frontmatter key: title'
 
 # session-uid wikilinks on the shared surface — one positive per scan root
-assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:4: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
-assert_match   "docs/: sessions/-prefixed link is caught"    'docs/wl-path.md:4: .*\[\[sessions/KJP-20260718-120001\]\]'
-assert_match   "alias form (uid pipe label) is caught"       'docs/wl-path.md:4: .*\[\[KJP-20260718-120002|the session\]\]'
+assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:5: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
+assert_match   "docs/: sessions/-prefixed link is caught"    'docs/wl-path.md:5: .*\[\[sessions/KJP-20260718-120001\]\]'
+assert_match   "alias form (uid pipe label) is caught"       'docs/wl-path.md:5: .*\[\[KJP-20260718-120002|the session\]\]'
 assert_match   "knowledge/: heading form is caught"          'knowledge/wl-know.md:5: .*\[\[KJP-20260718-120003#Progress\]\]'
 assert_match   "wikilink scan recurses into nested/"         'knowledge/nested/wl-nested.md:4: .*\[\[KJP-20260718-120004\]\]'
 assert_match   "000_common: embed form (bang-link) is caught" 'facts/wl-common.md:4: .*\[\[KJP-20260718-120005\]\]'
@@ -211,20 +253,49 @@ assert_match   "docs fm: inline-map session key is caught"   'fm-session.md:5: s
 assert_match   "docs fm: top-level session key is caught"    'fm-session.md:6: session key in docs frontmatter'
 assert_no_match "docs fm: clean v2 frontmatter passes"       'fm-v2.md'
 assert_no_match "docs fm: legacy keys + date-only updated are never findings" 'fm-legacy.md'
+
+# docs frontmatter — v2 coverage extension: status · history subkeys · id/next_id · mirror
+assert_match   "docs fm: missing status is caught"           'fm-nostatus.md:1: missing frontmatter key: status'
+assert_match   "docs fm: foreign status value is caught"     'fm-badstatus.md:2: invalid docs status "frozen"'
+assert_match   "docs fm: session vocabulary in docs status"  'fm-sessionstatus.md:2: session status "active" used in a docs document'
+assert_no_match "docs fm: quoted status is not a false positive" 'fm-quoted.md'
+assert_match   "docs fm: v1 history date: in inline map"     'fm-v1hist.md:4: v1 history key "date:"'
+assert_match   "docs fm: v1 history by: in inline map"       'fm-v1hist.md:4: v1 history key "by:"'
+assert_match   "docs fm: v1 history by: in block entry"      'fm-v1hist.md:6: v1 history key "by:"'
+assert_match   "docs fm: v1 history date: in flow style"     'fm-flowhist.md:3: v1 history key "date:"'
+assert_match   "docs fm: quoted by: in flow style"           'fm-flowhist.md:3: v1 history key "by:"'
+assert_match   "docs fm: quoted session key is caught"       'fm-qsession.md:3: session key in docs frontmatter'
+assert_no_match "docs fm: quoted status registers as status" 'fm-qsession.md:1: missing frontmatter key: status'
+assert_match   "policy/: missing id is caught"               'policy/KJP-POL-00002.md:1: missing id:'
+assert_match   "adr/: missing id is caught"                  'adr/KJP-ADR-00001.md:1: missing id:'
+assert_no_match "policy/: id present passes"                 'KJP-POL-00001.md'
+assert_match   "adr/: _index.md without next_id is caught"   'adr/_index.md:1: missing next_id:'
+assert_no_match "policy/: index.md with next_id passes"      'policy/index.md'
+assert_match   "API_SPEC mirror: missing source is caught"   '014_mirror/docs/tech-design/API_SPEC.md:1: missing source:'
+assert_match   "API_SPEC mirror: missing readonly is caught" '014_mirror/docs/tech-design/API_SPEC.md:1: API_SPEC mirror without readonly: true'
+assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/tech-design/API_SPEC.md'
+
 SAVED_REPORT="$REPORT"; REPORT="$WARNS"
 assert_match   "docs fm: unknown key warns on stderr"        'fm-legacy.md:2: unknown docs frontmatter key: kind'
 assert_no_match "docs fm: session key is never demoted to a warn" 'session key in docs frontmatter'
+assert_match   "docs fm: date-only updated warns on stderr"  'fm-legacy.md:5: date-only updated'
+assert_match   "docs fm: quoted unknown key still warns"     'fm-qsession.md:4: unknown docs frontmatter key: kind'
+assert_no_match "docs fm: datetime updated never warns"      'fm-v2.md'
+assert_no_match "docs fm: sessions/ placeholder is outside the docs scan" 'sample-session.md'
 REPORT="$SAVED_REPORT"
 
 # quiet cases
 assert_no_match "plain uid + v2 history: template pass"      'wl-plain.md'
 assert_no_match "non-uid wikilinks are not flagged"          'another-note'
-assert_no_match "ADR/policy doc wikilinks are not session uids" 'KJP-\(ADR\|POL\)-0000'
+# Pattern is anchored to the wikilink message — the id/next_id fixtures above legitimately
+# put KJP-ADR/KJP-POL filenames into the findings stream, and must not trip this assert.
+assert_no_match "ADR/policy doc wikilinks are not session uids" 'wikilink on the shared surface: .*KJP-\(ADR\|POL\)'
 assert_no_match "session wikilinks inside sessions/ are legal" 'WL-20260718-120014'
 assert_no_match "clean session note produces no finding"     'CLEAN-20260718-120000'
 assert_no_match "parked is a legal session status"           'PARKED-20260718-120012'
 assert_no_match "quoted scalars are not false positives"     'QUOTED-20260718-12000[78]'
 assert_no_match "sessions/index.md is excluded"              'sessions/index.md'
+assert_no_match "sessions/_index.md is excluded (TOC rule)"  'sessions/_index.md'
 assert_no_match "sample-session.md placeholder is excluded"  'sample-session.md'
 assert_no_match "nested session is out of scope"             'NESTED-20260718-120010'
 assert_no_match "nested knowledge note is out of scope"      'deep-no-title.md'
@@ -240,12 +311,13 @@ assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
 # numbers are asserted (not just "some count"): 15 sessions (12 + 2 dreaming + 1 wikilink
-# fixture); 13 knowledge = 3 project (good + no-title + wl-know; index/0.*/nested excluded)
-# + 3 facts + 1 machines + 1 pattern + 1 policy + 1 common-root note + 3 tools (999_tools,
-# index.md excluded);
-# 20 shared = 6 docs + 7 knowledge (all meta files and nested/ included — no exclusions on
-# this surface) + 7 under 000_common; 6 docs = the same 6 files counted again by the docs
-# frontmatter scan (wl-doc · wl-path · wl-plain · fm-session · fm-v2 · fm-legacy).
+# fixture; index/_index/sample excluded); 13 knowledge = 3 project (good + no-title +
+# wl-know; index/0.*/nested excluded) + 3 facts + 1 machines + 1 pattern + 1 policy
+# + 1 common-root note + 3 tools (999_tools, index.md excluded);
+# 34 shared = 20 docs-tree files (19 under 013 + the 014_mirror API_SPEC — no exclusions on
+# this surface) + 7 knowledge + 7 under 000_common; 20 docs = the same docs-tree files
+# counted again by the docs frontmatter scan (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 ·
+# adr/ 2 — index/_index counted here: meta files skip rules, not the scan).
 # 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: 999_tools
 # raises the knowledge count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
@@ -254,7 +326,7 @@ assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 # The old scan named `{facts,patterns,policies}` and so silently skipped notes sitting at the
 # common root — a gap, not a rule. Measured on the real beafter vault: every other count is
 # byte-identical before and after (19 sessions, 102 knowledge, 321 shared, 24 issues).
-assert_match   "scanned counts appear in the summary"        '(15 sessions, 13 knowledge, 20 shared, 6 docs)'
+assert_match   "scanned counts appear in the summary"        '(15 sessions, 13 knowledge, 34 shared, 20 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -302,6 +374,14 @@ REPORT="$(/bin/bash "$VALIDATE" "$G")"
 assert_match "knowledge scan survives glob metachars in vault path" 'glob-no-title.md'
 rm -rf "$GP"
 
+# env seam: BRAIN_TOOLS_REL overrides manifest/default, the same contract as BRAIN_COMMON_REL.
+# Pointing it at a folder that does not exist empties the tools root *silently* — the
+# 999_tools fixture drops out of the knowledge scan, nothing warns, every other scan survives.
+REPORT="$(BRAIN_TOOLS_REL=no-such-tools /bin/bash "$VALIDATE" "$V" 2>&1)"
+assert_no_match "BRAIN_TOOLS_REL override drops the tools root" 'tools-no-title.md'
+assert_no_match "an absent tools override stays silent"         'no-such-tools'
+assert_match    "other scans survive the tools override"        'facts/facts-no-title.md'
+
 # empty vault: no files at all — must not blow up, and must show a zero scan count
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/sessions"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
@@ -316,8 +396,12 @@ rm -rf "$E"
 R="$(mktemp -d -t brain-selftest-restructured)"
 mkdir -p "$R/sessions" "$R/_primary/patterns" "$R/_primary/_company/machines" \
          "$R/projects/013_restructured/knowledge" "$R/projects/013_restructured/docs" \
-         "$R/999_Archive" "$R/_templates/machines"
-printf -- 'common_root: _primary\nprojects_root: projects\n'  > "$R/.brain-paths"
+         "$R/999_Archive" "$R/_templates/machines" "$R/gear"
+printf -- 'common_root: _primary\nprojects_root: projects\ntools_root: gear\n' > "$R/.brain-paths"
+# tools_root moves the tools layer like the other two axes — a no-title note under gear/
+# pins that the manifest key is followed (the default 999_tools is pinned by the main vault).
+# gear/ raises only the knowledge count: the tools layer is never on the shared surface.
+printf -- '---\nkind: fact\n---\n'     > "$R/gear/rs-tools-no-title.md"
 printf -- '---\nkind: pattern\n---\n'  > "$R/_primary/patterns/rs-pattern-no-title.md"
 printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/machines/rs-nested-no-title.md"
 printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/_index.md"        # excluded (meta)
@@ -333,17 +417,36 @@ assert_match    "restructured: common root under _primary is scanned"   'rs-patt
 assert_match    "restructured: nested common subtree is scanned"        'rs-nested-no-title.md'
 assert_match    "restructured: projects/ NNN_* knowledge is scanned"    'rs-know-no-title.md'
 assert_match    "restructured: docs frontmatter scan follows the manifest" 'rs-fm-session.md:4: session key in docs frontmatter'
+assert_match    "restructured: manifest tools_root is followed"         'rs-tools-no-title.md:1: missing frontmatter key: title'
 assert_no_match "restructured: _index.md is excluded (meta rule)"       '_index.md'
 assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-title.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 3 knowledge, 5 shared, 1 docs)'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 4 knowledge, 5 shared, 1 docs)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
 printf -- 'common_root: nope\n' > "$R/.brain-paths"
 REPORT="$(/bin/bash "$VALIDATE" "$R" 2>&1)"
 assert_match    "missing common root warns on stderr"                   'common root not found'
 rm -rf "$R"
+
+# the real 2026-07 tree: `common_root: org`, a folder holding only an `_index.md` TOC, and no
+# tools root at all. The tools layer is machine-global and git-untracked, so a vault without
+# it is a *legal* state — absence must be silent (no warning, unlike the common root) and must
+# not collapse any other scan.
+R2="$(mktemp -d -t brain-selftest-org)"
+mkdir -p "$R2/sessions" "$R2/org/patterns" "$R2/org/empty-axis"
+printf -- 'common_root: org\n' > "$R2/.brain-paths"
+printf -- '---\nkind: pattern\n---\n'   > "$R2/org/patterns/org-no-title.md"
+printf -- '---\ntitle: axis toc\n---\n' > "$R2/org/empty-axis/_index.md"     # excluded (meta)
+REPORT="$(/bin/bash "$VALIDATE" "$R2" 2>&1)"; rc=$?
+assert_exit     "org vault: exits 0" 0 "$rc"
+assert_match    "org vault: common root under org/ is scanned"          'org-no-title.md:1: missing frontmatter key: title'
+assert_no_match "org vault: _index-only folder stays quiet"             'empty-axis'
+assert_no_match "org vault: absent tools root is silent (legal state)"  '999_tools'
+assert_no_match "org vault: no missing-root warning at all"             'not found'
+assert_match    "org vault: counts"                                     '(0 sessions, 1 knowledge, 2 shared, 0 docs)'
+rm -rf "$R2"
 
 # usage errors exit 2 (documented separately from the findings exit codes)
 /bin/bash "$VALIDATE" > /dev/null 2>&1;                  assert_exit "no argument exits 2" 2 $?
