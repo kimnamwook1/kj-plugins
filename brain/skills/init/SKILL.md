@@ -61,7 +61,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    vault-root: <absolute path>
    ```
 
-   **`## Router`** — one line for each of the 8 docs below (trigger + path). Point every line at the stable symlink `$HOME/.claude/brain-docs/<doc>.md` — **never** at the plugin install path. The symlink is created and refreshed on every SessionStart by `hooks/hooks.json`, so it tracks the plugin wherever it lives; a hard-coded install path dies on the next version bump or repo move.
+   **`## Router`** — one line for each of the 9 docs below (trigger + path). Point every line at the stable symlink `$HOME/.claude/brain-docs/<doc>.md` — **never** at the plugin install path. The symlink is created and refreshed on every SessionStart by `hooks/hooks.json`, so it tracks the plugin wherever it lives; a hard-coded install path dies on the next version bump or repo move.
 
    🔴 **Expand the home directory literally.** `CLAUDE.local.md` is read as plain text by the harness — `~` and `$HOME` are **not** guaranteed to expand. Resolve the real home at init time (`echo "$HOME"`) and write the expanded absolute path, e.g. `/Users/<user>/.claude/brain-docs/vault-tree.md`:
    - `vault-tree.md` — when wondering about the vault tree, paths, or naming conventions
@@ -72,6 +72,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - `knowledge-escalate-convention.md` — knowledge promotion gate and scoring
    - `memory-control-convention.md` — Handoff format, recall, scribe governance
    - `versioning-convention.md` — vault git commit discipline
+   - `git-convention.md` — commit type vocabulary (11 types), surface notation, branch/worktree naming
 
    Also include the vault paths, **resolved through the vault's `.brain-paths` manifest at init time** (resolver `${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh` — step 4 writes the manifest; the Router is plain text, so write the resolved absolute paths, never the variable names): `<vault-root>/sessions/` (sessions) · `<BRAIN_PROJECTS>/<NNN>_<project>/knowledge/` (knowledge) · `<BRAIN_PROJECTS>/<NNN>_<project>/docs/` (documents).
 
