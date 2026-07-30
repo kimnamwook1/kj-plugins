@@ -139,6 +139,16 @@ done < <(brain_projects)
 # empty = the folder is absent, a legal state (machine-global, git-untracked), skipped silently —
 # unlike the common root, whose absence is loud.
 [ -n "$BRAIN_TOOLS" ] && KDIRS[${#KDIRS[@]}]="$BRAIN_TOOLS"
+# The candidates pool (`<vault>/candidates/`) — promotion candidates awaiting the gate
+# (vault-tree.md §Tree axes). Root-fixed, so no manifest key resolves it (same class as
+# sessions/ — vault-paths.sh manifests only the axes that move between vaults). recall excludes
+# the pool BY DESIGN (unvalidated candidates must not prime sessions — recall.md), so this root
+# is a deliberate divergence from the recall mirror: a parked note is one file move from the
+# common layer, and a broken one would otherwise surface only at promotion time. Same lint,
+# same meta exclusions, same -maxdepth 1 (the pool is flat — promotion is a move, not a tree).
+# Absence is legal (a vault that never parked a candidate) and silent. The shared-surface scan
+# below does not take this root — scope extends on decision, not by drift.
+[ -d "$VAULT/candidates" ] && KDIRS[${#KDIRS[@]}]="$VAULT/candidates"
 
 : > "$LIST"
 # An empty array expanded under `set -u` is an unbound-variable error in bash 3.2 — guard it.

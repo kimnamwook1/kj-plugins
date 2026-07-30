@@ -10,9 +10,12 @@ session Learned  ──(scribe, realtime)──▶  <project>/knowledge/
 
 ## common/patterns/ Promotion
 ```
-<project>/knowledge/  ──(Dreaming, batch)──▶  common/patterns/
+<project>/knowledge/  ──(Dreaming, gate pass)───────────────────────▶  common layer (topic folder)
+<project>/knowledge/  ──(Dreaming, gate miss + cross-project value)──▶  candidates/
+candidates/           ──(later gate pass — one file move)───────────▶  common layer
 ```
-- **Stage 2 (batch, Dreaming)**: a `scribe` worker that sees only one session cannot spot cross-recurrence. Dreaming, which sees the whole, elevates project knowledge recurring across ≥3 projects up to `common/patterns/` (actual root per the vault's `.brain-paths` manifest — [[vault-tree]]).
+- **Stage 2 (batch, Dreaming)**: a `scribe` worker that sees only one session cannot spot cross-recurrence. Dreaming, which sees the whole, elevates project knowledge recurring across ≥3 projects up to the common layer (`patterns/` is the default example; actual root & topic-folder freedom — [[vault-tree]] §The common layer).
+- **`candidates/` waypoint (design confirmed 2026-07-30)** — the gate and scoring are unchanged; only the destinations are routed. **Gate pass → the common layer directly** (no forced stop in the pool). **Gate miss but visible cross-project value → `candidates/`** (vault root — layer canon: [[vault-tree]] §The candidates layer), where the note waits instead of staying invisible in one project's folder. A later Dreaming run re-judges the pool with the same gate; **promotion out of the pool is one file move** — a topic folder for facts/patterns, a `*policies*` folder for norms (which keeps the signature gate below). A candidate primes nothing until promoted — the recall exclusion is canonical in [[vault-tree]].
 
 ## common/facts/ Promotion
 ```
@@ -25,7 +28,7 @@ environment facts  ──(direct / auto-derived)──▶  common/facts/
 org-wide binding norm (external mandate OR self-imposed invariant)  ──(draft=agent / signature=user)──▶  common/policies/
 ```
 - **Policies**: **not** promotion **on the patterns/knowledge axis** — accumulated advice (patterns) does not become obligation (policies). They are set directly by decision, origin-agnostic (an external mandate like a law/regulation, or a self-imposed org-wide invariant); the transcription path from such a norm is the next item.
-- **Human sign-off gate (canon: this section)** — **no agent writes `common/policies/` on its own. Agents draft; the user signs.** A candidate that reads as obligation is still recorded on its normal tier (project `knowledge/` — nothing is lost) and **additionally returned as a `common-policy candidates` list**; the calling skill presents the list **in one batch** at the promotion point (`skills/sh`·`sc` · dreaming §7), and only approved items get a follow-up `scribe` brief writing to `common/policies/`. **Never interrupt per item.**
+- **Human sign-off gate (canon: this section)** — **no agent writes the common layer's normative axis (`*policies*` folders — identification: [[vault-tree]] §The common layer) on its own. Agents draft; the user signs.** A candidate that reads as obligation is still recorded on its normal tier (project `knowledge/` — nothing is lost) and **additionally returned as a `common-policy candidates` list**; the calling skill presents the list **in one batch** at the promotion point (`skills/sh`·`sc` · dreaming §7), and only approved items get a follow-up `scribe` brief writing to `common/policies/`. **Never interrupt per item.** The gate is destination-bound, not origin-bound: a note leaving `candidates/` for a `*policies*` folder passes this same draft=agent / signature=user gate — the file move happens only after the signature.
 - **Why only policies**: they sit at the top of Document Conflict Precedence (`docs/project-docs-convention.md`), so one wrong entry silently overrides every other document. Project `knowledge/` · `facts/` · `patterns/` keep the **automatic** two-gate judgment unchanged (`skills/_session-shared/knowledge-promotion.md`).
 
 ## docs/adr/

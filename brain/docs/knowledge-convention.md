@@ -35,7 +35,7 @@ Promotion used to be one-way: nothing fed back whether recalled knowledge actual
 - **Who updates**: `sh`/`sc` only, inside their existing scribe delegation. The PM reads the session's `## Context` recall block (the canonical injected-notes record — `recall.md` §Injection), judges which notes were actually used, and briefs scribe to bump `recalled:` on every injected note and `useful:` on the used subset.
 - **Edit-based (+1 on the literal current value)**: `recalled: 2` → `recalled: 3` via `Edit` — the `old_string` is a compare-and-swap, so a concurrent bump fails loudly instead of losing a count. Absent field → insert the line with value 1 (anchor on an existing frontmatter line, e.g. `status:`).
 - **Once per session — marker-guarded.** scribe appends one marker line at the end of the session's recall block: `<!-- counters: recalled@YYYY-MM-DD · useful: <note-basename>, … -->`. Marker present ⇒ `recalled:` is already counted for this session (never re-bumped — parks repeat, injection happened once). A later `sh`/`sc` may still **top-up `useful:`** for notes newly judged used and not yet in the marker's list — scribe extends the marker line with the same Edit discipline.
-- **Scope**: note paths in the recall block (`[K]`·`[C]`·`[X]` lines) — **except the common layer's `policies/`** (`common/policies` — actual root per the vault's `.brain-paths` manifest, [[vault-tree]]), the signature tier no agent writes, counters included (`knowledge-escalate-convention`; a policies note is simply not counted). `[M]` lines point at **session files, not notes** — never counted, never marked.
+- **Scope**: note paths in the recall block (`[K]`·`[C]`·`[X]` lines) — **except the common layer's normative axis** (`*policies*` directory segments — identification canon: [[vault-tree]] §The common layer), the signature tier no agent writes, counters included (`knowledge-escalate-convention`; a policies note is simply not counted). `[M]` lines point at **session files, not notes** — never counted, never marked.
 - 🔴 **No automatic deletion from counters — ever.** A low `useful`/`recalled` ratio has exactly two consequences: **ranking demotion** (the ranker's W_CONFIDENCE term is `useful`-based, so unhelpful notes sink on their own) and a **Dreaming rewrite·merge-candidate flag** (proposal only — dreaming §1). It never deletes, deprecates, or auto-archives a note — a note can sit at `useful: 0` for years and still be the one that prevents a production incident.
 
 ## Item-level provenance — `source_items:` (KJP-9)
@@ -45,6 +45,15 @@ Promotion used to be one-way: nothing fed back whether recalled knowledge actual
 - **Fallback — pre-existing notes have no `source_items`** (none in the vault carried it at introduction). A note without the field can only be matched at **uid granularity** via `source_sessions`; item-level comparison and item-level suppression are **not possible** for it — any scan consuming this field must know that and say so, not guess (dreaming §3 states the consequence).
 
 ## `common/` = 3 Axes (origin, lifespan, and trust model each differ)
+
+Layer flow — locations are canon in [[vault-tree]] (§The common layer owns the `*policies*` identification · §The candidates layer, the pool):
+
+```
+<project>/knowledge/  ─▶  candidates/ (cross-project candidate pool — pre-gate)  ─▶  common layer (facts = topic folder · norms = *policies* folder)
+```
+
+- The three axes below are **conceptual**; on disk only the norms axis is identified structurally (a `*policies*` directory segment — canon: [[vault-tree]]). Every other common-layer folder is a free topic folder on the facts tier, and the `facts/`·`patterns/`·`policies/` columns are the default example, not required folder names.
+- **`candidates/` notes use this same note form** — no separate schema; the path is the state. Gate & routing: [[knowledge-escalate-convention]].
 
 | | A. `facts/` (facts) | B. `patterns/` (distilled lessons) | C. `policies/` (norms) |
 |---|---|---|---|

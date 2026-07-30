@@ -116,7 +116,7 @@ Brain-to-harness mapping (the design-consistency anchor):
 
 # 5. Periodically
 /brain:dreaming  # batch consolidation — dedup proposals, staleness flags, second-stage
-                 # promotion to common/patterns, structure audits, recall-layer refresh
+                 # promotion (common layer · candidates/ pool), structure audits, recall-layer refresh
 ```
 
 ## Schema check (`scripts/validate.sh`)
@@ -186,18 +186,21 @@ Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — the sum
 
 ```
 <vault-root>/
-  000_common/            # cross-project knowledge
+  000_common/            # cross-project knowledge (folders below = default example — topics
+                         # are free; only a *policies* directory segment is structural: norms)
     facts/               #   environment facts incl. machines/ (measured, not remembered)
     patterns/            #   distilled cross-project lessons (promoted by Dreaming)
     policies/            #   org-wide norms (mandatory; wins document conflicts)
     dream-log.md         #   incremental baseline for the next Dreaming run
+  candidates/            # cross-project promotion pool — pre-gate; excluded from recall
   NNN_<project>/         # one folder per project (NNN = 001–899 project band, slug = identity)
     index.md             #   project hub — pointer index + project PREFIX
     knowledge/           #   project-scoped reusable knowledge (semantic, atomic notes)
     docs/                #   official docs — tech-design/ · adr/ · research/ · business/
                          #   policy/ · feature/<F>/ (FRD · TDC — diagrams live in its
                          #   §Diagrams — · feature policies)
-  999_tools/             # machine-global tool inventory — git-untracked, 9xx = reserved band
+  999_tools/             # machine-global tool inventory — opt-in (onboard step 6) ·
+                         # git-untracked, 9xx = reserved band
     tool-{mcp,skill,cli,plugin}.md
   sessions/
     <uid>.md             # one file per session (episodic); uid = PREFIX-YYYYMMDD-HHMMSS
@@ -215,13 +218,17 @@ the tools root (`999_tools/` by default) is *machine* scope ("true of this box, 
 you opened"). Keeping tool inventories on the vault axis gave
 N vaults N diverging copies of one truth — measured 2026-07-25, the same `tool-mcp.md` was 31KB in
 one vault and 3KB in another. `machines/` stays under `facts/`: machine *configuration* is a vault
-fact (which boxes this vault's work runs on), machine *tool surface* is not.
+fact (which boxes this vault's work runs on), machine *tool surface* is not. The tools root is
+**opt-in** — created only by `/brain:onboard` step 6 on machines that want inventories; absence
+is legal and scanners skip it silently.
 
 The `9xx` band is reserved for vault infrastructure and is **never** allocated to a project — the
 `[0-9]*_*` glob matches it, so anything computing the next project number must exclude it or the
 next project becomes `1000_`.
 
-The three axes of the common layer:
+The three *conceptual* axes of the common layer — on disk only a `*policies*` directory segment
+is structural (norms); every other folder is a free topic folder, and the names below are the
+default example (canon: `docs/vault-tree.md`):
 
 | Axis | Answers | Nature |
 |---|---|---|

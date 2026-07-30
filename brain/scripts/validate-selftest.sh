@@ -34,7 +34,7 @@ mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" \
          "$V/013_selftest/docs/tech-design" "$V/014_mirror/docs/tech-design" \
          "$V/000_common/facts" "$V/000_common/facts/machines" \
          "$V/000_common/patterns" "$V/000_common/policies" \
-         "$V/999_tools"
+         "$V/999_tools" "$V/candidates/nested"
 
 session() {  # <basename> <uid> <status>
   printf -- '---\nuid: %s\nproject: selftest\ncreated: 2026-07-18\nupdated: 2026-07-18\nstatus: %s\nwriter: nwkim\n---\n\n## Goal\n' \
@@ -119,6 +119,19 @@ printf -- '---\ntitle: MCP inventory\n---\n'    > "$V/999_tools/tool-mcp.md"
 printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/index.md"   # excluded (meta) — same rule as knowledge/
 printf -- '---\ntitle: tool note citing a session\n---\n[[KJP-20260718-120011]]\n' \
   > "$V/999_tools/wl-tools.md"
+
+# candidates/ — the vault-root promotion-candidate pool (vault-tree.md §Tree axes). IN scope for
+# the knowledge-title lint (same rule, same meta exclusions, -maxdepth 1 — the pool is flat:
+# promotion is a file move, not a tree), while recall excludes the pool by design — this lint is
+# exactly how a broken candidate gets caught before promotion time. wl-cand.md pins that the pool
+# stays OFF the shared-surface wikilink scan (extend on decision, not by drift); its quiet assert
+# is not vacuous because the no-title fixture proves the folder is scanned at all.
+printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/cand-no-title.md"
+printf -- '---\ntitle: a titled candidate\n---\n' > "$V/candidates/cand-good.md"
+printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/index.md"    # excluded (meta)
+printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/nested/cand-deep-no-title.md"  # out of scope
+printf -- '---\ntitle: candidate citing a session\n---\n[[KJP-20260718-120015]]\n' \
+  > "$V/candidates/wl-cand.md"
 
 # Session-uid wikilinks on the shared surface. One positive fixture per scan root, so
 # dropping any root from the scope kills a specific assert. Every fixture carries a
@@ -238,6 +251,7 @@ assert_match   "000_common/facts/machines is scanned"        'machines/machine-n
 assert_match   "000_common/patterns is scanned"              'patterns/patterns-no-title.md:1: missing frontmatter key: title'
 assert_match   "000_common/policies is scanned"              'policies/policies-no-title.md:1: missing frontmatter key: title'
 assert_match   "999_tools is scanned (recall mirror)"        '999_tools/tools-no-title.md:1: missing frontmatter key: title'
+assert_match   "candidates/ pool is scanned (title lint)"    'candidates/cand-no-title.md:1: missing frontmatter key: title'
 
 # session-uid wikilinks on the shared surface — one positive per scan root
 assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:5: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
@@ -308,12 +322,19 @@ assert_no_match "999_tools index.md is excluded (meta rule)" '999_tools/index.md
 # The load-bearing one for the scope split: 999_tools is gitignored, so it is NOT the shared
 # surface and a session wikilink there is legal. Adding it to SDIRS makes this line fire.
 assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
+assert_no_match "titled candidate note is quiet"             'cand-good.md'
+assert_no_match "candidates/index.md is excluded (meta rule)" 'candidates/index.md'
+assert_no_match "nested candidate is out of scope"           'cand-deep-no-title.md'
+# Scope decision, same shape as the 999_tools split: candidates/ is the title lint only —
+# adding it to SDIRS makes this line fire.
+assert_no_match "candidates/ is outside the shared-surface scan" 'wl-cand.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
 # numbers are asserted (not just "some count"): 15 sessions (12 + 2 dreaming + 1 wikilink
-# fixture; index/_index/sample excluded); 13 knowledge = 3 project (good + no-title +
+# fixture; index/_index/sample excluded); 16 knowledge = 3 project (good + no-title +
 # wl-know; index/0.*/nested excluded) + 3 facts + 1 machines + 1 pattern + 1 policy
-# + 1 common-root note + 3 tools (999_tools, index.md excluded);
+# + 1 common-root note + 3 tools (999_tools, index.md excluded) + 3 candidates
+# (cand-good + cand-no-title + wl-cand; index/nested excluded);
 # 34 shared = 20 docs-tree files (19 under 013 + the 014_mirror API_SPEC — no exclusions on
 # this surface) + 7 knowledge + 7 under 000_common; 20 docs = the same docs-tree files
 # counted again by the docs frontmatter scan (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 ·
@@ -321,12 +342,15 @@ assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 # 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: 999_tools
 # raises the knowledge count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
+# candidates/ follows the same asymmetry for its own reason: title lint only (a broken candidate
+# must be caught before promotion), while the shared count not moving pins that it stayed off
+# the shared-surface scan — its scope extends on decision, not by drift.
 # The common-root note (`wl-dreaming.md`) counts from the vault-paths change on: the common
 # layer is scanned recursively now, because its sub-axes are not the same shape in every vault.
 # The old scan named `{facts,patterns,policies}` and so silently skipped notes sitting at the
 # common root — a gap, not a rule. Measured on the real beafter vault: every other count is
 # byte-identical before and after (19 sessions, 102 knowledge, 321 shared, 24 issues).
-assert_match   "scanned counts appear in the summary"        '(15 sessions, 13 knowledge, 34 shared, 20 docs)'
+assert_match   "scanned counts appear in the summary"        '(15 sessions, 16 knowledge, 34 shared, 20 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -396,12 +420,16 @@ rm -rf "$E"
 R="$(mktemp -d -t brain-selftest-restructured)"
 mkdir -p "$R/sessions" "$R/_primary/patterns" "$R/_primary/_company/machines" \
          "$R/projects/013_restructured/knowledge" "$R/projects/013_restructured/docs" \
-         "$R/999_Archive" "$R/_templates/machines" "$R/gear"
+         "$R/999_Archive" "$R/_templates/machines" "$R/gear" "$R/candidates"
 printf -- 'common_root: _primary\nprojects_root: projects\ntools_root: gear\n' > "$R/.brain-paths"
 # tools_root moves the tools layer like the other two axes — a no-title note under gear/
 # pins that the manifest key is followed (the default 999_tools is pinned by the main vault).
 # gear/ raises only the knowledge count: the tools layer is never on the shared surface.
 printf -- '---\nkind: fact\n---\n'     > "$R/gear/rs-tools-no-title.md"
+# candidates/ stays at the vault root even when every manifest axis moves — root-fixed by
+# design, no candidates_root key (vault-paths.sh manifests only the axes that move between
+# vaults; same class as sessions/). This fixture pins that the scan ignores the manifest.
+printf -- '---\nkind: candidate\n---\n' > "$R/candidates/rs-cand-no-title.md"
 printf -- '---\nkind: pattern\n---\n'  > "$R/_primary/patterns/rs-pattern-no-title.md"
 printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/machines/rs-nested-no-title.md"
 printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/_index.md"        # excluded (meta)
@@ -418,11 +446,12 @@ assert_match    "restructured: nested common subtree is scanned"        'rs-nest
 assert_match    "restructured: projects/ NNN_* knowledge is scanned"    'rs-know-no-title.md'
 assert_match    "restructured: docs frontmatter scan follows the manifest" 'rs-fm-session.md:4: session key in docs frontmatter'
 assert_match    "restructured: manifest tools_root is followed"         'rs-tools-no-title.md:1: missing frontmatter key: title'
+assert_match    "restructured: root-fixed candidates pool is scanned"   'rs-cand-no-title.md:1: missing frontmatter key: title'
 assert_no_match "restructured: _index.md is excluded (meta rule)"       '_index.md'
 assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-title.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 4 knowledge, 5 shared, 1 docs)'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 knowledge, 5 shared, 1 docs)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
 printf -- 'common_root: nope\n' > "$R/.brain-paths"

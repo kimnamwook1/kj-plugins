@@ -14,6 +14,12 @@ Each of the 4 source scans (structure unchanged — same find roots, same exclus
 #   - `index.md` / `_index.md` = folder TOCs, either spelling (not recall targets).
 #   - `0.*`       = `0.`-prefixed meta logs — currently `0.rejected.md` (reject-log, canonical: knowledge-promotion.md).
 # Dropping any one of them leaks: the un-excluded name slips straight into the candidate set.
+#
+# Declared OUT of scope, by choice: the vault-root `candidates/` pool — promotion candidates that
+# have not passed the gate yet (layer canon: docs/vault-tree.md §Tree axes). It is not a scan root
+# below and must not become one: priming a session with unvalidated candidates is exactly what the
+# pool exists to prevent. Promotion (one file move into the common layer) is what makes a note
+# recallable. Same pattern as validate.sh's declared-uncovered list — a decision, not an oversight.
 
 RECALL_N="${RECALL_N:-8}"                                    # injection cap N (default 8; tune via env). See "## ranker".
 : "${GOAL:?recall: set GOAL to the session goal string (the ss goal — drives the overlap term)}"
@@ -58,9 +64,9 @@ emit() {
   find "$PROJDIR/knowledge" -maxdepth 1 -name '*.md' ! -name 'index.md' ! -name '_index.md' ! -name '0.*' 2>/dev/null | while read -r f; do
     t=$(fm "$f" title); [ -n "$t" ] && emit K "$f" "$t"
   done
-  # 2) [C] common (facts + patterns + policies) + machine-global tools — knowledge above the current project:
+  # 2) [C] the common layer (topic-free sub-axes — any `*policies*` directory = the normative tier) + machine-global tools — knowledge above the current project:
   #    Both roots come from the vault's `.brain-paths` manifest (vault-paths.sh) — the common layer (`common_root` → BRAIN_COMMON) and the machine-scope tools root (`tools_root` → BRAIN_TOOLS; canonical tree: docs/vault-tree.md).
-  #    policies = the normative axis (top priority on document conflicts — docs/project-docs-convention.md) → high recall value, so scan it on par with facts and patterns.
+  #    `*policies*` = the normative axis (top priority on document conflicts — docs/project-docs-convention.md) → high recall value, so it ranks above the rest of the common layer (emit's C branch).
   #    The tools root (tool-mcp/skill/cli/plugin) is IN scope, at the facts tier — emit's C branch gives it sec=3, since it is descriptive inventory, not a norm. Ground:
   #      a) It preserves measured behavior. Those 4 notes lived in the common layer's facts tier and were already scanned here; KJP-44 moved a folder on the
   #         scope-of-truth axis, and did not decide to stop priming tool facts. Dropping them would be an unvoted capability regression.
@@ -134,7 +140,7 @@ The pipeline scores every candidate with a fixed integer weighted sum, sorts des
 
 | Weight | Term (normalized 0–100) | Computation | Source |
 |---|---|---|---|
-| **W_SECTION 10** | section axis | `sec*20` — M=5 · C-policies=4 · C-facts/patterns/tools=3 · K=2 · X=1, then ±1 by `type:` (gotcha/decision > lesson > reference), clamped 1..5 | source prefix + `type:` |
+| **W_SECTION 10** | section axis | `sec*20` — M=5 · C-`*policies*`=4 · C-other/tools=3 · K=2 · X=1, then ±1 by `type:` (gotcha/decision > lesson > reference), clamped 1..5 | source prefix + `type:` |
 | **W_CONFIDENCE 5** | net-help feedback | `min(useful,10)*10` — the `useful:` feedback counter (sessions that actually used the note; bumped by `sh`/`sc`, canon `docs/knowledge-convention.md` §Feedback counters — KJP-7); field absent (pre-KJP-7 note) = 0 | `useful:` |
 | **W_OVERLAP 4** | goal overlap | `overlap_count*100/goal_tokens` — distinct goal tokens (≥2 chars) present in title+Trigger | `$GOAL` ↔ `title:`/`## Trigger` |
 | **W_PRIORITY 1** | priority | `min(prio,5)*20` — if present; else 0 | `priority:` |
@@ -149,7 +155,7 @@ From the **ranked top-N** above (A), you may add each note's `related:` neighbor
 
 ## Injection
 The ranker's **top-N** (default 8) **is** the recall set — no manual re-picking, no re-ordering. Emit each item on its own line with its **source path** (reduces memory hallucination and staleness); the ranker already puts direct goal matches and Mistakes (M) up top. If the ranked set is empty, quietly move on with "no relevant accumulated memory (fresh vault)".
-- **On a policies (C) conflict**: `common/policies/` is the normative axis — when it contradicts facts or patterns, **policies wins** (`docs/project-docs-convention.md` §Document Conflict Precedence). If you spot a contradiction, do not silently pick one — call it out in the recall block.
+- **On a policies (C) conflict**: the common layer's `*policies*` directories are the normative axis — when one contradicts a non-policies note, **policies wins** (`docs/project-docs-convention.md` §Document Conflict Precedence). If you spot a contradiction, do not silently pick one — call it out in the recall block.
 - **New session (`ss`)**: add as a recall block to `## Context`. **This block doubles as the session's canonical injected-notes record** (each line already carries its source path — no separate list is kept): `sh`/`sc` read it to bump the injected notes' `recalled:`/`useful:` feedback counters (canon: `docs/knowledge-convention.md` §Feedback counters).
 - **Resume (`sr`)**: present recall **together with** the resume summary (live context priming). Do not overwrite the session note's `## Context`. (Feedback counters count injection **once per session** — the resume re-presentation is screen-only and extends neither the injected-notes record nor any counter.)
-> Marker: `<!-- recall: recall.md · K+common(facts/patterns/policies)+tools(BRAIN_TOOLS)+cross+Mistake · index/_index/0.* excluded · deterministic weighted-sum ranker (S10/C5/O4/P1/rec0.5 · C=useful feedback) · top-N cap · 1-hop related · source paths · Context block = injected-notes record · graphify first -->`
+> Marker: `<!-- recall: recall.md · K+common(topic-free·*policies* normative)+tools(BRAIN_TOOLS)+cross+Mistake · candidates/ excluded by design · index/_index/0.* excluded · deterministic weighted-sum ranker (S10/C5/O4/P1/rec0.5 · C=useful feedback) · top-N cap · 1-hop related · source paths · Context block = injected-notes record · graphify first -->`

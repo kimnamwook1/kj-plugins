@@ -11,7 +11,7 @@
 ```
 <Vault root>/
   index.md                           
-  000_common/                            # cross-project knowledge — the common root (common_root)
+  000_common/                            # cross-project knowledge — the common root (common_root). Subfolders = default example; topics are free, only *policies* is structural (§The common layer)
     index.md
     facts/                           #   A. environment facts — created/updated by onboard step 6 from live measurement
       index.md
@@ -23,6 +23,7 @@
     policies/                        #   C. org-wide binding norms (every project; origin-agnostic)
       COMPLIANCE.md                   
     dream-log.md                     #   Dreaming run log — incremental baseline for the next dream
+  candidates/                        # cross-project promotion pool — pre-gate, vault root direct (§The candidates layer). Outside every recall scan
   NNN_<project>/                   # per project (number = sort order, identifier is the slug) — under projects_root (default: the vault root)
     index.md                         # = project hub; record the project prefix here
     knowledge/                       # reusable knowledge scoped to this project (semantic)
@@ -51,7 +52,7 @@
           FRD.md
           TDC.md                     # prose sections + §Diagrams (absorbed the former DATA_FLOW·SEQUENCE·STATE_DIAGRAM files)
           policy/                    # rules that apply to this feature only (path = tier: feature)
-  999_tools/                         # machine-global tool inventory — the tools root (tools_root) · git-untracked. Reserved band (see below)
+  999_tools/                         # machine-global tool inventory — the tools root (tools_root) · opt-in (onboard step 6) · git-untracked. Reserved band (see below)
     index.md
     tool-mcp.md                      #   MCP server inventory
     tool-skill.md                    #   skill inventory
@@ -63,12 +64,32 @@
     assets/                          # (optional) shared raw images & video
 ```
 
-## The tools root (`999_tools/` by default) — machine-global, not vault-scoped
+## The common layer — topics are free; only `*policies*` is structural
+
+🔴 **Canonical home of the normative-axis identification rule** — every consumer points here, none restates it.
+
+The common layer's subfolders are **free-form topic folders**; the diagram's `facts/`·`patterns/`·`policies/` split is the default example, not a location canon. Exactly one thing is structural:
+
+- **Norms (the policies tier)** = any note whose path contains a **directory segment whose name contains `policies`** — glob `*/*policies*/*`. Segment-contains, not exact-name: measured 2026-07-27, a restructured vault split `policies/` into `org_policies/{compliance,secret_management,service_operation}/` and an exact-match glob silently demoted every policy note to the facts tier. The recall ranker already matches this way (`skills/_session-shared/recall.md`, sec=4) — this section promotes that measured behavior to canon. A file merely named `…policies….md` does not match; the segment must be a directory.
+- **Everything else = the facts tier** — descriptive, non-binding, organized by whatever topics the vault likes. Recall scans the common layer recursively and ranks every non-`*policies*` note on the facts tier.
+
+A restructured common layer is legal as-is — e.g. the techtainment vault today (measured 2026-07-30): `common_root: org` with five topic folders `about · machines · networks · org_policies · platforms`. What the *conceptual* axes mean (facts vs patterns vs policies) stays canonical in `knowledge-convention.md`; this section owns only how the normative axis is identified on disk.
+
+## The candidates layer (`candidates/`) — promotion pool, recall-excluded
+
+`<vault-root>/candidates/`, directly at the root — the pool of **cross-project lesson candidates**: notes with visible value beyond their source project that have not passed the promotion gate (gates & routing: `knowledge-escalate-convention.md`). The legacy `learned/` folder is this layer under its old name — the concept is absorbed here, and a vault still carrying `learned/` renames it to `candidates/`.
+
+- **Note format = the knowledge note format** (`knowledge-convention.md`) — no separate schema. **The path is the state**, the same "path = tier" principle as everywhere else in this tree: a candidate is an ordinary knowledge note standing in a different place.
+- **Promotion = one file move.** `candidates/<note>.md` → the common layer: a topic folder for facts/patterns, a `*policies*` folder for norms (identification rule above). Nothing is rewritten at the move. The policies destination keeps the human sign-off gate — draft=agent / signature=user (`knowledge-escalate-convention.md`).
+- 🔴 **Never scanned by recall.** An unverified candidate that primes a session has in effect been promoted without passing the gate — the layer would be pointless. `candidates/` sits outside every recall scan root by construction ([K] project knowledge · [C] common + tools roots · [X] project band — `skills/_session-shared/recall.md`), and it stays out on purpose: adding it is a canon change, not a tuning knob.
+
+## The tools root (`999_tools/` by default) — machine-global, opt-in, not vault-scoped
 
 **The axis is scope of truth, and the root is what separates it.** The common root (`000_common/` by default) means "common to every project *in this vault*"; the tools root (`999_tools/` by default) means "true of *this machine*, whatever vault you opened". Tool inventories are the second kind — they describe `~/.claude/**`, which no vault owns.
 
+- **Opt-in — not required vault structure.** The tools layer is a machine-local option: it is **excluded from the `/brain:init` required scaffold**, and only a machine that wants inventories creates it, via `/brain:onboard` step 6 (at `tools_root`, `999_tools/` by default — the `.gitignore` entry is still registered before the first write). **Absence is legal and silent**: the resolver (`scripts/vault-paths.sh`) resolves a missing tools root to the empty string with no warning — deliberately the opposite of the loud missing common root — and every consumer skips the scan.
 - **Why it was split out (measured 2026-07-25).** Two vaults on one machine each recorded the same tool surface under their own common layer's `facts/`, and the copies diverged by an order of magnitude (`tool-mcp.md` 31KB vs 3KB). Storing a machine-global fact on a vault-scoped axis makes N vaults into N conflicting inventories, and nothing can arbitrate them — each is "correct" for its own scope.
-- **Git-untracked.** The contents are machine-local, so they never belong on the shared surface (`versioning-convention.md` §Share scope). A teammate pulling your MCP list gets a fact about *your* laptop. Registered in the vault's `.gitignore` at `/brain:init` — **before** `/brain:onboard` step 6 first populates it, because a gitignore added after the first commit does not un-commit anything.
+- **Git-untracked.** The contents are machine-local, so they never belong on the shared surface (`versioning-convention.md` §Share scope). A teammate pulling your MCP list gets a fact about *your* laptop. Registered in the vault's `.gitignore` at creation — by whoever creates the layer (`/brain:onboard` step 6), **before** the first write populates it, because a gitignore added after the first commit does not un-commit anything.
 - **Populated by measurement only** — `/brain:onboard` step 6, never by hand and never from memory.
 
 **Why `machines/` stays in the common layer's `facts/`.** Machine *configuration* is a vault fact (which boxes this vault's work runs on — one note per machine, and a vault legitimately spans several); tool *surface* is machine-global (what is installed on the box you are typing on right now). One is a roster the vault keeps, the other is the state of one machine — different scopes, so different homes.
