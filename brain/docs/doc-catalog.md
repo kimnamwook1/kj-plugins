@@ -5,7 +5,7 @@
 > - **Naming = abbreviation + full name, everywhere a document is titled** — this table's Document column and every stub H1: `# PRD (Product Requirements Doc — 제품 요구사항)`.
 > - **tier = universal (baseline)**: laid down by default for any non-trivial project.
 > - **tier = situational**: created only when the trigger actually occurs.
-> - Location conventions: project-wide = `docs/` · **per-feature = `docs/feature/<F>/`** (feature lives **under** docs) · reusable knowledge = `knowledge/` · project hub = root `index.md` (an existing `_index.md` is recognized as its equal — [[vault-tree]]) · shared across all projects = `common/`. (Structure & naming canon: [[vault-tree]])
+> - Location conventions: project-wide = `docs/` · **per-feature = `docs/feature/<F>/`** (feature lives **under** docs) · reusable knowledge = `knowledge/` · project hub = root `_index.md` (a legacy `index.md` is recognized as its equal — [[vault-tree]]) · shared across all projects = `common/`. (Structure & naming canon: [[vault-tree]])
 > - **owner = a PM routing label — not a frontmatter field.** It is the brief-routing *default*, and **this table is its only original** (re-judged by the PM at brief time — [[project-docs-convention]] §deleted fields). The label names a brief, not a resident agent — spawn defaults to `worker`; only code-implementation documents get `coder`.
 > - **The owner column feeds the brief's DoD** — the PM writes "update document X" into the DoD of the brief the owner label routes ([[project-docs-convention]] §Rules that outlived their fields).
 > - **kind = a vocabulary label in this table — not a frontmatter field either.** Derivation canon: [[project-docs-convention]] §kind ← path matrix (the sole copy — never restate it here).
@@ -18,7 +18,7 @@
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **Project hub** | `project` | pm | root `index.md` | Once at onboarding. **One-line definition + PREFIX + TOC pointers only** — no content prose (index.md pointer principle, [[vault-tree]]) | universal |
+| **Project hub** | `project` | pm | root `_index.md` | Once at onboarding. **One-line definition + PREFIX + TOC pointers only** — no content prose (`_index.md` pointer principle, [[vault-tree]]) | universal |
 
 **Tech-design documents** — the 5 marked ★stub are pre-created at project creation ([[project-docs-convention]]); the rest are created on trigger
 

@@ -135,8 +135,9 @@ Exit codes: `0` clean or warn-only · `1` findings under `--strict` · `2` usage
 (missing/unknown argument, root not a directory, `mktemp` failure). `2` is a *broken run*,
 not a clean one — CI should treat it as failure in both modes.
 
-What it checks — **sessions** (`sessions/*.md`, top level only; `index.md` and the
-`sample-session.md` schema placeholder excluded, since neither is a session): the six required
+What it checks — **sessions** (`sessions/*.md`, top level only; the folder TOC —
+`_index.md`, legacy `index.md` — and the
+`sample-session.md` schema placeholder excluded, since none is a session): the six required
 frontmatter keys (`uid` `project` `created` `updated` `status` `writer` — `updated` carries a
 full `YYYY-MM-DDTHH:MM:SS` local datetime; date-only = legacy-legal, format canon
 `docs/sessions-note-convention.md`), `uid` matching
@@ -148,7 +149,7 @@ common layer's `{facts,patterns,policies}/`, and of the tools root — all roots
 the vault's `.brain-paths` manifest (`scripts/vault-paths.sh`; the tree under *The vault* below
 shows the defaults): `title:` present. Subdirectories
 are not scanned, matching the flat scan in
-`skills/_session-shared/recall.md`, which also supplies the `index.md` + `0.*` meta exclusion —
+`skills/_session-shared/recall.md`, which also supplies the `_index.md`/`index.md` + `0.*` meta exclusion —
 with one surgical exception, the common layer's `facts/machines/`, added as an explicit scan root
 (one note per machine, which recall reads). This scan is the recall mirror, so it tracks recall's
 roots exactly; the tools root is here because recall scans it as a `[C]` source.
@@ -194,7 +195,7 @@ Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — the sum
     dream-log.md         #   incremental baseline for the next Dreaming run
   candidates/            # cross-project promotion pool — pre-gate; excluded from recall
   NNN_<project>/         # one folder per project (NNN = 001–899 project band, slug = identity)
-    index.md             #   project hub — pointer index + project PREFIX
+    _index.md            #   project hub — pointer index + project PREFIX
     knowledge/           #   project-scoped reusable knowledge (semantic, atomic notes)
     docs/                #   official docs — tech-design/ · adr/ · research/ · business/
                          #   policy/ · feature/<F>/ (FRD · TDC — diagrams live in its
@@ -300,11 +301,11 @@ so merging them is not a fix for anything.
 | **Rules** | session schema · promotion gate · the 3 `status` values · doc frontmatter · conflict precedence | `brain/` (this plugin) | yes — one copy for all vaults |
 | **Content** | git/dev/ops strategy · infra facts · knowledge notes · policies · session records | vault common layer + project folders (roots per `.brain-paths`) | no — per vault |
 
-Rule: **a vault `index.md` points at a rule, it never restates one.** An index that repeats a
+Rule: **a vault folder TOC (`_index.md`; legacy `index.md`) points at a rule, it never restates one.** An index that repeats a
 threshold, a status set, or a naming rule is a fork waiting to happen — the copy ages, and the
 work downstream follows the aged copy rather than the canon.
 
-Pointer form, as used in the common layer's `policies/index.md`:
+Pointer form, as used in the common layer's `policies/_index.md`:
 
 ```
 > canonical (identification · IDs · promotion · precedence) =
@@ -327,7 +328,7 @@ exactly one canonical place**; every other document points at it ("canonical: X"
 restating it. The Dreaming drift-lint periodically scans for restatements and contradictions
 against this map.
 
-**Scope: this map binds vault scaffolds too** — `index.md` files and any other generated vault
+**Scope: this map binds vault scaffolds too** — `_index.md` files (and legacy `index.md`) and any other generated vault
 text are documents for drift-lint purposes. Every canonical home below is a plugin doc, and per
 the ownership boundary no vault path can become one; a vault file restating a value in this
 table is a finding, not a convenience.

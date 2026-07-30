@@ -48,13 +48,14 @@ Creates a session in the vault as a **single file**. A session is a self-contain
    if [ -z "$PROJDIR" ]; then
      PROJDIR="$BRAIN_PROJECTS/$(brain_next_project_num)_<project>"   # always NNN_-prefixed. Plain names forbidden.
    fi
-   [ -d "$PROJDIR/knowledge" ] && [ -f "$PROJDIR/index.md" ] && echo OK || echo NEEDS_SCRIBE
+   # hub TOC = _index.md (canonical); a legacy index.md is its equal — accept either (vault-tree.md)
+   [ -d "$PROJDIR/knowledge" ] && { [ -f "$PROJDIR/_index.md" ] || [ -f "$PROJDIR/index.md" ]; } && echo OK || echo NEEDS_SCRIBE
    ```
    > The `printf '%03d'` above is **for computing a variable** (not a file write) — no redirection. Computation is a read, so the PM may do it.
 
    **(b) If `NEEDS_SCRIBE`, delegate to `scribe`** — writing brief (what the PM decides and hands over):
    - `vault-root`: `<VAULT>` · `project`: `<project>` · the resolved `PROJDIR` path (the `NNN_<project>` computed above).
-   - What to create: directory `<PROJDIR>/knowledge/` · file `<PROJDIR>/index.md` (only if missing; content = project hub — one-line definition + `PREFIX: <value>` + table-of-contents pointers only, canon `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md` §Project hub). The PM confirms the PREFIX value with the user and puts it in the brief (suggested default = uppercase abbreviation of the project slug).
+   - What to create: directory `<PROJDIR>/knowledge/` · file `<PROJDIR>/_index.md` (only if missing — a legacy `<PROJDIR>/index.md` counts as the hub, never create `_index.md` beside it; content = project hub — one-line definition + `PREFIX: <value>` + table-of-contents pointers only, canon `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md` §Project hub). The PM confirms the PREFIX value with the user and puts it in the brief (suggested default = uppercase abbreviation of the project slug).
    - **Idempotent** — if it already exists, `scribe` does nothing (no overwriting).
    - Use the path `scribe` returns as `PROJDIR` for the later steps.
 
@@ -67,7 +68,7 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 2. **Write the session file** — **uid minting·field collection = PM (reads), the file Write is delegated to `scribe`.**
 
    **(a) PM — uid mint + field collection (read-only):**
-   - **PREFIX** — Read the project prefix recorded in the project hub `<PROJDIR>/index.md`. If missing, confirm with the user and include writing it into the hub in the (b) brief.
+   - **PREFIX** — Read the project prefix recorded in the project hub `<PROJDIR>/_index.md` (or the legacy `<PROJDIR>/index.md`, where that is the hub). If missing, confirm with the user and include writing it into the hub in the (b) brief.
    - **uid = `<PREFIX>-YYYYMMDD-HHMMSS`** (canon: sessions-note-convention):
    ```bash
    uid="<PREFIX>-$(date +%Y%m%d-%H%M%S)"

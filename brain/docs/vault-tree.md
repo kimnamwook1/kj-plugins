@@ -1,6 +1,6 @@
 # Vault Tree
 
-`index.md` must act as a pointer index — a table of contents only. An existing `_index.md` is recognized as its equal — same folder-TOC role, underscore form (scanners exclude both as TOC, not notes — `scripts/vault-paths.sh` `brain_find_notes`).
+The folder TOC is **`_index.md`** — it must act as a pointer index, a table of contents only. A legacy `index.md` is recognized as its equal — same folder-TOC role, pre-flip spelling (decision 2026-07-30); never create `_index.md` beside an existing one (scanners exclude both as TOC, not notes — `scripts/vault-paths.sh` `brain_find_notes`).
 
 ## Tree axes — the manifest decides; the diagram is the default
 
@@ -10,11 +10,11 @@
 
 ```
 <Vault root>/
-  index.md                           
+  _index.md                          
   000_common/                            # cross-project knowledge — the common root (common_root). Subfolders = default example; topics are free, only *policies* is structural (§The common layer)
-    index.md
+    _index.md
     facts/                           #   A. environment facts — created/updated by onboard step 6 from live measurement
-      index.md
+      _index.md
       organization.md                #     organization info (interview)
       user.md                        #     user — preferences & conventions
       machines/                      #     one note per machine (<hostname>.md — lowercase-kebab; OS, key tools)
@@ -25,15 +25,15 @@
     dream-log.md                     #   Dreaming run log — incremental baseline for the next dream
   candidates/                        # cross-project promotion pool — pre-gate, vault root direct (§The candidates layer). Outside every recall scan
   NNN_<project>/                   # per project (number = sort order, identifier is the slug) — under projects_root (default: the vault root)
-    index.md                         # = project hub; record the project prefix here
+    _index.md                        # = project hub; record the project prefix here
     knowledge/                       # reusable knowledge scoped to this project (semantic)
-      index.md
+      _index.md
       *.md                           
     docs/                            # official documents
-      index.md
+      _index.md
       MILESTONE.md                   # NOT pre-created — "when what" phased delivery plan, docs/ root (a planning/ folder only if a 2nd planning doc appears)
       tech-design/                   # pre-created stubs = the 5 below marked ★
-        index.md
+        _index.md
         PRD.md                       # ★ + §비기능 요구(NFR) · §용어(Glossary)
         ARCHITECTURE.md              # ★ + §데이터 모델(ERD) · §외부 연동(Integrations) — split a section out only when it grows heavy
         CODE_CONVENTION.md           # ★ + §테스트 규율 (project-wide test discipline)
@@ -53,13 +53,13 @@
           TDC.md                     # prose sections + §Diagrams (absorbed the former DATA_FLOW·SEQUENCE·STATE_DIAGRAM files)
           policy/                    # rules that apply to this feature only (path = tier: feature)
   999_tools/                         # machine-global tool inventory — the tools root (tools_root) · opt-in (onboard step 6) · git-untracked. Reserved band (see below)
-    index.md
+    _index.md
     tool-mcp.md                      #   MCP server inventory
     tool-skill.md                    #   skill inventory
     tool-cli.md                      #   CLI inventory
     tool-plugin.md                   #   plugin inventory
   sessions/                          # outside the team share (NNN_*/ + 000_common); committing it is a per-vault choice
-    index.md                         # session table of contents
+    _index.md                        # session table of contents
     <uid>.md                         # session = one file (episodic). uid = PROJECT_PREFIX-YYYYMMDD-HHMMSS
     assets/                          # (optional) shared raw images & video
 ```
@@ -121,4 +121,4 @@ The bands are a default-layout property — there the common root (`000`) and va
   - this canon gap is why two vaults stored one machine under divergent case/schema.
 - **multi-word filenames = `UPPER_SNAKE`**
   - `THREAT_MODEL.md` · `CODE_CONVENTION.md` · `API_SPEC.md`
-- **folder index = `index.md`** — an existing `_index.md` is recognized as its equal
+- **folder index = `_index.md`** — a legacy `index.md` is recognized as its equal (never both in one folder)

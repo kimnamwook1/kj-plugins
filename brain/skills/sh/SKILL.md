@@ -14,7 +14,7 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 ## Executor and write boundary (must-read)
 
 - **PM (this skill's executor) = reading·detection·judgment + the vault git commit.** Session discovery (`find`) · pending-marker scan (`grep`) · date check (`date`) · user Q&A · **deciding what to record** · **the vault commit (step 7)** are the PM's. (Commit executor = PM — canon: `${CLAUDE_SKILL_DIR}/../../docs/versioning-convention.md`. A commit is not content authorship but a **boundary record**, and it swallows the whole repo, so only the PM — who sees the whole — can do it safely. `scribe` never commits.)
-- **Vault content writes = all delegated to `scribe`.** Park entry · `## To-Do-List` update · frontmatter (`updated`) · knowledge promotion·`knowledge/index.md` — the PM does not write them directly (discipline — recording consistency + main-context economy).
+- **Vault content writes = all delegated to `scribe`.** Park entry · `## To-Do-List` update · frontmatter (`updated`) · knowledge promotion·`knowledge/_index.md` — the PM does not write them directly (discipline — recording consistency + main-context economy).
 - **How to delegate**: spawn a subagent with the `Agent` tool and hand it a **writing brief**. What to pass = context (`vault-root` · `project` · session `uid` · the current local datetime — `YYYY-MM-DDTHH:MM:SS`, what `updated:` stamps take) + **what · to which path · with what content**. `scribe` returns the paths·content it recorded.
 
 ## Hard rule — the sh vs sc boundary
@@ -57,7 +57,7 @@ description: Park (suspend) a work session — not closure. Unconditionally park
 
    - **Command**: `git -C "$VAULT" add -- <paths…> && git -C "$VAULT" commit -q -m "<message>"`
      - **Stage only the paths this session wrote — `git add -A` is forbidden.** One vault is shared by concurrent sessions of other projects; `-A` sweeps their in-flight work into this session's commit under this session's message.
-     - **The pathspec = what the scribes returned** — the step-4 session file `<VAULT>/sessions/<uid>.md` + the step-3 promoted note paths + `<project>/knowledge/index.md`·`0.rejected.md` when touched + the step-3 counter-bumped note paths (these may sit outside `<project>/` — `[C]`/`[X]` notes). If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
+     - **The pathspec = what the scribes returned** — the step-4 session file `<VAULT>/sessions/<uid>.md` + the step-3 promoted note paths + `<project>/knowledge/_index.md`·`0.rejected.md` when touched + the step-3 counter-bumped note paths (these may sit outside `<project>/` — `[C]`/`[X]` notes). If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
      - **Leave every other dirty file dirty** — do not stage, stash, or revert anything outside that list, however unrelated-looking the diff. It is another session's unfinished work.
      - **Read `git -C "$VAULT" status --porcelain` before staging.** If dirty files reach beyond this session's own paths, say so in step 8 (`N files dirty across M directories — staged only this session's`) and stage from the pathspec anyway. A report, not a gate — never block the park on it.
      - If none of those paths changed, **do not commit** (no empty commits). If the vault is not a git repo, skip quietly and mention it in step 8.

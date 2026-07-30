@@ -130,10 +130,10 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 ## ID Issuance (shared by multi-instance documents: POL · ADR …)
 
 - **Format `<PREFIX>-<TYPE>-0000N`** (project PREFIX · document TYPE · 5-digit serial).
-- **Issuer = the PM, in advance.** Read the **frontmatter `next_id`** of that type's folder TOC — `index.md` first; where absent, an existing `_index.md` is recognized as its equal — assign +1, then update `next_id`. Workers never pick their own numbers (collisions under concurrent work).
+- **Issuer = the PM, in advance.** Read the **frontmatter `next_id`** of that type's folder TOC — `_index.md` first; where absent, a legacy `index.md` is recognized as its equal — assign +1, then update `next_id`. Workers never pick their own numbers (collisions under concurrent work).
 - **Verification = Dreaming** — detects duplicates, gaps, and regressions in batch and **reports** them.
 - **Dreaming never issues IDs**
-- **`next_id` home = that type's folder `index.md`** (absent → an existing `_index.md` is its equal — folder-TOC equivalence: [[vault-tree]]) — POL: `<project>/docs/policy/index.md`, ADR: `<project>/docs/adr/index.md`.
+- **`next_id` home = that type's folder `_index.md`** (absent → a legacy `index.md` is its equal — folder-TOC equivalence: [[vault-tree]]) — POL: `<project>/docs/policy/_index.md`, ADR: `<project>/docs/adr/_index.md`.
 - **ADRs are collected in `docs/adr/` — never placed in feature folders.** Why: ① ADRs that **attach to no feature** — stack choices, infra decisions — would have nowhere to go ② when a feature is scrapped, its decision record gets buried with it — an ADR is standalone evidence of "why we decided this" and outlives the feature ③ `docs/policy/` already has the same shape (single per-project sequence + its own folder), so the ID issuance rule stays unified.
 - If an ADR relates to a feature, reference it from that feature's `FRD`·`TDC` via a `[[<PREFIX>-ADR-0000N]]` wikilink. **Never move the file into the feature folder.**
 

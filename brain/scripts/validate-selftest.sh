@@ -56,10 +56,12 @@ session BAD-20260718-120013    BAD-20260718-120013    cancel        # retired vo
 printf -- '---\nuid: BAD-20260718-120005\ncreated: 2026-07-18\nstatus: active\n---\n' \
   > "$V/sessions/BAD-20260718-120005.md"                            # missing project/updated/writer
 printf -- '# just a body\n' > "$V/sessions/BAD-20260718-120006.md"   # no frontmatter
-printf -- '---\ntitle: sessions index\n---\n' > "$V/sessions/index.md"  # excluded (TOC)
-# _index.md is the same folder-TOC rule under its other name — broken as a session on purpose
-# (no uid/status), so silence can only mean the exclusion held.
-printf -- '---\ntitle: sessions toc\n---\n' > "$V/sessions/_index.md"   # excluded (TOC, _index form)
+printf -- '---\ntitle: sessions toc\n---\n' > "$V/sessions/_index.md"   # excluded (TOC, canonical form)
+# index.md is the legacy spelling of the same folder-TOC rule (canon flip 2026-07-30:
+# _index.md canonical, index.md recognized as its equal) — kept as the legacy fixture that
+# pins both spellings. Broken as a session on purpose (no uid/status), so silence can only
+# mean the exclusion held.
+printf -- '---\ntitle: sessions index\n---\n' > "$V/sessions/index.md"  # excluded (TOC, legacy form)
 
 # Quoted scalars must NOT be false positives (regression: `status: "active"` blocked --strict).
 session QUOTED-20260718-120007 '"QUOTED-20260718-120007"' '"active"'
@@ -92,7 +94,7 @@ printf -- '---\nuid: DRM-20260719-005514\nproject:\nsession_type: dreaming\ncrea
 # single directory from the scan scope kills a specific assert.
 printf -- '---\ntype: gotcha\ntitle: a real title\n---\n' > "$V/013_selftest/knowledge/good.md"
 printf -- '---\ntype: gotcha\nuid: X\n---\n' > "$V/013_selftest/knowledge/no-title.md"
-printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/index.md"      # excluded (meta)
+printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/_index.md"     # excluded (meta)
 printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/0.rejected.md" # excluded (meta)
 printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/nested/deep-no-title.md"  # out of scope
 printf -- '---\nkind: fact\n---\n'    > "$V/000_common/facts/facts-no-title.md"
@@ -116,7 +118,7 @@ printf -- '---\ntitle: a titled fact\n---\n' > "$V/000_common/facts/misc-x.md"
 # knowledge/ subfolder, which this folder deliberately does not have.
 printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/tools-no-title.md"
 printf -- '---\ntitle: MCP inventory\n---\n'    > "$V/999_tools/tool-mcp.md"
-printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/index.md"   # excluded (meta) — same rule as knowledge/
+printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/_index.md"  # excluded (meta) — same rule as knowledge/
 printf -- '---\ntitle: tool note citing a session\n---\n[[KJP-20260718-120011]]\n' \
   > "$V/999_tools/wl-tools.md"
 
@@ -128,7 +130,7 @@ printf -- '---\ntitle: tool note citing a session\n---\n[[KJP-20260718-120011]]\
 # is not vacuous because the no-title fixture proves the folder is scanned at all.
 printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/cand-no-title.md"
 printf -- '---\ntitle: a titled candidate\n---\n' > "$V/candidates/cand-good.md"
-printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/index.md"    # excluded (meta)
+printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/_index.md"   # excluded (meta)
 printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/nested/cand-deep-no-title.md"  # out of scope
 printf -- '---\ntitle: candidate citing a session\n---\n[[KJP-20260718-120015]]\n' \
   > "$V/candidates/wl-cand.md"
@@ -200,13 +202,14 @@ printf -- '---\nstatus: draft\nhistory: [{ at: 2026-07-20T10:00:00, date: 2026-0
 printf -- '---\n"status": draft\n"session": KJP-20260718-120000\n"kind": prd\n---\nbody\n' \
   > "$V/013_selftest/docs/fm-qsession.md"
 # docs/policy/ · docs/adr/ — body files need `id:` (multi-instance, PM-issued, immutable);
-# their index/_index carry the folder's `next_id:` counter instead. Both folder forms and
-# both index spellings get one fixture each, PASS and FAIL paired.
+# their _index/index carry the folder's `next_id:` counter instead. Both folder forms and
+# both TOC spellings get one fixture each, PASS and FAIL paired — canonical `_index.md`
+# passes, the legacy `index.md` fixture pins that the old spelling is still checked.
 printf -- '---\nstatus: draft\nid: KJP-POL-00001\n---\nrule\n' > "$V/013_selftest/docs/policy/KJP-POL-00001.md"
 printf -- '---\nstatus: draft\n---\nrule\n'                    > "$V/013_selftest/docs/policy/KJP-POL-00002.md"  # missing id
-printf -- '---\nnext_id: 3\n---\n'                             > "$V/013_selftest/docs/policy/index.md"          # counter present — quiet
+printf -- '---\nnext_id: 3\n---\n'                             > "$V/013_selftest/docs/policy/_index.md"         # counter present — quiet (canonical form)
 printf -- '---\nstatus: draft\n---\ndecision\n'                > "$V/013_selftest/docs/adr/KJP-ADR-00001.md"     # missing id
-printf -- '---\ntitle: adr toc\n---\n'                         > "$V/013_selftest/docs/adr/_index.md"            # missing next_id (_index form)
+printf -- '---\ntitle: adr toc\n---\n'                         > "$V/013_selftest/docs/adr/index.md"             # missing next_id (legacy form)
 # API_SPEC mirror contract: `source:` + `readonly: true`. PASS and FAIL live in two projects
 # because the singleton filename can exist only once per docs tree.
 printf -- '---\nstatus: draft\nsource: repo/openapi.yaml\nreadonly: true\nsynced: 2026-07-28T10:00:00\n---\nmirror\n' \
@@ -283,8 +286,8 @@ assert_no_match "docs fm: quoted status registers as status" 'fm-qsession.md:1: 
 assert_match   "policy/: missing id is caught"               'policy/KJP-POL-00002.md:1: missing id:'
 assert_match   "adr/: missing id is caught"                  'adr/KJP-ADR-00001.md:1: missing id:'
 assert_no_match "policy/: id present passes"                 'KJP-POL-00001.md'
-assert_match   "adr/: _index.md without next_id is caught"   'adr/_index.md:1: missing next_id:'
-assert_no_match "policy/: index.md with next_id passes"      'policy/index.md'
+assert_match   "adr/: legacy index.md without next_id is caught" 'adr/index.md:1: missing next_id:'
+assert_no_match "policy/: _index.md with next_id passes"     'policy/_index.md'
 assert_match   "API_SPEC mirror: missing source is caught"   '014_mirror/docs/tech-design/API_SPEC.md:1: missing source:'
 assert_match   "API_SPEC mirror: missing readonly is caught" '014_mirror/docs/tech-design/API_SPEC.md:1: API_SPEC mirror without readonly: true'
 assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/tech-design/API_SPEC.md'
@@ -308,22 +311,22 @@ assert_no_match "session wikilinks inside sessions/ are legal" 'WL-20260718-1200
 assert_no_match "clean session note produces no finding"     'CLEAN-20260718-120000'
 assert_no_match "parked is a legal session status"           'PARKED-20260718-120012'
 assert_no_match "quoted scalars are not false positives"     'QUOTED-20260718-12000[78]'
-assert_no_match "sessions/index.md is excluded"              'sessions/index.md'
 assert_no_match "sessions/_index.md is excluded (TOC rule)"  'sessions/_index.md'
+assert_no_match "sessions/index.md is excluded (legacy TOC)" 'sessions/index.md'
 assert_no_match "sample-session.md placeholder is excluded"  'sample-session.md'
 assert_no_match "nested session is out of scope"             'NESTED-20260718-120010'
 assert_no_match "nested knowledge note is out of scope"      'deep-no-title.md'
-assert_no_match "knowledge index.md is excluded"             'knowledge/index.md'
+assert_no_match "knowledge _index.md is excluded"            'knowledge/_index.md'
 assert_no_match "knowledge 0.* meta file is excluded"        '0.rejected.md'
 assert_no_match "titled knowledge note produces no finding"  'knowledge/good.md'
 assert_no_match "000_common facts note with title is quiet"  'misc-x.md'
 assert_no_match "999_tools note with title is quiet"         'tool-mcp.md'
-assert_no_match "999_tools index.md is excluded (meta rule)" '999_tools/index.md'
+assert_no_match "999_tools _index.md is excluded (meta rule)" '999_tools/_index.md'
 # The load-bearing one for the scope split: 999_tools is gitignored, so it is NOT the shared
 # surface and a session wikilink there is legal. Adding it to SDIRS makes this line fire.
 assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
 assert_no_match "titled candidate note is quiet"             'cand-good.md'
-assert_no_match "candidates/index.md is excluded (meta rule)" 'candidates/index.md'
+assert_no_match "candidates/_index.md is excluded (meta rule)" 'candidates/_index.md'
 assert_no_match "nested candidate is out of scope"           'cand-deep-no-title.md'
 # Scope decision, same shape as the 999_tools split: candidates/ is the title lint only —
 # adding it to SDIRS makes this line fire.
@@ -333,7 +336,7 @@ assert_no_match "candidates/ is outside the shared-surface scan" 'wl-cand.md'
 # numbers are asserted (not just "some count"): 15 sessions (12 + 2 dreaming + 1 wikilink
 # fixture; index/_index/sample excluded); 16 knowledge = 3 project (good + no-title +
 # wl-know; index/0.*/nested excluded) + 3 facts + 1 machines + 1 pattern + 1 policy
-# + 1 common-root note + 3 tools (999_tools, index.md excluded) + 3 candidates
+# + 1 common-root note + 3 tools (999_tools, _index.md excluded) + 3 candidates
 # (cand-good + cand-no-title + wl-cand; index/nested excluded);
 # 34 shared = 20 docs-tree files (19 under 013 + the 014_mirror API_SPEC — no exclusions on
 # this surface) + 7 knowledge + 7 under 000_common; 20 docs = the same docs-tree files
