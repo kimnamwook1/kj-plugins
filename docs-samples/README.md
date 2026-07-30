@@ -34,7 +34,7 @@ updated: 2026-07-25T12:00:00
 |---|---|
 | `FRD.md` | — (what) |
 | `TDC.md` | DATA_FLOW · SEQUENCE · STATE_DIAGRAM → §Diagrams (how) |
-| `POLICY-sample.md` | — (기능 한정 규칙) |
+| `policy/VDN-POL-00001.md` | — (기능 한정 규칙) |
 
 ## 표기 규칙
 - H1 = 약어 + 풀네임 병기: `PRD (Product Requirements Doc — 제품 요구사항)`
