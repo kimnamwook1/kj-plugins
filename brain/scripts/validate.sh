@@ -265,10 +265,13 @@ done < "$LIST" >> "$OUT"
 #     vocabulary only; the kind ← path derivation matrix stays in project-docs-convention.
 #   · `updated:` not YYYY-MM-DDTHH:MM:SS — date-only values are legacy-legal
 #     (sessions-note-convention.md), absence is normal (only `status:` is required).
-# Declared UNCOVERED, by choice: value-axis duplication (a price outside BUSINESS §BM, a
+# Declared UNCOVERED here, by choice: value-axis duplication (a price outside BUSINESS §BM, a
 # schema copied out of migrations/ — project-docs-convention §Value Axes). Judging "this
-# token is a price" is semantics, not schema; that audit stays with dreaming/PM review,
-# and this line exists so the gap reads as a decision, not an oversight.
+# token is a price" is semantics, not schema, so it stays out of this linter — but the
+# price/tier *literal* half now has its own report-only detector, `value-axis-drift.sh`
+# (KJP-58), which reads the §Value Axes table as its SSOT. Semantic duplication (a norm
+# restated in prose) remains with dreaming/PM review; this line exists so the split reads
+# as a decision, not an oversight.
 # Scope = NNN_*/docs/** recursive (the docs trees only — knowledge `source_sessions` is a
 # separate, legal axis and its dirs are not scanned). index/_index are folder meta
 # (`next_id`, TOC titles), so they skip the unknown-key warn and the body-document rules

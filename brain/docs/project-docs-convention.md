@@ -93,6 +93,8 @@ history:
 | API contract | repo machine-readable spec (API_SPEC is a mirror) |
 | UI pixels | design tool or component code (DESIGN holds links + rules) |
 
+The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh <vault-root>` reads this table as its SSOT and reports (report-only) literals living outside their home (KJP-58). Semantic duplication — a norm restated in prose — remains this declaration + PM mediation.
+
 ## stub Pre-creation Rules
 
 - **Pre-created = 6** — 5 in `tech-design/` (`PRD` · `ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`) + 1 in `business/` (`BUSINESS`). **At project onboarding the PM delegates pre-creating all of them as `status: stub`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.

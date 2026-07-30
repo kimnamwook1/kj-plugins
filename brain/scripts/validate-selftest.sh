@@ -453,6 +453,119 @@ rm -rf "$R2"
 /bin/bash "$VALIDATE" "$V/nope" > /dev/null 2>&1;        assert_exit "nonexistent root exits 2" 2 $?
 /bin/bash "$VALIDATE" "$V" --bogus > /dev/null 2>&1;     assert_exit "unknown option exits 2" 2 $?
 
+# ---------------------------------------------------------------- value-axis-drift.sh
+# KJP-58 — value-axis literal drift detector (pricing · tiers). Fixtures pin the agreed
+# teeth (3-way agreement 2026-07-29 §4):
+#   · the rule data is READ from the §Value Axes table, never inlined — proven by an
+#     alternate-home fixture canon (PRICEBOOK §Rates): the hint text AND the home
+#     exclusions must follow the table, so a hardcoded BUSINESS fails both at once;
+#   · report-only output — the delete-and-replace-with-link wording, no autofix;
+#   · code fences and inline `code` spans are example context, not drift — positive and
+#     false-positive cases both pinned (the assert discipline at the top of this file);
+#   · a canon without the pricing row exits 2 LOUD — silently scanning nothing is how
+#     a moved SSOT would hide.
+DRIFT="${DRIFT_SH:-$HERE/value-axis-drift.sh}"
+DV="$(mktemp -d -t brain-selftest-drift)"
+mkdir -p "$DV/013_drift/docs/tech-design" "$DV/013_drift/docs/pricebook" "$DV/sessions"
+
+# Alternate-home fixture canon — same table shape as project-docs-convention §Value Axes,
+# different home. The decoy row after the section end pins the section scoping: rule data
+# ends where §Value Axes ends.
+cat > "$DV/fixture-canon.md" <<'EOF'
+# fixture canon
+## Value Axes — one value kind, one home
+| Value kind | The only original |
+|---|---|
+| pricing · tiers · unit economics | PRICEBOOK §Rates |
+| security normative statements | POL |
+## next section
+| pricing | NOT-THE-TABLE |
+EOF
+
+# One line = one scenario; the line numbers are load-bearing for the asserts below.
+# Frontmatter (line 3), fence (line 10), inline code (line 12), and bare plan/원인 prose
+# (line 13) are the false-positive half; lines 6-8 and 14 are the positive half.
+cat > "$DV/013_drift/docs/tech-design/PRD.md" <<'EOF'
+---
+status: draft
+pricehint: $5 per seat
+---
+
+Our price is $9.99/mo for the Pro plan.
+국내 가격은 9,900원, 상위는 5만원.
+프로 플랜과 무료 티어를 나눈다.
+```
+price = "$9.99"
+```
+Set `PRICE=$9.99` and `$1` in the env.
+원인 분석과 플랜 수립이 필요하다. The plan is to refactor.
+Free/Pro/Enterprise 3단 구성.
+EOF
+
+# The home itself is the original, not drift — both exclusion shapes, derived from the
+# table's home column: the docs/<home>/ tree and the <HOME>.md filename anywhere.
+printf -- '---\nstatus: draft\n---\nrate: $9.99\n'  > "$DV/013_drift/docs/pricebook/rates.md"
+printf -- '---\nstatus: draft\n---\nprice $9.99\n'  > "$DV/013_drift/docs/PRICEBOOK.md"
+
+REPORT="$(/bin/bash "$DRIFT" "$DV" --convention "$DV/fixture-canon.md" 2>/dev/null)"; rc=$?
+assert_exit     "drift: default mode exits 0 with findings"       0 "$rc"
+assert_match    "drift: currency literal in prose is caught"      'PRD.md:6: value-axis drift'
+assert_match    "drift: axis label comes from the table"          '(pricing · tiers · unit economics)'
+assert_match    "drift: replacement hint reads the table home"    'delete and replace with a \[\[PRICEBOOK\]\] §Rates link'
+assert_no_match "drift: rows outside §Value Axes are not rule data" 'NOT-THE-TABLE'
+assert_match    "drift: EN tier + plan-word adjacency is caught"  'PRD.md:6: .*Pro plan'
+assert_match    "drift: KRW comma literal is caught"              'PRD.md:7: .*9,900원'
+assert_match    "drift: 만원 literal is caught"                   'PRD.md:7: .*5만원'
+assert_match    "drift: KO tier adjacency is caught"              'PRD.md:8: .*프로 플랜'
+assert_match    "drift: KO tier word 티어 is caught"              'PRD.md:8: .*무료 티어'
+assert_match    "drift: tier slash-list is caught"                'PRD.md:14: .*Free/Pro'
+assert_no_match "drift: frontmatter is not scanned"               'PRD.md:3'
+assert_no_match "drift: fenced code block is example context"     'PRD.md:10'
+assert_no_match "drift: inline code spans are example context"    'PRD.md:12'
+assert_no_match "drift: bare plan/원인 prose is not a literal"    'PRD.md:13'
+assert_no_match "drift: home tree docs/pricebook/ is excluded"    'rates.md'
+assert_no_match "drift: home file PRICEBOOK.md is excluded"       'PRICEBOOK.md:'
+assert_match    "drift: counts appear in the summary"             '7 finding(s) (1 docs)'
+/bin/bash "$DRIFT" "$DV" --convention "$DV/fixture-canon.md" --strict >/dev/null 2>&1
+assert_exit     "drift: --strict exits 1 on findings"             1 $?
+
+# Default canon resolution — script-relative ../docs/, the real project-docs-convention.
+# Pins two things at once: the relative-path seam works from wherever the script lives,
+# and the real canon still carries the pricing row with home BUSINESS §BM.
+DV2="$(mktemp -d -t brain-selftest-drift2)"
+mkdir -p "$DV2/014_real/docs/tech-design" "$DV2/014_real/docs/business" "$DV2/sessions"
+printf -- '---\nstatus: draft\n---\n티어별 과금은 월 ₩12,000이다.\n' > "$DV2/014_real/docs/tech-design/ARCHITECTURE.md"
+printf -- '---\nstatus: draft\n---\n월 ₩12,000 (원본).\n'            > "$DV2/014_real/docs/business/BUSINESS.md"
+REPORT="$(/bin/bash "$DRIFT" "$DV2" 2>/dev/null)"; rc=$?
+assert_exit     "drift: real canon via script-relative default"    0 "$rc"
+assert_match    "drift: real canon row catches the KRW literal"    'ARCHITECTURE.md:4: .*₩12,000'
+assert_match    "drift: hint text for the real home"               '\[\[BUSINESS\]\] §BM'
+assert_no_match "drift: BUSINESS.md itself is never drift"         'BUSINESS.md:'
+assert_no_match "drift: docs/business/ tree is never drift"        'docs/business/'
+assert_match    "drift: real-canon vault counts"                   '1 finding(s) (1 docs)'
+
+# Clean vault — OK line with a visible scan count (a collapsed scan must not look clean).
+DV3="$(mktemp -d -t brain-selftest-drift3)"
+mkdir -p "$DV3/013_clean/docs" "$DV3/sessions"
+printf -- '---\nstatus: draft\n---\nNo literals here; the plan is to ship.\n' > "$DV3/013_clean/docs/notes.md"
+REPORT="$(/bin/bash "$DRIFT" "$DV3" 2>/dev/null)"; rc=$?
+assert_exit     "drift: clean vault exits 0"                       0 "$rc"
+assert_match    "drift: clean vault reports OK with the scan count" 'OK — no drift (1 docs)'
+/bin/bash "$DRIFT" "$DV3" --strict >/dev/null 2>&1
+assert_exit     "drift: clean vault exits 0 under --strict"        0 $?
+
+# A canon without the pricing row = the SSOT moved. Loud exit 2, never a zero scan.
+printf -- '## Value Axes — one value kind, one home\n| Value kind | The only original |\n|---|---|\n| logical data model | ARCHITECTURE §데이터 모델 |\n' \
+  > "$DV/norow-canon.md"
+REPORT="$(/bin/bash "$DRIFT" "$DV" --convention "$DV/norow-canon.md" 2>&1 >/dev/null)"; rc=$?
+assert_exit     "drift: canon without the pricing row exits 2"     2 "$rc"
+assert_match    "drift: the missing-row error is named, not silent" 'no pricing row'
+
+# usage errors exit 2 — same contract as validate.sh
+/bin/bash "$DRIFT" > /dev/null 2>&1;             assert_exit "drift: no argument exits 2" 2 $?
+/bin/bash "$DRIFT" "$DV" --bogus > /dev/null 2>&1; assert_exit "drift: unknown option exits 2" 2 $?
+rm -rf "$DV" "$DV2" "$DV3"
+
 echo "---"
 if [ "$fails" -eq 0 ]; then echo "validate-selftest: all assertions passed"; exit 0; fi
 echo "validate-selftest: $fails assertion(s) failed"; exit 1
