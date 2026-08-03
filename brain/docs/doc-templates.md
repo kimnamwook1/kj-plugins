@@ -16,9 +16,9 @@
 
 ## stub rule for templated docs (🔴 read before pre-filling)
 
-- At `status: stub` the body **may** carry the section headings as an empty skeleton — but every section under them stays empty or holds a literal `<!-- TODO -->`.
+- At `status: created` the body **may** carry the section headings as an empty skeleton — but every section under them stays empty or holds a literal `<!-- TODO -->`.
 - **An empty heading means "not yet written", never "none / false".** Never read a blank section as a fact (Core Rule 8).
-- **Flip `status: stub` → `draft` the instant any section gains real content.** A stub is "no information" and must never be cited as evidence ([[project-docs-convention]] stub rule).
+- **Flip `status: created` → `draft` the instant any section gains real content.** A pre-created document is "no information" and must never be cited as evidence ([[project-docs-convention]] stub rule).
 
 ---
 

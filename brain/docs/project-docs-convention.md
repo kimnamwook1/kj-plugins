@@ -13,7 +13,7 @@
 
 ```yaml
 # ── base: every docs body document ──
-status: stub | draft | approved | deprecated   # the only required key
+status: created | draft | approved | deprecated   # the only required key
 updated: YYYY-MM-DDTHH:MM:SS                   # scribe machine-stamp (local time, same basis as session uids — format & legacy rule: [[sessions-note-convention]])
 
 # ── multi-instance extension: POL · ADR ──
@@ -97,7 +97,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 
 ## stub Pre-creation Rules
 
-- **Pre-created = 6** — 5 in `tech-design/` (`PRD` · `ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`) + 1 in `business/` (`BUSINESS`). **At project onboarding the PM delegates pre-creating all of them as `status: stub`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
+- **Pre-created = 6** — 5 in `tech-design/` (`PRD` · `ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`) + 1 in `business/` (`BUSINESS`). **At project onboarding the PM delegates pre-creating all of them as `status: created`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
 - **`API_SPEC` is not pre-created** — it is a read-only repo-spec mirror (§The Only Exception below); dreaming's api-mirror audit generates it once an API exists. `COMPLIANCE` · `DESIGN` · `MILESTONE` stay situational (created on trigger).
 - **Feature document set = 3** (`FRD` · `TDC` + the `policy/` folder) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be).
 - **ADRs are never pre-created** — one is created only when a meaningful decision actually occurs: **the PM delegates it as a recording brief carrying the `architecture` owner label** (a brief label, not a resident agent — workers never write the vault directly; [[memory-control-convention]] §Governance. ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".

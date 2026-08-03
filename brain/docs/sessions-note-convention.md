@@ -26,7 +26,7 @@
 > | Object | Value set | Canon |
 > |---|---|---|
 > | **Session note** (`sessions/<uid>.md`) | `active` \| `parked` \| `done` | this document |
-> | **Docs document** (PRD·FRD·TDC·POL·ADR…) | `stub` \| `draft` \| `approved` \| `deprecated` | [[project-docs-convention]] §frontmatter Standard |
+> | **Docs document** (PRD·FRD·TDC·POL·ADR…) | `created` \| `draft` \| `approved` \| `deprecated` | [[project-docs-convention]] §frontmatter Standard |
 > | **Knowledge note** | `fresh` \| `stale?` | [[knowledge-convention]] |
 
 ## Sections

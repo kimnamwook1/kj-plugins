@@ -110,7 +110,7 @@ while IFS= read -r f; do
       if ("status" in seen) {
         s = val["status"]
         if (s != "active" && s != "parked" && s != "done") {
-          if (s ~ /^(stub|draft|approved|deprecated|stale)$/)
+          if (s ~ /^(created|draft|approved|deprecated|stale)$/)
             print file ":" ln["status"] ": document status \"" s "\" used in a session note (session status = active|parked|done)"
           # `cancel` was a session status until KJP-48. Its own message carries the migration
           # instruction, since "invalid" alone would not say what to replace it with.
@@ -261,7 +261,7 @@ done < "$LIST" >> "$OUT"
 #     wikilink" rule: team vaults gitignore sessions/, so even a *plain uid* is a
 #     reference no teammate can resolve. Team provenance = history `ticket`; the
 #     session uid rides the boundary commit message (git-convention.md).
-#   · `status:` absent, or a value outside stub|draft|approved|deprecated — the only
+#   · `status:` absent, or a value outside created|draft|approved|deprecated — the only
 #     required key (meta files exempt; they are folder TOCs, not body documents).
 #   · v1 history subkeys `date:`/`by:` — the top-level key regex cannot see inside a
 #     `- { ... }` inline map or an indented block entry, which is exactly where the
@@ -384,14 +384,18 @@ while IFS= read -r f; do
         exit
       }
       if (!("status" in seen))
-        print file ":1: missing frontmatter key: status (the only required key — stub|draft|approved|deprecated)"
+        print file ":1: missing frontmatter key: status (the only required key — created|draft|approved|deprecated)"
       else {
         s = val["status"]
-        if (s !~ /^(stub|draft|approved|deprecated)$/) {
+        if (s !~ /^(created|draft|approved|deprecated)$/) {
           if (s ~ /^(active|parked|done)$/)
-            print file ":" ln["status"] ": session status \"" s "\" used in a docs document (docs status = stub|draft|approved|deprecated)"
+            print file ":" ln["status"] ": session status \"" s "\" used in a docs document (docs status = created|draft|approved|deprecated)"
+          # `stub` was the docs "no information" status until 2026-08-02. Its own message carries
+          # the migration instruction, since "invalid" alone would not say what to replace it with.
+          else if (s == "stub")
+            print file ":" ln["status"] ": retired status \"stub\" (docs status = created|draft|approved|deprecated; a pre-created empty document is created)"
           else
-            print file ":" ln["status"] ": invalid docs status \"" s "\" (expected stub|draft|approved|deprecated)"
+            print file ":" ln["status"] ": invalid docs status \"" s "\" (expected created|draft|approved|deprecated)"
         }
       }
       if (idreq && !("id" in seen))

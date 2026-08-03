@@ -179,7 +179,7 @@ printf -- '---\nkind: prd\ntitle: legacy doc\nstatus: approved\nupdated: 2026-07
   > "$V/013_selftest/docs/fm-legacy.md"
 
 # Docs frontmatter v2 — coverage extension (status · history subkeys · id · next_id · mirror).
-# status: required on every non-meta docs file; vocabulary = stub|draft|approved|deprecated
+# status: required on every non-meta docs file; vocabulary = created|draft|approved|deprecated
 # (doc-catalog.md). Three findings shapes (absent, foreign value, session vocabulary) plus a
 # quoted-scalar pass — the same regression class the session scan already pins.
 printf -- '---\nupdated: 2026-07-28T10:00:00\n---\nbody\n'  > "$V/013_selftest/docs/fm-nostatus.md"

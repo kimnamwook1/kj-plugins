@@ -9,7 +9,7 @@
 > - **owner = a PM routing label — not a frontmatter field.** It is the brief-routing *default*, and **this table is its only original** (re-judged by the PM at brief time — [[project-docs-convention]] §deleted fields). The label names a brief, not a resident agent — spawn defaults to `worker`; only code-implementation documents get `coder`.
 > - **The owner column feeds the brief's DoD** — the PM writes "update document X" into the DoD of the brief the owner label routes ([[project-docs-convention]] §Rules that outlived their fields).
 > - **kind = a vocabulary label in this table — not a frontmatter field either.** Derivation canon: [[project-docs-convention]] §kind ← path matrix (the sole copy — never restate it here).
-> - **All documents follow the [[project-docs-convention]] frontmatter standard v2** — `status: stub|draft|approved|deprecated` (the only required key) + optional `history`. 🔴 **`status: stub` means "no information" — never cite as evidence. The moment it gains content, switch to `draft`.**
+> - **All documents follow the [[project-docs-convention]] frontmatter standard v2** — `status: created|draft|approved|deprecated` (the only required key) + optional `history`. 🔴 **`status: created` means "no information" — never cite as evidence. The moment it gains content, switch to `draft`.**
 > - **ID issuance for multi-instance documents (POL·ADR) = the PM issues in advance** ([[project-docs-convention]]). Workers never pick their own numbers.
 
 ## Selection Table
