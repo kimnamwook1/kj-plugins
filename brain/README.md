@@ -157,7 +157,7 @@ roots exactly; the tools root is here because recall scans it as a `[C]` source.
 **Session-uid wikilinks on the shared surface** — every `*.md` under each project folder's
 `docs/` and `knowledge/` and the common layer (roots per `.brain-paths`; recursive, no
 meta-file exclusion): a `[[…]]` whose
-target is a session uid is a finding. Canon is `docs/versioning-convention.md` §Share scope —
+target is a session uid is a finding. Canon is `docs/git-convention.md` §Share scope —
 `sessions/` sits outside the team-shared surface and a team vault gitignores it, so the link
 dangles in a teammate's vault; a shared note cites a session as **plain uid text**. Catches
 `[[uid]]`, `[[sessions/uid]]`, `[[uid|alias]]`, `[[uid#heading]]`, `![[uid]]`, for both the
@@ -255,14 +255,14 @@ Three profiles in `agents/`, differing only in isolation and permissions:
   *with* commits, it stops and reports. The `Agent` tool takes no name parameter, so the coder
   also creates its own `<type>/<PREFIX>-<number>-<title-slug>` branch and reports it on the first line
   of `Outputs` — the PM merges by name, then deletes with `git branch -d` (never `-D`) so an
-  unmerged branch cannot be dropped. Canon → `agents/coder.md`, `docs/versioning-convention.md`.
+  unmerged branch cannot be dropped. Canon → `agents/coder.md`, `docs/git-convention.md`.
 - **A `coder`'s last action is a PR — but only if the remote demands one.** Whether a change
   needs a pull request is measured off the host, not chosen: query *both* classic branch
   protection and rulesets (either can gate, and a repo can fail the first while the second
   makes a PR mandatory). No gate → the coder stops at the branch and the PM merges locally.
   A gate → the coder pushes its own topic branch and opens a **draft** PR, which it cannot
   merge; the PM verifies and flips it to ready. Content = whoever did the work, release = the
-  PM, the same axis as `Docs draft`. Canon → `docs/versioning-convention.md` §Pull / merge
+  PM, the same axis as `Docs draft`. Canon → `docs/git-convention.md` §Pull / merge
   requests.
 - **Nested spawning**: workers may spawn sub-workers when parallelism, isolation, or a
   fresh-eyes verification pays off. Reports flow upward only (recursive star) — a sub-worker
@@ -286,7 +286,7 @@ Eight convention documents define the system; each fact has exactly one home:
 | `docs/knowledge-convention.md` | the atomic, trigger-first knowledge note format |
 | `docs/knowledge-escalate-convention.md` | the 3-stage promotion topology (episodic → semantic) |
 | `docs/memory-control-convention.md` | Handoff format, recall, Dreaming, and scribe governance |
-| `docs/versioning-convention.md` | git = SOT, commit-only lifecycle, push only on explicit request, PR path measured off the remote |
+| `docs/git-convention.md` | git = SOT, commit-only lifecycle, push only on explicit request, PR path measured off the remote |
 | `docs/project-docs-convention.md` | doc frontmatter standard, stub rules, policy system, ID minting, conflict precedence |
 | `docs/doc-catalog.md` | which document to create when — grade, trigger, owner label |
 
@@ -348,10 +348,10 @@ table is a finding, not a convenience.
 | Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss`·`sr` · memory-control-convention |
 | Open-session scan + summary extract (`status: active\|parked` × `project` · `\|\| :` loop terminator) | `skills/_session-shared/active-sessions.md` | `skills/sl`·`sr` |
 | Vault I/O boundary (writes = `Write`/`Edit` only · `obsidian create` banned for the silent `X 1.md` fork · CLI reads·link diagnostics allowed, `unresolved`/`orphans`/`deadends` canonical) | `skills/_session-shared/vault-io.md` | `skills/ss`·`sr`·`sc` · knowledge-promotion · dreaming |
-| git = SOT · commit-only lifecycle | `docs/versioning-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
-| PR/MR path (gate measured off the remote · draft by coder · ready by PM · topic-branch push carve-out) | `docs/versioning-convention.md` §Pull / merge requests | `agents/coder.md` §Last action · doc-catalog (§Delivery records the measured values) |
-| Agent branch naming (`<type>/<PREFIX>-<number>-<title-slug>` · type from the shared vocabulary) | `agents/coder.md` §First action | `docs/versioning-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |
-| Type vocabulary + surface notation + branch/worktree naming | `docs/git-convention.md` (promoted into the harness 2026-07-28 — a distributed plugin cannot depend on a user's personal `at` skill; that skill and any vault mirror now point here) | `agents/coder.md` · `docs/versioning-convention.md` · doc-catalog point, none copy |
+| git = SOT · commit-only lifecycle | `docs/git-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
+| PR/MR path (gate measured off the remote · draft by coder · ready by PM · topic-branch push carve-out) | `docs/git-convention.md` §Pull / merge requests | `agents/coder.md` §Last action · doc-catalog (§Delivery records the measured values) |
+| Agent branch naming (`<type>/<PREFIX>-<number>-<title-slug>` · type from the shared vocabulary) | `agents/coder.md` §First action | `docs/git-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |
+| Type vocabulary + surface notation + branch/worktree naming | `docs/git-convention.md` (promoted into the harness 2026-07-28 — a distributed plugin cannot depend on a user's personal `at` skill; that skill and any vault mirror now point here) | `agents/coder.md` · `docs/git-convention.md` · doc-catalog point, none copy |
 | Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · dreaming |
 | Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |
 | Stub pre-creation and stub rules | `docs/project-docs-convention.md` | doc-catalog · `/brain:init` |

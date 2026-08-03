@@ -12,7 +12,7 @@ argument-hint: "[session-file?]"
 
 ## Write boundary — common to the 3 session skills
 
-All three of `ss` · `sh` · `sc` share **executor = PM (main session), vault content writes = the `scribe` worker** (a subagent handed a writing brief — not resident). The PM does **reading·detection·judgment** — session discovery (`find`/`grep`), user Q&A, **deciding what to record** — and directly executes **the vault git commit (⑦)** (commit executor = PM, canon: `${CLAUDE_SKILL_DIR}/../../docs/versioning-convention.md`). Every step that leaves vault content — closing entry · `status` transition · frontmatter · knowledge-promotion finalization · `knowledge/_index.md` — is **delegated to `scribe`** — a discipline (recording consistency + main-context economy), with governance canon at `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`.
+All three of `ss` · `sh` · `sc` share **executor = PM (main session), vault content writes = the `scribe` worker** (a subagent handed a writing brief — not resident). The PM does **reading·detection·judgment** — session discovery (`find`/`grep`), user Q&A, **deciding what to record** — and directly executes **the vault git commit (⑦)** (commit executor = PM, canon: `${CLAUDE_SKILL_DIR}/../../docs/git-convention.md`). Every step that leaves vault content — closing entry · `status` transition · frontmatter · knowledge-promotion finalization · `knowledge/_index.md` — is **delegated to `scribe`** — a discipline (recording consistency + main-context economy), with governance canon at `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`.
 
 ## Hard rule — the sh vs sc boundary
 
@@ -89,13 +89,12 @@ Both touch the same file (`<VAULT>/sessions/<uid>.md`) and the **executor is `sc
 ⚠ The `status` transition happens **only in this delegation** — the PM does not patch it directly with `sed`/redirection (vault content writes belong to `scribe`, as a discipline).
 
 ### ⑦ git commit (vault snapshot — commit-only, executor = PM)
-The PM commits the vault directly **after** the ④·⑤·⑥ `scribe` writes are done — **record → commit order** (committing first leaves the just-written closing entry·`status` transition out of the snapshot). Commit executor = PM is canon (versioning-convention — a commit is not content authorship but a **boundary record**, and it swallows the whole repo, so only whoever sees the whole can do it safely. `scribe` never commits).
+The PM commits the vault directly **after** the ④·⑤·⑥ `scribe` writes are done — **record → commit order** (committing first leaves the just-written closing entry·`status` transition out of the snapshot). Commit executor = PM is canon (git-convention — a commit is not content authorship but a **boundary record**, and it swallows the whole repo, so only whoever sees the whole can do it safely. `scribe` never commits).
 
 - **Check the message convention before committing (no guessing)** — read **that vault's existing convention first** with `git -C "$VAULT" log --oneline -10` and follow it (conventions differ per vault). The following is only the shape used when no convention exists, not a mandated format:
   ```bash
   git -C "$VAULT" add -- <paths…> && git -C "$VAULT" commit -q -m "session <uid>: completed — <one-line gist>"
   ```
-- **Stage only the paths this session wrote — `git add -A` is forbidden.** One vault is shared by concurrent sessions of other projects; `-A` sweeps their in-flight work into this session's commit under this session's message.
 - **The pathspec = what the scribes returned** — the ⑤·⑥ session file `<VAULT>/sessions/<uid>.md` + the ④ promoted note paths + `<project>/knowledge/_index.md`·`0.rejected.md` when touched + the ④ counter-bumped note paths (these may sit outside `<project>/` — `[C]`/`[X]` notes). If a return omitted a path, ask that scribe; never widen the pathspec to compensate.
 - **Leave every other dirty file dirty** — do not stage, stash, or revert anything outside that list, however unrelated-looking the diff. It is another session's unfinished work.
 - **Read `git -C "$VAULT" status --porcelain` before staging.** If dirty files reach beyond this session's own paths, say so in ⑧ (`N files dirty across M directories — staged only this session's`) and stage from the pathspec anyway. A report, not a gate — never block the closure on it.

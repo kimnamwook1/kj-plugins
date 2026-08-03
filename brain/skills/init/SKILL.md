@@ -22,7 +22,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    2. **Mismatches are report-only** — present them as a table (e.g. `Sessions/ uppercase — canonical is sessions/`). 🔴 **Migration (rename/move) only after user approval** — a shared vault may be in use by other people. Without approval, leave the existing structure as is, and make the vault paths in the step 2 router point to the **actual paths** (not the canonical tree).
    3. The scaffold (step 4) is idempotent anyway — skip existing entries and create **only what is missing** (anything newly created still uses canonical naming).
 
-   Team-shared context: if the vault is a git repo, synchronization is the git merge layer's job (`versioning-convention.md`, concurrency layer 2) — nothing for init to touch; mention it only.
+   Team-shared context: if the vault is a git repo, synchronization is the git merge layer's job (`git-convention.md`, concurrency layer 2) — nothing for init to touch; mention it only.
 
 2. **Create the two config files** (project root) — the brain block is **split by shareability**: `CLAUDE.md` = committed, true for every teammate · `CLAUDE.local.md` = gitignored, machine-specific. For **each** file: **if it already exists, add/update only the brain block** (replace only what is between that file's `<!-- brain:begin -->` … `<!-- brain:end -->` markers), **never overwrite the whole file**.
 
@@ -40,7 +40,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    **`## PM role`**
    - Single point of contact — decompose, delegate, aggregate, and report requests.
    - The external ticket system = the canonical work queue. No parallel queue in the vault — session To-Dos are only for chores too small for a card and resume memos.
-   - Never write vault content directly — delegate recording via a `scribe` brief. **Commits are the PM's** (boundary recording — canonical versioning-convention.md).
+   - Never write vault content directly — delegate recording via a `scribe` brief. **Commits are the PM's** (boundary recording — canonical git-convention.md).
    - Ticket loop — when large, plan (built-in Plan, read-only) → coder → verifier. When small, straight to worker/coder. Exploration and multi-file investigation use built-in Explore (read-only).
    - Brief discipline — specify Goal, constraints, context pointers, DoD. No file overlap between concurrent workers. A brief touching features, architecture, deployment, or schema includes the affected document updates in its DoD (the worker drafts the content — Handoff `Docs draft`; scribe copies; the PM commits).
    - Document-conflict arbitration — the canonical precedence is `~/.claude/brain-docs/project-docs-convention.md`. (🔴 Unlike the 2b Router, do **not** expand the home here — `CLAUDE.md` is committed, so a specific user's absolute home would be wrong for every teammate and leak the path. `~` is fine: this line is a human-readable reference, not a harness-functional path.)
@@ -71,7 +71,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    - `knowledge-convention.md` — knowledge note format
    - `knowledge-escalate-convention.md` — knowledge promotion gate and scoring
    - `memory-control-convention.md` — Handoff format, recall, scribe governance
-   - `versioning-convention.md` — vault git commit discipline
+   - `git-convention.md` — vault git commit discipline
    - `git-convention.md` — commit type vocabulary (11 types), surface notation, branch/worktree naming
 
    Also include the vault paths, **resolved through the vault's `.brain-paths` manifest at init time** (resolver `${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh` — step 4 writes the manifest; the Router is plain text, so write the resolved absolute paths, never the variable names): `<vault-root>/sessions/` (sessions) · `<BRAIN_PROJECTS>/<NNN>_<project>/knowledge/` (knowledge) · `<BRAIN_PROJECTS>/<NNN>_<project>/docs/` (documents).

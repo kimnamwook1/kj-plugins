@@ -36,6 +36,18 @@
 > **RUNBOOK §Delivery (absorbs the former `GIT_STRATEGY` file).** Records this project's delivery bucket (from `/brain:onboard` Q1/Q2) + a git-flow pointer + an exceptions line (default "예외: 없음 — 분류표 준수"), **and the measured values below.**
 > 🔴 **The git flow is decided by the vault's delivery classification note** — a classification table mapping **project type → flow**. There is no single org-default flow; org is only where documents live (one org legitimately runs different flows per project type). The note's **path differs per vault**: a binding vault keeps it in the common layer's `policies/` (e.g. `DELIVERY_STRATEGY.md`); a vault still stabilizing may keep it in the common layer's `facts/` as a non-binding reference and promote it to `policies/` when stable (common-layer location = the vault's `.brain-paths` manifest — [[vault-tree]]). **Never hardcode the path or restate a flow value — refer to "the vault's delivery classification note" and point** (restate → drift).
 >
+> **§배포 `### 환경` — 브랜치↔환경 매핑은 여기가 정본이다 (2026-08-03 신설).** 환경 **수·티어**는 공통층 배포 분류가 정하지만(서버-SaaS = stage+prod 등), **어느 브랜치가 어느 환경으로 배포되는지는 레포의 배선**이라 어디에도 없었다. 🔴 **브랜치 이름과 환경 이름은 같지 않다** — 실측: `dev` 브랜치가 `stage` 환경으로 배포되는 형태가 실재한다. 이름이 다르면 추론이 불가능하므로 표로 적는다.
+>
+> ```markdown
+> ### 환경
+> | 환경 | 배포 트리거 | 승격 조건 | 되돌리기 |
+> |---|---|---|---|
+> | stage | `dev` 브랜치 push | 개인 브랜치(`dev-<이름>`) → `dev` 머지 시 | 직전 커밋 재배포 |
+> | prod  | `main` 브랜치 push | `dev` → `main` 머지 + 사람 승인 | 직전 태그 재배포 |
+> ```
+>
+> 행 수·이름 전부 프로젝트마다 다르다 — 이 표는 예시이고 실제 값으로 갈아끼운다. 태그 기반 배포면 트리거 열에 `v*` 태그를 적는다. **사람 작업 브랜치 접두어(`dev-<이름>` 등)도 여기 측정치로 기록**하고, 에이전트 브랜치(canon `docs/git-convention.md`)와 공존시킨다 — 통합하지 않는다.
+
 > **The split that keeps the two from drifting: the vault note holds the *policy*, §Delivery holds *what this repo's remote actually enforces*.** Restating a policy value here is drift; recording a measurement is the entire job — a measurement has no second copy to disagree with, because the repo is its own source. So §Delivery owns, for **this** repo:
 > - **The PR/MR gate, as measured** — is a pull/merge request structurally required, how many approvals, which merge methods survive, whether any status check actually blocks the merge, and who may bypass. 🔴 **Read it off the host, never off memory or off the workflow file** — a CI workflow proves what *runs*, not what *blocks*. Record the query used, so the next reader can re-run it. **An absent gate is a finding, not a blank**: write "protection: none (measured `<command>`, `<date>`)" rather than leaving the line out.
 > - **Branch naming** — the prefixes this repo's branches actually carry, and whether they are a rule or an observation. The *model* (trunk, short-lived branches, merge style) stays the vault note's; the *names* are local.

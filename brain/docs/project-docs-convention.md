@@ -3,7 +3,7 @@
 > Tree & naming → [[vault-tree]] · document selection → [[doc-catalog]] · body templates (DESIGN·MILESTONE) → [[doc-templates]]
 
 ## Version Control
-- [[versioning-convention]]
+- [[git-convention]]
 
 ## Core Rules
 - **living doc** (no v1/v2 copies).
@@ -69,9 +69,9 @@ history:
 
 ### history & session linkage
 
-- 🔴 **The `session` key is banned in docs frontmatter altogether** — not merely the wikilink form; the key itself, plain uid included. A team vault gitignores `sessions/` ([[versioning-convention]] §Share scope), so even a plain uid is a reference no teammate can resolve. Enforced by `scripts/validate.sh`.
+- 🔴 **The `session` key is banned in docs frontmatter altogether** — not merely the wikilink form; the key itself, plain uid included. A team vault gitignores `sessions/` ([[git-convention]] §Share scope), so even a plain uid is a reference no teammate can resolve. Enforced by `scripts/validate.sh`.
 - **Team provenance = `ticket`** in `history` entries — a tracker ID resolves for everyone.
-- **Session↔document linkage lives in the vault boundary commit message** (the PM's commit carries the session uid) — canon: [[versioning-convention]].
+- **Session↔document linkage lives in the vault boundary commit message** (the PM's commit carries the session uid) — canon: [[git-convention]].
 - Knowledge notes' `source_sessions` is a **separate axis** (promotion-source tracing) and unchanged — canon: [[knowledge-convention]]. Do not read this ban as applying there.
 
 ### Rules that outlived their fields

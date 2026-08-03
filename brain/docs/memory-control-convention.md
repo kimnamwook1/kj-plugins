@@ -1,6 +1,6 @@
 # Memory Control
 
-> Promotion → [[knowledge-escalate-convention]] · knowledge notes → [[knowledge-convention]] · sessions → [[sessions-note-convention]] · commits → [[versioning-convention]]
+> Promotion → [[knowledge-escalate-convention]] · knowledge notes → [[knowledge-convention]] · sessions → [[sessions-note-convention]] · commits → [[git-convention]]
 
 ## Handoff Format (worker → PM → scribe, maps to session Progress — Risks·Next·Ask feed To-Do-List / PM judgment)
 ```
@@ -32,5 +32,5 @@ Keep realtime cheap; batch the hard parts. Runs periodically (scheduled).
 - **`scribe` = a verbatim scribe (not a summarizer).** Records the `Learned`/`Outputs` of worker Handoffs **word for word**. PM compression belongs **only to the user-reporting channel** — the Handoff `scribe` receives is the original text (→ prevents losing the conditional nuances of Mistake/Fixed).
 - **Never force realtime dedup** — on duplicates, record both for now; merging & cleanup is Dreaming's job (batch). (fast-but-lossy capture + periodic consolidation)
 - **PM mediation**: worker Handoff → PM → `scribe`. **Direct worker→`scribe` is forbidden** — only the PM can see whether delegations overlap. Go direct, and two `scribe` workers silently overwrite the same file.
-- **Two concurrency layers**: intra-machine = **`scribe` discipline** (no locks — the PM delegates without overlap) / inter-machine = git merge. Canon → [[versioning-convention]]
+- **Two concurrency layers**: intra-machine = **`scribe` discipline** (no locks — the PM delegates without overlap) / inter-machine = git merge. Canon → [[git-convention]]
 - **PM = the main session · workers = subagents.** A worker's scope is defined by **the PM's brief** (Goal, constraints, context pointers, DoD), not by a role catalog. Labels (`scribe`, `architecture`, etc.) name kinds of briefs — they are not resident agents.

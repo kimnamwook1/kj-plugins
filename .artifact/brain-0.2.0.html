@@ -1,0 +1,1779 @@
+
+<title>kj-plugins — brain 0.2.0</title>
+<style>
+  :root {
+    --bg: #f3f5f8; --surface: #ffffff; --ink: #1b2430; --ink-soft: #4b586a;
+    --ink-faint: #8494a8; --line: #d7dee8; --acc: #2b5cc4; --acc-soft: #e7edf9;
+    --warn: #b4690e; --warn-soft: #f9efe2; --mono-bg: #eaeef4; --dim: #a5b1c2;
+    --ok: #1e7a4d; --ok-soft: #e3f2ea; --danger: #b3383d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10151d; --surface: #171e29; --ink: #e5eaf2; --ink-soft: #aab6c6;
+      --ink-faint: #6b7a8e; --line: #2a3546; --acc: #6c96ee; --acc-soft: #1c2940;
+      --warn: #e09b3d; --warn-soft: #33261360; --mono-bg: #1f2836; --dim: #566378;
+      --ok: #4fbe86; --ok-soft: #14301f; --danger: #e2707a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151d; --surface: #171e29; --ink: #e5eaf2; --ink-soft: #aab6c6;
+    --ink-faint: #6b7a8e; --line: #2a3546; --acc: #6c96ee; --acc-soft: #1c2940;
+    --warn: #e09b3d; --warn-soft: #33261360; --mono-bg: #1f2836; --dim: #566378;
+    --ok: #4fbe86; --ok-soft: #14301f; --danger: #e2707a;
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f5f8; --surface: #ffffff; --ink: #1b2430; --ink-soft: #4b586a;
+    --ink-faint: #8494a8; --line: #d7dee8; --acc: #2b5cc4; --acc-soft: #e7edf9;
+    --warn: #b4690e; --warn-soft: #f9efe2; --mono-bg: #eaeef4; --dim: #a5b1c2;
+    --ok: #1e7a4d; --ok-soft: #e3f2ea; --danger: #b3383d;
+  }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Apple SD Gothic Neo", Pretendard, "Noto Sans KR", -apple-system, sans-serif;
+    line-height: 1.62; margin: 0; padding: 0 20px 90px; font-size: 15px;
+  }
+  main { max-width: 1000px; margin: 0 auto; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85em; background: var(--mono-bg); padding: 1px 5px; border-radius: 3px; }
+  header { padding: 40px 0 4px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11.5px; color: var(--ink-faint); font-weight: 700; margin-bottom: 8px; }
+  h1 { font-size: clamp(24px, 4vw, 34px); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 6px; text-wrap: balance; }
+  .lede { color: var(--ink-soft); max-width: 68ch; margin: 0 0 4px; font-size: 14.5px; }
+  .meta { font-size: 12px; color: var(--ink-faint); }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; font-size: 12px; color: var(--ink-soft); }
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 20px; vertical-align: 2px; }
+  .b-ok { background: var(--ok-soft); color: var(--ok); }
+  .b-todo { background: var(--warn-soft); color: var(--warn); }
+
+  /* 탭 */
+  .tabs {
+    position: sticky; top: 0; z-index: 10; background: var(--bg);
+    display: flex; flex-wrap: wrap; gap: 5px; padding: 14px 0 10px;
+    border-bottom: 2px solid var(--line); margin-bottom: 4px;
+  }
+  .tab {
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+    padding: 5px 14px; cursor: pointer;
+  }
+  .tab:hover { border-color: var(--acc); color: var(--acc); }
+  .tab:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+  .tab.active { background: var(--acc); border-color: var(--acc); color: #fff; }
+  :root[data-theme="dark"] .tab.active { color: #0d1117; }
+  @media (prefers-color-scheme: dark) { .tab.active { color: #0d1117; } }
+  :root[data-theme="light"] .tab.active { color: #fff; }
+
+  .panel { display: none; padding-top: 18px; }
+  .panel.active { display: block; }
+  .panel > h2 { font-size: 20px; margin: 4px 0 4px; letter-spacing: -0.01em; }
+  h3 { font-size: 15.5px; margin: 20px 0 6px; }
+  .sub { color: var(--ink-faint); font-size: 13px; margin: 0 0 12px; }
+  p { color: var(--ink-soft); font-size: 14px; }
+  p b, li b, td b { color: var(--ink); }
+
+  .tblwrap { overflow-x: auto; margin: 10px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; background: var(--surface); border: 1px solid var(--line); }
+  th, td { text-align: left; padding: 7px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); background: var(--mono-bg); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td { color: var(--ink-soft); }
+
+  .tree { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 15px 17px; overflow-x: auto; margin: 10px 0; }
+  .tree pre { margin: 0; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.8; color: var(--ink); }
+  .tree .b { color: var(--acc); font-weight: 700; }
+  .tree .g { color: var(--dim); }
+  .tree .c { color: var(--ink-faint); }
+  .tree .w { color: var(--warn); font-weight: 700; }
+  .tree .f { color: var(--ink-soft); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; margin: 10px 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; color: var(--ink-soft); }
+  .card b { color: var(--ink); display: block; margin-bottom: 3px; }
+  .card .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; color: var(--acc); }
+  .red { color: var(--danger); font-weight: 700; }
+  ul { margin: 6px 0 10px; padding-left: 20px; }
+  li { color: var(--ink-soft); font-size: 14px; margin-bottom: 4px; }
+  footer { margin-top: 40px; font-size: 12px; color: var(--ink-faint); border-top: 1px solid var(--line); padding-top: 12px; }
+
+  /* 문서 양식 탭 전용 */
+  .form-doc { margin: 22px 0 0; }
+  .form-doc h3 { margin-bottom: 2px; }
+  .form-path { font-size: 12px; color: var(--ink-faint); margin: 0 0 8px; }
+  .b-canon { background: var(--acc-soft); color: var(--acc); }
+  .b-sample { background: var(--mono-bg); color: var(--ink-faint); }
+
+  /* 0.2.0 초안 서브탭·에디터 */
+  .editbar { display: flex; gap: 8px; align-items: center; margin: 10px 0 6px; flex-wrap: wrap; }
+  .editbar button { font: inherit; font-size: 12.5px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px; cursor: pointer; color: var(--ink); }
+  .editbar button:hover { border-color: var(--acc); color: var(--acc); }
+  #prd-editor, #mkt-editor, #cmp-editor, #tos-editor, #mst-editor, #arc-editor, #cc-editor, #rb-editor, #tm-editor, #ds-editor, #pp-editor, #as-editor { width: 100%; box-sizing: border-box; min-height: 640px; resize: vertical; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; }
+  #prd-editor:focus, #mkt-editor:focus, #cmp-editor:focus, #tos-editor:focus, #mst-editor:focus, #arc-editor:focus, #cc-editor:focus, #rb-editor:focus, #tm-editor:focus, #ds-editor:focus, #pp-editor:focus, #as-editor:focus { outline: 2px solid var(--acc); outline-offset: -1px; }
+  #cmp-editor, #tos-editor, #pp-editor, #as-editor { min-height: 300px; }
+  .fnode { font: inherit; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: inherit; color: var(--acc); background: none; border: none; border-bottom: 1px dotted var(--acc); padding: 0; cursor: pointer; }
+  .fnode:hover { background: var(--acc-soft); }
+  .fnode:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+  #ft-editor, #ss-editor, #idx-editor, #dr-editor, #pm-editor, #nc-editor, #adr-editor,
+  #aw-editor, #ac-editor, #av-editor, #cm-editor, #sk-editor, #rc-editor, #ar-editor { width: 100%; box-sizing: border-box; min-height: 640px; resize: vertical; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; line-height: 1.7; }
+  #ft-editor:focus, #ss-editor:focus, #idx-editor:focus { outline: 2px solid var(--acc); outline-offset: -1px; }
+</style>
+
+<main>
+<header>
+  <div class="eyebrow">kj-plugins · brain plugin</div>
+  <h1>brain 0.2.0 — 설계 전서</h1>
+  <p class="lede">Claude Code용 second-brain 메모리 하네스의 완전 해부이자 0.2.0 목표 스펙 — 세션 포착 → 지식 승격 → recall 전 파이프라인.</p>
+  <div class="meta">정본 = <code>brain/</code> · 이 문서는 그 정본이 되어야 할 상태를 적는다. 🔧 표시는 레포에 아직 없는 것.</div>
+  
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-t="p-principles">원리</button>
+  <button class="tab" data-t="p-tree">폴더 트리 및 양식</button>
+  <button class="tab" data-t="p-skills">스킬</button>
+  <button class="tab" data-t="p-agents">에이전트</button>
+  <button class="tab" data-t="p-verify">검증·스크립트</button>
+</nav>
+
+<!-- ═══ 그린필드 트리 ═══ -->
+<section class="panel" id="p-tree">
+  <h2>폴더 트리 및 양식</h2>
+  <p class="sub">파란 파일명을 누르면 그 문서의 양식이 아래에 열린다.</p>
+
+  <div class="tree"><pre>
+<span class="g">&lt;vault&gt;/</span>
+<span class="g">├─</span> <span class="f">.brain-paths</span>                    <span class="c">축 키 · init 최우선 작성 · schema_version 포함</span>
+<span class="g">├─</span> <span class="b">org/</span> <span class="c">또는</span> <span class="b">personal/</span>             <span class="c">사실 기록 · 무인 사이클 접근 금지</span>
+<span class="g">│  ├─</span> <span class="b">about/</span>                       <span class="c">개인·회사 설명</span>
+<span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  ├─</span> <span class="b">machines/</span>                    <span class="c">보유 장비 HW·SW · 파일명 = 소문자 호스트명</span>
+<span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  ├─</span> <span class="b">network/</span>                     <span class="c">네트워크 세팅</span>
+<span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  ├─</span> <span class="b">platforms/</span>                   <span class="c">운영 플랫폼·도메인 지식</span>
+<span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  ├─</span> <span class="b">policies/</span>
+<span class="g">│  │  ├─</span> <button class="fnode" data-e="d3">common_policy.md</button>   <span class="c">단일 파일 시작, 비대해지면 이 폴더 안에서 분리</span>
+<span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">├─</span> <span class="b">neocortex/</span>                      <span class="c">볼트 전역 지식 · recall 대상</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="nc">NEO-&lt;slug&gt;.md</button>              <span class="c">번호 없음 · 파일명이 동일성 키 · aliases:로 구 이름 보존</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="dr">dream-logs.md</button>              <span class="c">dreaming 실행 기록 · 단일 파일 누적</span>
+<span class="g">│  ├─</span> <span class="f">neocortex.base</span>
+<span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">├─</span> <span class="b">&lt;projects_root&gt;/NNN_&lt;slug&gt;/</span>     <span class="c">001–999 · 직속에 projects.base</span>
+<span class="g">│  ├─</span> <span class="b">docs/</span>
+<span class="g">│  │  ├─</span> <span class="b">business/</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="prd">PRD.md</button>              <span class="c">목표·요구사항·NFR·GLOSSARY·BM</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="mkt">MARKETING.md</button>        <span class="c">GTM·마케팅 전략</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="mst">MILESTONE.md</button>        <span class="c">Phase 로드맵 · Phase 0 = MVP</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="cmp">COMPLIANCE.md</button>       <span class="c">염두할 법안</span>
+<span class="g">│  │  │  ├─</span> <span class="b">legal/</span>              <span class="c">이용약관·개인정보처리방침 등 프로젝트가 지켜야 할 법적 문서를 작성·보관</span>
+<span class="g">│  │  │  │  ├─</span> <button class="fnode" data-e="cmp">&lt;법적 문서&gt;.md</button>
+<span class="g">│  │  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  │  ├─</span> <span class="b">develop/</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="arc">ARCHITECTURE.md</button>     <span class="c">시스템설계·데이터모델·외부연동·ERD</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="cc">CODE_CONVENTION.md</button>  <span class="c">스택·코드 규약·네이밍 바인딩</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="rb">RUNBOOK.md</button>          <span class="c">배포·운영·관측·DR·마이그레이션</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="tm">THREAT_MODEL.md</button>     <span class="c">위협·완화 표</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">P_POLICY.md</button>         <span class="c">프로젝트 내부 정책</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">DESIGN.md</button>           <span class="c">Tokens·Components·States·A11y·Responsive</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">API_SPEC.md</button>         <span class="c">API 규약</span>
+<span class="g">│  │  │  ├─</span> <span class="b">feature/</span>
+<span class="g">│  │  │  │  ├─</span> <button class="fnode" data-e="ft">&lt;pp&gt;_&lt;fp&gt;_0000N.md</button>  <span class="c">FRD+TDC 통합</span>
+<span class="g">│  │  │  │  ├─</span> <span class="f">feature.base</span>
+<span class="g">│  │  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  │  ├─</span> <span class="b">adr/</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="adr">&lt;pp&gt;-ADR-0000N.md</button> <span class="c">1결정=1파일 · 불변 ID</span>
+<span class="g">│  │  │  ├─</span> <span class="f">adr.base</span>
+<span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  │  ├─</span> <span class="b">resources/</span>                <span class="c">자료조사 · 미팅 기록 · 참고 자료 · freeform · recall 비대상</span>
+<span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  ├─</span> <span class="b">p_memory/</span>                    <span class="c">프로젝트 지식 · recall 대상</span>
+<span class="g">│  │  ├─</span> <button class="fnode" data-e="pm">&lt;pp&gt;_&lt;slug&gt;.md</button>          <span class="c">접두는 위키링크 전역 유일성용 · 번호 없음</span>
+<span class="g">│  │  ├─</span> <span class="f">p_memory.base</span>
+<span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">├─</span> <span class="b">hippocampus/</span>                    <span class="c">세션 · git 추적 안 함 · recall 비대상</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="ss">&lt;pp&gt;_YYYYMMDD_&lt;slug&gt;.md</button>  <span class="c">같은 날 같은 슬러그 금지</span>
+<span class="g">│  ├─</span> <span class="f">hippocampus.base</span>
+<span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">├─</span> <span class="b">&lt;tools_root&gt;/</span>                   <span class="c">opt-in · 부재 = 합법</span>
+<span class="g">│  ├─</span> <span class="b">cli/</span> <span class="b">mcp/</span> <span class="b">plugins/</span> <span class="b">skills/</span>   <span class="c">각 노트 frontmatter 로 설치·사용 상태 구분</span>
+<span class="g">│  ├─</span> <span class="f">tools.base</span>
+<span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">└─</span> <button class="fnode" data-e="idx">_index.md</button>
+</pre></div>
+
+  <h3>하네스 파일 <span class="badge b-todo">📝 5자 회담 2R 확정</span></h3>
+  <p class="sub">볼트가 아니라 <b>플러그인 레포</b>의 파일이다. 상한은 합의가 아니라 <b>덧셈</b>으로 나왔다 — KERNEL 8줄이 바닥을 정한다.</p>
+  <div class="tree"><pre>
+<span class="g">├─</span> <span class="b">agents/</span>                          <span class="c">서브에이전트 정의 · spawn 마다 100% 주입</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="aw">worker.md</button>                  <span class="c">≤40줄 / 3,600 B</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="ac">coder.md</button>                   <span class="c">≤50줄 / 5,000 B</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="av">verifier.md</button>                <span class="c">≤22줄 · QA + 보안 (cso 대체)</span>
+<span class="g">│  └─</span> <button class="fnode" data-e="ar">researcher.md</button>              <span class="c">≤22줄 · 신설</span>
+<span class="g">├─</span> <span class="b">skills/</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="sk">init/SKILL.md</button>              <span class="c">≤80줄 · 호출 시에만</span>
+<span class="g">│  ├─</span> <button class="fnode" data-e="sk">onboard/SKILL.md</button>           <span class="c">≤50줄 · 호출 시에만</span>
+<span class="g">│  └─</span> <button class="fnode" data-e="rc">_session-shared/recall.md</button>  <span class="c">161 → ≤25줄 / 2,500 B</span>
+<span class="g">└─</span> <button class="fnode" data-e="cm">CLAUDE.md</button>                     <span class="c">≤30줄 / 2,200 B · 메인 세션 <b>매 턴</b> 100%</span>
+</pre></div>
+
+  <h3>공통 규칙</h3>
+  <div class="grid">
+    <div class="card"><span class="tag">frontmatter</span><b>5필드가 베이스</b><code>status</code>(<code>created</code>|<code>draft</code>|<code>approved</code>|<code>deprecated</code>) · <code>updated</code> · <code>version</code> · <code>species</code>. <code>id</code> 는 ADR·POL 만, mirror 3키는 API_SPEC 만.</div>
+    <div class="card"><span class="tag">헤딩</span><b>제목 = 파일명, 본문은 ## 부터</b>H1 을 본문에 쓰지 않는다. 하위 소제목은 ###. 앵커 대상 헤딩은 약어로 고정하고 개명하지 않는다.</div>
+    <div class="card"><span class="tag">파일명</span><b>대문자 = 역할 싱글턴</b><code>docs/</code> 아래 역할 문서는 대문자. 공통층 하위는 소문자-케밥. 폴더 목차는 <code>_index.md</code>.</div>
+    <div class="card"><span class="tag">구획</span><b>묶음이 기본값</b>절이 독립 소비자를 갖거나, 그 절만 고치는 커밋이 반복되거나, 문서 과반을 점유할 때 분리한다. 분리는 절→파일 + 원위치 링크 + 앵커 재배선을 같은 커밋에서.</div>
+    <div class="card"><span class="tag">값 축</span><b>가격·티어 리터럴은 PRD §BM 에만</b>다른 문서는 링크로 가리킨다. UI 토큰의 정본은 DESIGN.md 이고 코드 토큰 파일은 export 산출물이다.</div>
+    <div class="card"><span class="tag">다이어그램</span><b>mermaid 기본</b>편집 원본이 필요하면 draw.io 파일을 같이 둔다. 구조도의 외부 노드명은 연동 표의 '대상' 열에 있어야 한다.</div>
+  </div>
+
+  <div id="tree-editors">
+<div id="ed-prd" hidden>
+    <h3>PRD 0.2.0 초안 <span class="badge b-todo">📝 편집 가능</span></h3>
+    <p class="sub">참고자료 6건(brunch·elancer·codestates·velog·naver blog·Atlassian) 수렴 + 그린필드 확정 전제(NFR·Glossary·BM 흡수 · GTM→MARKETING · 일정→MILESTONE · 상세 스펙·와이어프레임→feature) 반영. <b>아래 텍스트를 직접 고치세요</b> — 이 브라우저에 자동 저장됩니다. 확정하려면 <b>파일로 저장</b> → 다운로드 승인 → Claude에게 "적용했어"라고 말하면 <code>~/Downloads/PRD-draft.md</code>를 읽어 반영합니다.</p>
+    <div class="tblwrap"><table>
+      <tr><th>섹션</th><th>수렴 근거 (6개 소스 중 등장)</th></tr>
+      <tr><td><b>요약 · 문제 정의</b></td><td>— 전 소스 "기능보다 문제·왜 먼저" 합의</td></tr>
+      <tr><td><b>목표 · 성공 지표</b></td><td>— 수치 목표 사전 설정· 릴리스 기준을 성공 판정에 흡수</td></tr>
+      <tr><td><b>사용자 · 시나리오</b></td><td>— CUJ 명칭· 예외 케이스 요구</td></tr>
+      <tr><td><b>요구사항</b></td><td>— MoSCoW· 상세는 FRD 위임 (Atlassian "링크 허브 + just enough")</td></tr>
+      <tr><td><b>비기능 요구 (NFR)</b></td><td>기술 제약— 명시 열거는 elancer 1곳(성능·응답속도·보안·접근성·로깅)</td></tr>
+      <tr><td><b>BM</b></td><td>볼트 확정 전제(BUSINESS 소멸→PRD 흡수) — 가격·티어 유일 원본</td></tr>
+      <tr><td><b>범위 제외</b></td><td>— 의사결정 기준·scope creep 방지</td></tr>
+      <tr><td><b>가정 · 제약</b></td><td>가정, 제약과 묶으면 실질</td></tr>
+      <tr><td><b>오픈 이슈</b></td><td>— "미기록 = 리스크 관리 실패"(naver blog)</td></tr>
+      <tr><td><b>용어 · 참조</b></td><td>참고 링크· 문서 메타는 frontmatter·git이 대체 → 섹션 없음</td></tr>
+      <tr><td>PRD 밖</td><td>일정·런칭→ MILESTONE·MARKETING / 디자인 참조→ feature</td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="prd-save">파일로 저장 (PRD-draft.md)</button>
+      <button id="prd-reset">기본값 복원</button>
+      <span id="prd-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="prd-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Product Requirements Doc — 제품 요구사항
+---
+&lt;!-- 제목 = 파일명(PRD.md) = # 레벨 — 본문 헤딩은 ##부터 시작(하위는 ###), H1은 본문에 쓰지 않는다. 풀네임은 species 필드 보유. --&gt;
+
+## 요약
+&lt;!-- 2~3문장 엘리베이터 피치: 무엇을 · 누구에게 · 왜 지금. --&gt;
+
+## 문제 정의
+&lt;!-- 누구의 어떤 문제 · 현재 대안과 그 한계 · Why Now 한 단락. 기능 나열 금지 — 문제부터. --&gt;
+
+## 목표 · 성공 지표
+&lt;!-- 측정 가능한 수치 목표 n개 + 성공 판정 기준(릴리스 기준 겸용). 비목표(안 할 것)도 여기 한 줄. --&gt;
+
+## 사용자 · 시나리오
+&lt;!-- 페르소나 + 핵심 사용 여정(CUJ) + 예외 케이스. --&gt;
+
+## 요구사항
+&lt;!-- 상위 기능 목록 + 우선순위만. 상세 스펙 서술 금지 — feature 열은 링크(id)가 정본.
+     파일 미생성 기능만 임시 텍스트 허용, 킥오프 시 링크로 교체 의무 (기능명 이중 원본 금지).
+| feature | 우선순위(MoSCoW) |
+|---------|------------------|
+--&gt;
+
+## NFR
+&lt;!-- 비기능 요구 — 설계에 영향 주는 것만: 성능·응답속도·보안·접근성·로깅. 충돌 서열에서 PRD 본문보다 상위.
+     상위 문서의 인용은 [[PRD#NFR]] 절 단위만 NFR로 인정 — 본문 타 절과 충돌 시 §NFR 승. 앵커 헤딩 = 계약(개명 금지). --&gt;
+
+## BM
+&lt;!-- 비즈니스 모델 — 가격·티어·단위경제의 유일 원본 — 리터럴은 아래 소제목 3곳에만(표/불릿), 타 절·타 문서는 링크.
+     value-axis-drift 검사기의 홈 제외 단위 = 이 섹션(파일 아님). 앵커 헤딩 = 계약(개명 금지). --&gt;
+### 가격
+### 티어
+### 단위경제
+
+## 가정 · 제약
+&lt;!-- 가정 = 참이라 믿고 진행하는 것(검증 계획 병기) · 제약 = 기술·리소스·규제. --&gt;
+
+## 오픈 이슈
+&lt;!-- 미결 질문 목록 — 미기록 = 리스크 관리 실패. 해소되면 결정은 본문/ADR로 옮기고 줄은 삭제. --&gt;
+
+## 용어 (Glossary)
+&lt;!-- | 용어 | 뜻 | --&gt;
+
+## 참조 문서
+&lt;!-- [[MARKETING]] · [[MILESTONE]] · [[COMPLIANCE]] · feature/_index — 일정=MILESTONE · GTM=MARKETING · 상세 스펙·와이어프레임=feature. --&gt;</textarea>
+  </div>
+<div id="ed-mkt" hidden>
+    <h3>MARKETING 0.2.0 초안 <span class="badge b-todo">📝 편집 가능</span></h3>
+    <p class="sub">리서치 9소스 완독(EN 6 · KO 3) 수렴 + 확정 경계(가격·티어 = PRD §BM 링크만 · 일정 = MILESTONE · 실물 홍보 콘텐츠 = 산출물) 반영. 편집 → 자동 저장 → <b>파일로 저장</b> → Claude에게 "적용했어".</p>
+    <div class="tblwrap"><table>
+      <tr><th>섹션</th><th>수렴 근거 (9개 소스 중 등장)</th></tr>
+      <tr><td><b>4축 뼈대: 타겟 → 포지셔닝·메시징 → 채널 → 지표</b></td><td>전원 포함 — 위에서 아래 순서로 채우는 게 공통 규율 (포지셔닝 전 채널 선점 = 실수 1위)</td></tr>
+      <tr><td><b>타겟·ICP</b></td><td>— 非타겟 명시 포함</td></tr>
+      <tr><td><b>포지셔닝·메시징</b></td><td>(+2 흡수) — 경쟁 분석 독립 장은뿐이라 여기 압축 (린 소스 4곳 전부 독립 장 없음)</td></tr>
+      <tr><td><b>채널 · KPI</b></td><td>각— 예산는 §목표에 1줄로 축소</td></tr>
+      <tr><td><b>전환 · 리텐션</b></td><td>각— 린 특화 고가치 채택 ("most startups skip")</td></tr>
+      <tr><td><b>런칭</b></td><td>— 티어 + pre/launch/post 상대 시퀀스만, 날짜는 MILESTONE 링크</td></tr>
+      <tr><td><b>홍보 자산 인덱스</b></td><td>③ 홍보 콘텐츠 = 산출물 (사용자 3분법 검증됨) — 재사용 원천(메시징)까지 문서 안, 실물은 인덱스 표만</td></tr>
+      <tr><td>문서 밖</td><td>가격·패키징 → PRD §BM · 콘텐츠 캘린더(산출물) · 세일즈 인에이블먼트(1인 셀프서브 제외) · 미션·비전·SWOT</td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="mkt-save">파일로 저장 (MARKETING-draft.md)</button>
+      <button id="mkt-reset">기본값 복원</button>
+      <span id="mkt-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="mkt-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Marketing Strategy — 마케팅 전략서
+---
+&lt;!-- 제목 = 파일명(MARKETING.md) = # 레벨 — 본문 헤딩은 ##부터. version·species = 전 문서 공통 (2026-07-31 개정). --&gt;
+&lt;!-- 경계: GTM·마케팅 전략의 정본. 제품·요구사항 = [[PRD]] · 가격·티어 = [[PRD#BM]] 링크만 — 본문에 숫자 가격·유료 티어 조건·단위경제 리터럴 금지 · 날짜·일정 = [[MILESTONE]].
+     섹션은 위에서 아래 순서로 채운다 — 포지셔닝 확정 전 채널 선점 금지. --&gt;
+
+## 목표 · 지표
+&lt;!-- 마케팅 북스타 지표 1 + 선행 지표 2~3 — 수치만, 기한·날짜는 [[MILESTONE]] 링크. 예산은 여기 1줄. 제품 목표와 구분 — 그건 [[PRD#목표 · 성공 지표]]. --&gt;
+
+## 타겟
+&lt;!-- 기본 = [[PRD#사용자 · 시나리오]] 링크(이중 원본 금지). 구매 의사결정자 ≠ 사용 페르소나일 때만 여기 1명 추가 + 구매·전환 트리거 + 非타겟(누구에게 안 파는가) 한 줄. --&gt;
+
+## 포지셔닝 · 메시징
+&lt;!-- 포지셔닝 문장 1: "&lt;타겟&gt;에게 &lt;제품&gt;은 &lt;대안&gt;과 달리 &lt;핵심 가치&gt;를 준다".
+     메시지 필러 ≤3 · 예상 반론과 답 ≤5 · 경쟁은 여기 한 줄씩(독립 장 금지).
+     여기가 모든 홍보 실물의 재사용 원천 — 실물 카피는 문서 밖. --&gt;
+
+## 채널
+&lt;!-- 주력 1 + 보조 1. 채널별 한 줄: 왜 이 채널 · 첫 실험. --&gt;
+
+## 전환 · 리텐션
+&lt;!-- 인지→가입→활성→결제 경로 1개 + 리텐션·추천 모션 한 줄씩. --&gt;
+
+## 런칭
+&lt;!-- 규모(대형 / 보통 / 조용한 출시 — 가격 티어와 혼동 방지, T 기호 금지) + pre/launch/post 상대 시퀀스만 — 날짜는 [[MILESTONE]]. --&gt;
+
+## 홍보 자산 인덱스
+&lt;!-- 실물(카피·소셜·PR·영상)은 볼트 밖 산출물 — 여기는 인덱스 표만.
+| 자산 | 채널 | 상태 | 링크 |
+|------|------|------|------|
+--&gt;
+
+## 참조 문서
+&lt;!-- [[PRD]] · [[PRD#BM]] · [[MILESTONE]] · [[COMPLIANCE]](광고 규제 시). --&gt;</textarea>
+  </div>
+<div id="ed-mst" hidden>
+    <h3>MILESTONE 0.2.0 초안 <span class="badge b-todo">📝 편집 가능</span></h3>
+    <p class="sub">내부 실측(0.1.x doc-templates 강제 골격 — 외부 수렴과 85% 일치) + 외부 7소스(EN 5·KO 2). 편집 → 자동 저장 → <b>파일로 저장</b> → "적용했어".</p>
+    <div class="tblwrap"><table>
+      <tr><th>결정</th><th>근거</th></tr>
+      <tr><td><b>Phase 3요소: Goal · Scope · Exit criteria</b></td><td>Goal 은 outcome 을 적는다</td></tr>
+      <tr><td><b>순서 스파인 + 확정 날짜만 §날짜</b></td><td>날짜 축은 유일한 분열 지점 — 자기부과 날짜는 1인 운용에서 "promises"화 → 문서 신뢰 붕괴 (2소스 교차). 단 r8·r9가 위임한 런칭·판정 기한은 hard deadline 예외라 §날짜 앵커 절이 수신</td></tr>
+      <tr><td><b>로드맵 ≠ 작업 큐</b></td><td>when만 기록 (0.1.x 머리말 계승 — what/why=PRD·유동 태스크=Huly). 큐 변질 신호 2종을 주석으로: 행 분해 신호·갱신 빈도 신호</td></tr>
+      <tr><td><b>0.1.x 대비 변경 5</b></td><td>Goal 열 신설 · Target 날짜 열 → §날짜 절 이동 · Milestone→Phase 개명(Phase 0=MVP 확정 용어) · 헤딩 단축(앵커 계약) · Out of scope 절 삭제(PRD 전례와 동일 판단 — 방어는 신호 주석이 수행)</td></tr>
+      <tr><td>기각</td><td>NNL(Now-Next-Later) 별도 축 — Phase 행 순서가 이미 그 역할 · Owner 열 — 1인 운용에서 사문</td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="mst-save">파일로 저장 (MILESTONE-draft.md)</button>
+      <button id="mst-reset">기본값 복원</button>
+      <span id="mst-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="mst-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Milestone — Phase 로드맵 · 일정·날짜의 유일 원본
+---
+&lt;!-- 제목 = 파일명(MILESTONE.md) = # 레벨 — 본문 헤딩은 ##부터. PRD(판정 기한)·MARKETING(런칭 날짜)이 날짜를 여기로 위임. --&gt;
+&lt;!-- 경계: when만 기록 — what/why = [[PRD]] · 기능 상세 = feature/ · 유동 태스크·스프린트 = Huly(정식 작업 큐, 이중 큐 금지).
+     큐 변질 신호 2종: ① Phase 행이 하위 항목 나열로 팽창하면 그건 티켓감 ② 주 단위로 고쳐지고 있으면 큐가 된 것 — 정당 갱신은 Phase exit·가정 붕괴·확정 날짜 변경뿐. --&gt;
+
+## 개요
+&lt;!-- 한 단락 — 지금 어느 Phase인지 + 다음 전환 조건. --&gt;
+
+## Phase
+&lt;!-- 행 순서 = 유일한 순서 축 (날짜 열 없음 — 자기부과 희망 날짜 금지). Phase 0 = MVP(PoC) 고정.
+     Goal = 이 Phase가 끝나면 달라지는 것(outcome) · Scope = 링크만(재기술 금지) · Exit = 측정 가능한 완료 판정 · Status = Huly 포인터.
+| Phase | Goal | Scope (→ [[PRD]] · feature/) | Exit criteria | Status (→ Huly) |
+|-------|------|------------------------------|---------------|-----------------|
+| 0 (MVP) | | | | |
+--&gt;
+
+## 날짜
+&lt;!-- 확정 날짜(hard deadline)만 — 규제·계약·이벤트·공표한 런칭. 희망 날짜는 여기 못 올라온다.
+     이 절이 유일 원본 — PRD §목표(판정 기한)·MARKETING §런칭(런칭 날짜)이 [[MILESTONE#날짜]]를 링크로 수신, 재기술 금지. 앵커 헤딩 = 계약(개명 금지).
+- 런칭: YYYY-MM-DD — Phase N exit 조건부
+--&gt;
+
+## 순서
+&lt;!-- 왜 이 순서인가 — Phase 간 의존·선행 조건 한 줄씩. 날짜 없이 순서만이 약속이다. --&gt;
+
+## 리스크
+&lt;!-- 로드맵을 흔들 수 있는 가정·의존성 — 깨지면 어느 Phase가 밀리는지 병기. --&gt;</textarea>
+  </div>
+<div id="ed-cmp" hidden>
+    <h3>COMPLIANCE · legal/TERMS_OF_SERVICE 0.2.0 초안 <span class="badge b-todo">📝 frontmatter만</span></h3>
+    <p class="sub">본문은 프로젝트·규제 환경마다 달라 양식화 불가 (사용자 판정 2026-07-31 — 0.1.x free-form 지위와 일치). <b>양식 = frontmatter + 경계 주석까지.</b> legal/ 문서는 이 골격을 공통으로 쓴다. 편집 → 자동 저장 → 파일로 저장 → "적용했어".</p>
+
+    <h3 style="margin-top:18px">COMPLIANCE.md</h3>
+    <p class="form-path"><code>docs/business/COMPLIANCE.md</code> — 싱글턴 · 트리거 시 작성(규제 대상 데이터·AI 기능 발생)</p>
+    <div class="editbar">
+      <button id="cmp-save">파일로 저장 (COMPLIANCE-draft.md)</button>
+      <button id="cmp-reset">기본값 복원</button>
+      <span id="cmp-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="cmp-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Compliance — 규제·법규 준수 검토
+---
+&lt;!-- 제목 = 파일명(COMPLIANCE.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
+&lt;!-- 본문 free-form — 염두할 법안(개인정보보호법·EU AI Act 등)과 대응 상태. 트리거 시 작성.
+     미작성/created = 미검토일 뿐 — 근거 인용·출시 판단 금지. "적용 규제 없음"은 검토 결과이므로 draft 이상에서 명시 기록해야 성립.
+     공개 이행물 원본은 docs/business/legal/ — 각 항목에서 해당 legal 문서로 링크. --&gt;</textarea>
+
+    <h3 style="margin-top:18px">legal/TERMS_OF_SERVICE.md</h3>
+    <p class="form-path"><code>docs/business/legal/&lt;법적 문서&gt;.md</code> — 공개 게시 원본 (웹·앱 게시용) · COMPLIANCE와 링크</p>
+    <div class="editbar">
+      <button id="tos-save">파일로 저장 (TERMS_OF_SERVICE-draft.md)</button>
+      <button id="tos-reset">기본값 복원</button>
+      <span id="tos-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="tos-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Terms of Service — 서비스 이용약관 (공개 게시 원본)
+effective: YYYY-MM-DD            # 시행일 — 게시·효력 발생일 (legal/ 전용 필드) · approved 전환 시 필수
+---
+&lt;!-- 제목 = 파일명 = # 레벨 — 본문 헤딩은 ##부터. 게시 시 표기 제목은 게시 채널 규격을 따른다. --&gt;
+&lt;!-- 본문 free-form — 이 파일이 게시본의 유일 원본. 게시 채널(웹·앱)에는 복사만, 수정은 여기서만.
+     게시 규칙: 게시·효력 주장은 status: approved에서만 — 게시 채널 반영 대상 = approved이면서 effective ≤ 오늘인 최신 버전 (미래 시행본은 대기 상태, drift 아님).
+     규제 근거·검토 이력은 [[COMPLIANCE]] — 여기는 이행물 본문만. --&gt;</textarea>
+  </div>
+<div id="ed-arc" hidden>
+    <h3>ARCHITECTURE 0.2.0 초안 <span class="badge b-todo">📝 편집 가능</span></h3>
+    <p class="sub">사용자 3소스 + 직접 수집 5소스(+보조 4) 수렴. 사용자 3소스 성격 판정: storycompiler = 실무 문서(핵심 기여) · itpenote 2건 = 기술사 시험 답안 노트(아키텍처 스타일 어휘만 차용). 편집 → 자동 저장 → <b>파일로 저장</b> → "적용했어".</p>
+    <div class="tblwrap"><table>
+      <tr><th>결정</th><th>근거</th></tr>
+      <tr><td><b>개요 신설</b></td><td> — 0.1.x 시안(구조·데이터모델·외부연동·결정기록)에 없던 유일한 만장일치 공백. 시안 대비 델타는 이 1절뿐</td></tr>
+      <tr><td><b>구조 = 본체</b></td><td>— mermaid 1장(외부 연결점·신뢰 경계 subgraph, 요소 ≤20) + 모듈 맵 표 + 의존 방향 + 불변 조건</td></tr>
+      <tr><td><b>다이어그램 — 수 자유 · 갱신 = AI DoD · 임베드 2형식 (사용자 개정)</b></td><td>갱신 주체가 AI 워커라 장수 상한 폐기 () — 구조·스키마 브리프 DoD에 다이어그램 갱신 의무. 첫 장 = 전체 큰 그림 의무(subgraph 해상도 조절) · 요소 ~20 초과 = 분리 신호 · 기능 그림은 feature로 · C4 L1+L2 권장. <b>임베드 2형식: mermaid 인라인(기본 — AI 텍스트 갱신) 또는 draw.io <code>![[*.drawio.svg]]</code>(편집 원본만 — export 정적 이미지는 여전히 안티패턴 금지 · 파일은 assets/ · DoD 동일 적용)</b></td></tr>
+      <tr><td><b>데이터 모델 유지 (논리만)</b></td><td>수렴 분할 축 — 서구 린 계열은 생략, 한국 실무·시험 계열은 필수. 볼트가 ERD 정본을 여기 지정했으므로 유지, 단 물리 스키마 정본 = 레포 migrations 포인터 1줄 의무</td></tr>
+      <tr><td><b>결정 기록 = adr/ 링크만</b></td><td>만장일치급 "본체는 밖" + 외부 독립 근거: "요약표는 drift하고 자동 생성 인덱스는 안 한다" — 요약표도 금지</td></tr>
+      <tr><td><b>링크 허브 원칙</b></td><td>NFR→PRD · 보안→THREAT_MODEL · 스택→CODE_CONVENTION · 물리 스키마→migrations · API→레포 스펙 · 배포→RUNBOOK — 링크 1줄은 라우팅, 재기술 시작이 drift</td></tr>
+      <tr><td>배제</td><td>NFR·이해관계자·품질모델·용어집(실무 린 계열 전원 배제) · 배치/런타임 시퀀스(약수렴). arc42 가설 검증: 제작자 스스로 1페이지 경량판 제공 — 죽는 건 어휘가 아니라 "전부 채우기"</td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="arc-save">파일로 저장 (ARCHITECTURE-draft.md)</button>
+      <button id="arc-reset">기본값 복원</button>
+      <span id="arc-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="arc-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Architecture — 시스템 설계 (구조·논리 데이터 모델·외부 연동)
+---
+&lt;!-- 제목 = 파일명(ARCHITECTURE.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
+&lt;!-- 경계: 이 문서는 링크 허브 — 링크 1줄은 라우팅, 재기술 시작이 drift.
+     NFR = [[PRD#NFR]] · 보안 위협 = [[THREAT_MODEL]](구조도엔 신뢰 경계 표시+링크까지만) · 스택·규약 = [[CODE_CONVENTION]] · 결정 본체 = adr/(링크만) · 물리 스키마 = 레포 migrations · API 상세 = 레포 스펙([[API_SPEC]]은 미러) · 배포·운영 = [[RUNBOOK]] · 기능 상세 = feature/.
+     운용: 자주 바뀌지 않는 사실만 기록 — 갱신은 구조·논리 데이터 모델·외부 연결점이 바뀐 커밋에서만.
+     본문 갱신 = 워커(브리프 DoD) · version 범프·커밋 = PM 경계 커밋 — 주체 분리는 모순 아닌 역할 분리. --&gt;
+
+## 개요
+&lt;!-- 3~6줄: 풀려는 문제 1문장 + 아키텍처 스타일 한 단어(모놀리스·이벤트 드리븐 등) + 성립 전제. --&gt;
+
+## 구조
+&lt;!-- 첫 장 = 시스템 전체 큰 그림 1장 의무 — 외부 연결점·신뢰 경계 포함, 모듈은 subgraph로 묶어 해상도 조절.
+     다이어그램 수 자유 — 임베드 2형식: ① mermaid 인라인(기본 — AI 워커가 텍스트로 갱신, 같은 diff) ② draw.io 임베드(`![[이름.drawio.svg]]` — 편집 원본만, export 정적 이미지 금지 · 파일은 소유 문서 옆 assets/ · 수명 공유).
+     갱신 주체 = AI 워커: 구조·스키마를 건드리는 브리프 DoD에 다이어그램 갱신 포함(PM 브리프 규율) — draw.io 파일도 동일 적용.
+     요소 ~20 초과는 금지가 아니라 신호 — subgraph로 묶거나 한 레벨(C4 L2) 내려 분리. 기능 수준 시퀀스·플로우는 feature 파일로(수명 공유).
+     + 모듈 맵 표(모듈 | 책임 한 줄) + 의존 방향 규칙 + 불변 조건(어겨지면 버그인 것). --&gt;
+
+## 데이터 모델
+&lt;!-- 논리 모델만 — 엔티티·관계·카디널리티·의미 있는 필드명까지 (타입·인덱스·제약 = migrations 소관, 여기 적으면 물리 재기술 drift). mermaid erDiagram 인라인, 무거워지면 그때 분리.
+     끝 1줄 고정: 물리 스키마 정본 = 레포 migrations 경로. --&gt;
+
+## 외부 연동
+&lt;!-- 이 표 = 유일한 연동 인벤토리 정본 — 구조도의 외부 노드명은 이 표 '대상' 열 이름만 사용 (기계 검사 가능: mermaid 외부 노드명 ⊆ 표 '대상' 열).
+     계약 위치 = 레포 경로 필수 — [[API_SPEC]] 미러 단독 기입 금지 (미러를 정본처럼 인용하면 값 축 파괴).
+     연동 변경 브리프의 DoD = 표 행 + 구조도 같은 diff 갱신.
+| 대상 | 용도 | 계약 위치 |
+|------|------|-----------|
+--&gt;
+
+## 결정 기록
+&lt;!-- adr/ 링크 목록만 — 요약표·근거 재서술 금지(요약표는 drift한다). 되돌리기 어려운 결정이 생기면 ADR 신설 후 여기 한 줄. --&gt;</textarea>
+  </div>
+<div id="ed-cc" hidden>
+    <h3>CODE_CONVENTION 0.2.0 초안 <span class="badge b-todo">📝 편집 가능</span></h3>
+    <p class="sub">사용자 시드(네이밍 5종) + 소스 9건(제공 tistory · 한국어 2 · 영어 4 · 방증 1 · 내부 실측 2). 편집 → 자동 저장 → <b>파일로 저장</b> → "적용했어".</p>
+    <div class="tblwrap"><table>
+      <tr><th>쟁점 판정</th><th>근거</th></tr>
+      <tr><td><b>① 네이밍 층위 — 제3의 길</b></td><td>실측: 시드는 이미 동일 값의 <b>3중 사본</b>(플러그인 canon · org NAMING_CONVENTION · 시드, 값 충돌 0). 소스 수렴 = Conventional Branch 모델: 규칙 원문은 canon 1곳, 프로젝트 문서 = <b>형식 1줄 + 바인딩(PREFIX·티켓 시스템) + 일탈만</b>. "내린다" = 바인딩을 내리는 것이지 원문 복사가 아님. 시드 5헤딩은 그대로 유지(org 문서와 앵커 1:1 패리티 — 이관이 링크 rewrite로 끝남)</td></tr>
+      <tr><td><b>② 환경분리 — 트리거 시 §Environment</b></td><td>코드 규약 문서에 dev/staging/prod 운영 규약을 넣은 소스 0건. 경계: 코드 표면(환경변수 네이밍·설정 파일 규칙) = 필요 시 여기 신설 · 절차·인프라 = RUNBOOK. 지금은 섹션 미생성(선제 생성 금지와 정합)</td></tr>
+      <tr><td><b>③ 린터 = 정본</b></td><td>만장일치, 반례 0건 — 도구 설정 파일이 정본, 문서는 원칙+포인터+도구가 못 잡는 것만 ("Document only what you can't" · 분량 1~2쪽). DESIGN의 "픽셀 = 디자인 툴 정본"과 동일 구도</td></tr>
+      <tr><td>따라오는 결정</td><td>org <code>NAMING_CONVENTION.md</code> 거취 — 방치하면 3중 사본이 4중이 됨. 권장 = 그린필드 org층에서 소멸(규칙 원문은 canon, 프로젝트는 바인딩) · 대안 = 포인터 스텁 존치. <b>사용자 결정 대기</b></td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="cc-save">파일로 저장 (CODE_CONVENTION-draft.md)</button>
+      <button id="cc-reset">기본값 복원</button>
+      <span id="cc-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="cc-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Code Convention — 코드 규약 (스택·스타일·git 네이밍·테스트 규율)
+---
+&lt;!-- 제목 = 파일명(CODE_CONVENTION.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
+&lt;!-- 정본 원칙: 도구가 강제할 수 있는 것은 도구 설정이 정본(린터·포매터·commitlint) — 여기는 원칙 + 포인터 + 도구가 못 잡는 것만.
+     네이밍 5절: 규칙 원문 정본 = git-convention canon 1곳 (`~/.claude/brain-docs/git-convention.md` — Router 경유) — 각 절은 형식 1줄 + 프로젝트 바인딩 + 일탈만 (원문 표 재기술 = 사본 증식 금지).
+     환경분리: 코드 표면(환경변수 네이밍·설정 파일 규칙)이 필요해지면 §Environment 신설 — 배포 절차·환경별 인프라는 [[RUNBOOK]]. --&gt;
+
+## Stack
+&lt;!-- 형식 고정: `- &lt;언어·프레임워크·런타임&gt; — 매니페스트: &lt;레포 경로&gt;` — 버전 숫자 칸 없음(정본 = 매니페스트). --&gt;
+
+## Style
+&lt;!-- 정본 = 린터·포매터 설정 파일(레포 경로 명시). 산문은 도구가 못 잡는 규칙만 — 네이밍 의미론·주석 원칙 등. --&gt;
+
+## Branch naming
+&lt;!-- 형식: `&lt;type&gt;/&lt;PREFIX&gt;-&lt;번호&gt;-&lt;slug&gt;` — kebab · 소문자 · type 접두 포함 40자 상한. 티켓 없으면 `&lt;type&gt;/&lt;PREFIX&gt;-adhoc-&lt;slug&gt;`.
+     바인딩: PREFIX = ___ · 티켓 시스템 = ___. 일탈 없으면 "일탈 없음" 한 줄. --&gt;
+
+## Worktree naming
+&lt;!-- 형식: `&lt;PREFIX&gt;-&lt;번호&gt;-&lt;slug&gt;` — kebab · 소문자. 티켓 없으면 `&lt;PREFIX&gt;-adhoc-&lt;slug&gt;` (브랜치 adhoc과 사슬 정합). --&gt;
+
+## Commit naming
+&lt;!-- 형식: `type(scope): 요약` — type = Conventional Commits 11종 고정(feat·fix·docs·style·refactor·perf·test·build·ci·chore·revert), 새 타입 발명 금지.
+     11종 정의 원문·타입 판정 규칙 = canon(git-convention) 포인터 — 여기 표 재기술 금지. --&gt;
+
+## PR/MR naming
+&lt;!-- 형식: `type(&lt;PREFIX&gt;-&lt;번호&gt;): 요약` — type 재분류 정정은 PR 제목이 싣는다, 브랜치는 개명하지 않는다. 티켓 없으면 `type(&lt;PREFIX&gt;-adhoc): 요약`. --&gt;
+
+## Issue Ticket naming
+&lt;!-- 형식: `[type] 대상 + 증상` — 제목은 "무엇이"까지, 원인·처리안은 description·댓글. --&gt;
+
+## Test
+&lt;!-- 공통 전략만 — 러너·커버리지 원칙·픽스처 규율. 기능별 수용 기준은 feature 파일(FRD) 소관. --&gt;
+
+## Forbidden
+&lt;!-- 이 프로젝트에서 금지하는 것 + 이유 한 줄. 도구로 강제 가능해지면 도구 설정으로 옮기고 여기서 삭제. --&gt;</textarea>
+  </div>
+<div id="ed-rb" hidden>
+    <h3>RUNBOOK 0.2.0</h3>
+    <p class="sub">외부 8소스 + 0.1.x 시안 합성 →· CONDITIONAL-GO 3, 이의 전부 해소). 사용자 최종 서명 대기.</p>
+    <div class="tblwrap"><table>
+      <tr><th>결정</th><th>근거</th></tr>
+      <tr><td><b>혼합 단일 거처 유지</b></td><td>업계는 "작업 1건당 runbook 라이브러리"()지만 1인 린 전제 + Atlassian "single resource" 선례로 정합. incident playbook 별도 문서 주장 0건(내부)</td></tr>
+      <tr><td><b>장애 대응 신설</b></td><td>프로덕션 진입 시 §관측과 동반 생성 — 알림 1개 = 대응 항목 1개(Google 원칙) · escalation 소멸(1인) · 최소형 표: 증상|진단 명령|복구·rollback</td></tr>
+      <tr><td><b>환경 = §배포 하위</b></td><td>환경을 독립 절로 세운 소스 0건 — 환경 = 배포의 실행 스코프(Octopus 모델). 코드 표면 규약은 CODE_CONVENTION</td></tr>
+      <tr><td><b>자동화 정본 규칙 — 문서 머리 승격</b></td><td>"잘 문서화된 수동 절차 → 성숙하며 자동화"(Cortex) · 자동화 후 문서 = 스크립트 포인터+실행법+검증법(SolarWinds) — "린터=정본"의 운영판</td></tr>
+      <tr><td><b></b></td><td>검증 의무 = 실행 절차 절 한정( — Delivery 제외, 가짜 출력 방지) · 출력 발췌 최소 토큰+시크릿·PII 마스킹( — git 이력 영구 고정 방지) · 실행일 병기 명문화+수동 절차는 결과 서술+실행일</td></tr>
+      <tr><td>날짜 축 판정</td><td>독립 날짜 필드 금지 <b>유지</b> 채택: 독립 필드는 "출력 없이 날짜만 갱신"되는 거짓 신선도를 허용하나 출력 종속 날짜는 구조적으로 불가능 (8중 7 무권장).TTL 30일은 숫자 발명 기각 ·수동 예외는 결과 서술 규칙으로 흡수</td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="rb-save">파일로 저장 (RUNBOOK-draft.md)</button>
+      <button id="rb-reset">기본값 복원</button>
+      <span id="rb-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="rb-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Runbook — 배포·운영 절차 (Delivery·배포·관측·장애 대응·DR·마이그레이션)
+---
+&lt;!-- 제목 = 파일명(RUNBOOK.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
+&lt;!-- 정본 원칙: 자동화된 절차는 스크립트·CI가 정본 — 여기는 "무엇을 실행하고 어떻게 검증하는지" 포인터만. 수동 절차는 여기가 정본, 성숙하면 자동화로 승격.
+     검증 규율: 실행 절차 절(배포·관측·장애 대응·DR·마이그레이션) = 검증 명령 + 실제 출력 발췌(실행일 병기) 기록 의무 — §Delivery 등 기록 절은 제외.
+     출력 발췌는 판정에 필요한 최소 토큰만 — 시크릿·PII·자격증명은 마스킹(***). 검증 명령이 없는 수동 절차는 검증 가능한 결과 서술 + 실행일.
+     🔴 독립 날짜 필드(last-verified 류) 금지 — 날짜는 기록된 출력의 종속 메타데이터 (출력 없이 날짜만 갱신되는 거짓 신선도가 구조적으로 불가능). --&gt;
+
+## Delivery
+&lt;!-- 정본 = 공통층 [[common_policy#배포 분류]] (구 DELIVERY_STRATEGY — 통제 주체 × SaaS 축, org마다 값이 다른 조직 정책).
+     여기는 이 프로젝트의 부류 선언(서버-SaaS | 서버-개인 | 클라이언트) + 예외만 — 규칙 재기술 금지. 검증 의무 제외 절. --&gt;
+
+## 배포
+&lt;!-- 배포 절차 — 자동화됐으면 스크립트·CI 경로 + 실행법 + 성공 검증 명령·출력. --&gt;
+### 환경
+&lt;!-- 환경 **수·티어**는 공통 배포 분류가 결정 ([[common_policy#배포 분류]] — 서버-SaaS = stage+prod · 서버-개인 = prod 단일 · 클라이언트 = 스토어 트랙). 그 값을 여기 재기술하지 않는다.
+     🔴 여기가 정본인 것 = **브랜치↔환경 매핑**. 브랜치 이름과 환경 이름은 같지 않다 —
+        실측 예: `dev` 브랜치가 `stage` 환경으로 배포된다. 적지 않으면 아무도 모른다.
+     아래 표를 이 레포 실제 값으로 갈아끼운다. 행 수·이름 전부 프로젝트마다 다르다. --&gt;
+
+| 환경 | 배포 트리거 | 승격 조건 | 되돌리기 |
+|---|---|---|---|
+| stage | `dev` 브랜치 push | 개인 브랜치(`dev-&lt;이름&gt;`) → `dev` 머지 시 | 직전 커밋 재배포 |
+| prod | `main` 브랜치 push &lt;!-- 또는 `v*` 태그 --&gt; | `dev` → `main` 머지 + 사람 승인 | 직전 태그 재배포 |
+
+&lt;!-- 개인 작업 브랜치 접두어(`dev-&lt;이름&gt;` 등)는 **사람 규약이므로 여기 측정치로 적는다.**
+     에이전트 브랜치 `&lt;type&gt;/&lt;PREFIX&gt;-&lt;번호&gt;-&lt;slug&gt;` 는 하네스 canon([[git-convention]])이고 둘은 공존한다 — 통합하지 않는다.
+     환경 변수 위치는 포인터만. env var 네이밍 규약은 [[CODE_CONVENTION]]. --&gt;
+
+## 관측 (Observability)
+&lt;!-- 프로덕션 진입 시 작성 — 뭘 보면 정상인지: 대시보드·알림 목록 + 확인 명령·출력. --&gt;
+
+## 장애 대응
+&lt;!-- 프로덕션 진입 시 §관측과 동반 생성 — 알림 1개 = 대응 항목 1개. escalation 없음(1인 운용).
+| 증상 | 진단 명령 | 복구·rollback |
+|------|-----------|----------------|
+--&gt;
+
+## 재해 복구 (DR)
+&lt;!-- 데이터 유실이 사업 리스크일 때 작성 — 백업 위치·복원 절차 + 검증 명령·출력. 실패 시 분기 힌트 허용(성공/실패 출력 쌍). --&gt;
+
+## 마이그레이션 (Migration)
+&lt;!-- 스키마 변경 시 절차 누적 — 실행·롤백 명령 + 출력. 실패 시 분기 힌트 허용. 물리 스키마 정본 = 레포 migrations ([[ARCHITECTURE#데이터 모델]]과 경계). --&gt;</textarea>
+  </div>
+<div id="ed-tm" hidden>
+    <h3>THREAT_MODEL 0.2.0</h3>
+    <p class="sub">핵심 7 + 보조 4소스(Shostack·MS STRIDE·OWASP·Mozilla RRA·SSDF·ISO) + org SECRET_MANAGEMENT 실측 → r15(GO 2 · CONDITIONAL-GO 2, 이의 전부 해소). 사용자 최종 서명 대기.</p>
+    <div class="tblwrap"><table>
+      <tr><th>결정</th><th>근거</th></tr>
+      <tr><td><b>4질문 뼈대 + STRIDE는 표 열 하나</b></td><td>양자택일 아닌 표준 결합 — STRIDE-per-element는 Shostack 자기 차트 최고 난도("too heavy"). 세션 30~60분 박스(Mozilla RRA) · likelihood 추정 스킵</td></tr>
+      <tr><td><b>수치 점수 금지 — L/M/H/C</b></td><td>DREAD 옹호 소스 0건, 공저자 본인 폐기("drop back to high/medium/low")</td></tr>
+      <tr><td><b>증적 성격 — 흡수 불가 검증</b></td><td>0.1.x 판정이 외부 근거로 확인됨(SSDF 감사 기록·ISO SoA 매핑). 소유자·날짜·개정은 frontmatter·git이 충족 — 본문은 표·수용 리스크·트리거·점검만</td></tr>
+      <tr><td><b>경계 3종</b></td><td>신뢰 경계 그림 = ARCHITECTURE 링크만 · 시크릿 = SECRET_MANAGEMENT 포인터 · 완화 실행 정본 = 티켓</td></tr>
+      <tr><td><b></b></td><td>§점검 문구 정직화("DoD에서 워커 판정 — validate 기계 검사는 0.2.0 구현 시",정반대 독해의 중재) · approved 게이트(출시·감사 인용은 approved만, 전환 = open 0 + accept 전부 기재) · done = 티켓 종결 증거 ID 필수 · §점검 대조 대상 정확화(모듈 맵·외부 연동 값, 2 GO도 놓친 세부) · 트리거 ⑤ 신뢰 경계·논리 모델 변경 추가</td></tr>
+      <tr><td>운영 기록</td><td>version 재론(4회 반복) — 재론 금지 명시로 영구 종결, 이번 라운드 미제출 확인</td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="tm-save">파일로 저장 (THREAT_MODEL-draft.md)</button>
+      <button id="tm-reset">기본값 복원</button>
+      <span id="tm-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="tm-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Threat Model — 위협 모델 (위협·완화 표 · 보안 증적)
+---
+&lt;!-- 제목 = 파일명(THREAT_MODEL.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
+&lt;!-- 방법론: Shostack 4질문 뼈대 + STRIDE는 표의 열 하나 — STRIDE-per-element 순회 금지, 세션은 30~60분 박스, likelihood 추정 스킵.
+     증거 성격: 이 문서는 감사 증적 — 소유자·날짜·개정 이력은 frontmatter·git이 담당.
+     출시·감사 인용 허용 = status: approved만 — 전환 조건: 위협 표 open 행 0 + accept 행 전부 §수용 리스크 기재. --&gt;
+
+## 전제와 범위
+&lt;!-- Q1(무엇을 만드나): 1단락 + 검증 가능한 가정 · 미해결 질문. 시스템 서술은 [[ARCHITECTURE]] 링크 — 재기술 금지. --&gt;
+
+## 신뢰 경계
+&lt;!-- 링크 1줄 절 — 정본 = [[ARCHITECTURE#구조]](신뢰 경계 subgraph). 그림 재작성 금지. --&gt;
+
+## 위협 표
+&lt;!-- Q2·Q3(뭐가 잘못될 수 있나 · 어떻게 할 건가). 심각도 = L/M/H/C(수치 점수 금지) · 대응 = mitigate/eliminate/transfer/accept · 상태 = open/in_progress/done.
+     완화 열: 규범은 포인터([[SECRET_MANAGEMENT]] 등) · 구현은 티켓 ID — 실행 정본은 티켓. 상태 done = 티켓 종결 확인 후에만, 종결 티켓 ID 병기(허위 완료 방지).
+| ID | 위협 | STRIDE | 자산·컴포넌트 | 심각도 | 대응 | 완화 | 상태 |
+|----|------|--------|---------------|--------|------|------|------|
+--&gt;
+
+## 수용 리스크
+&lt;!-- 대응 = accept 행 전용 — 사유 · 수용자 · 다음 재평가 시점. 연 1회 재평가 의무. --&gt;
+
+## 범위 밖
+&lt;!-- 의식적으로 분석하지 않은 것 — "안 본 것"과 "위협 없음"의 구분 기록 (증적 요건). --&gt;
+
+## 갱신 트리거
+&lt;!-- ① [[ARCHITECTURE#외부 연동]] 표 행 추가·변경 ② 인증·인가 변경 ③ 공개 표면 확장 ④ 보안 사건 ⑤ 신뢰 경계·논리 데이터 모델 변경 — 해당 브리프 DoD에 이 문서 갱신 포함. + 연 1회 수용 리스크 재평가. --&gt;
+
+## 점검
+&lt;!-- Q4(잘 했나) — 고정 3항: ① 모든 위협 행에 대응 결정 존재 ② accept 행 전부 §수용 리스크에 사유 있음 ③ 자산·컴포넌트 값 = [[ARCHITECTURE]] 모듈 맵 '모듈'·외부 연동 '대상' 값과 일치.
+     갱신 브리프 DoD에서 워커가 판정 — 기계 검사(validate) 추가는 0.2.0 구현 시 (3항 전부 문자열 비교로 환원 가능). --&gt;</textarea>
+  </div>
+<div id="ed-d3" hidden>
+    <h3>DESIGN · P_POLICY · API_SPEC 0.2.0</h3>
+    <p class="sub">develop 경량 3종 묶음. 사용자 최종 서명 대기.</p>
+    <div class="tblwrap"><table>
+      <tr><th></th><th>내용</th></tr>
+      <tr><td><b>API_SPEC 미러 예외 ()</b></td><td>"유일 예외 문서는 frontmatter 규칙도 예외" — status: draft 고정 · version 범프 주체 = 동기화 워커(파일 전체가 워커 생성물, PM은 검증·경계 커밋만)</td></tr>
+      <tr><td><b>P_POLICY 조항 헤딩 계약 (수렴)</b></td><td>규칙 1건 = <code>## POL-NNN &lt;제목&gt;</code> · 참조 = <code>[[P_POLICY#POL-003]]</code> 앵커 — 충돌 서열 2위의 인용 단위 확보. 단일 파일 확정과 정합(비대 분리 시 헤딩→파일명 자연 승격)</td></tr>
+      <tr><td><b>DESIGN States 단독 원본 ()</b></td><td>Components의 States 열 = 상태 이름 목록만 — 동작 서술은 §States &amp; Interactions 단독 (3곳 이중 원본 해소). 골격은 0.1.x 🏛 정본 계승 + 확인 기록 3층·컴포넌트별 .md 금지</td></tr>
+      <tr><td><b>DESIGN 첫 리서치 — 값 축 전면 전환</b></td><td>DESIGN은 리서치 없이 확정됐던 유일 양식 → 지정 3소스 + 발굴 5소스로 첫 조사(1차 원본 <code>google-labs-code/design.md</code> 저장소 실측 — 지정 소스 yscho03은 스펙 오류 6건이라 인용 배제). <b>값 축 전복(): 구 "UI 픽셀 = 코드 정본" → 디자인 토큰 정본 = DESIGN.md, 코드 토큰 정의는 export 산출물</b>. 델타: §Do's and Don'ts 신설(최우선 — AI에게 문서의 유일한 힘은 네거티브 제약) · Design Tokens에 실값 보유 + primitive 층 금지(플랫 15~20개) + Layout 축 신설(브레이크포인트를 A11y 꼬리에서 독립) · Components에 When-not-to-use·Status 열 · §SSOT → §Export 성격 전환. UI 문구 소관 = 보류(트리거 시) · DESIGN 린터 도입 = 별도 티켓</td></tr>
+      <tr><td><b>DESIGN — 집행 3층</b></td><td>토큰 값의 정본은 DESIGN.md 다. 코드 토큰 파일은 export 산출물이며, §Export 에 동기 검증 명령을 둔다.</td></tr>
+    </table></div>
+
+    <h3 style="margin-top:18px">DESIGN.md</h3>
+    <div class="editbar">
+      <button id="ds-save">파일로 저장 (DESIGN-draft.md)</button>
+      <button id="ds-reset">기본값 복원</button>
+      <span id="ds-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="ds-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Design — 디자인 시스템 (토큰·컴포넌트 계약의 정본)
+---
+&lt;!-- 제목 = 파일명(DESIGN.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
+&lt;!-- 🔴 값 축 (2026-07-31 전면 전환 — 구 "UI 픽셀 = 코드 정본" 폐기): **디자인 토큰의 정본 = 이 문서**. 코드의 토큰 정의(CSS 변수·테마 파일 등)는 여기서 export된 산출물이며, 값이 어긋나면 코드가 틀린 것.
+     토큰 값을 쓰는 유일한 위치 = §Design Tokens 표 — 코드는 토큰 값을 창작하지 않는다(가져다 쓸 뿐).
+     단 렌더링 자체는 코드·디자인 툴의 몫 — 토큰 값은 에이전트에게 주는 컨텍스트이지 렌더링 지시가 아니다. 컴포넌트 구현 픽셀·이력은 여전히 코드·툴이 보유.
+     🔴 정본 주장의 집행 3층(하나라도 빠지면 정본 선언이 사문): ① 규격 = §Design Tokens 고정 표(export 입력) ② 탐지 = §Export 검증 명령+출력 ③ 게이트 = status: approved 전환 조건.
+        **approved 전환 조건**: §Export에 경로·동기 방식 기재 + 검증 명령 출력이 일치로 기록돼 있을 것. 토큰 변경 브리프의 DoD = 산출물 파일 동시 갱신 + 검증 재실행(같은 경계 커밋).
+        불일치 발견 시 워커는 **자동 수정 금지** — 어느 쪽이 뒤처졌는지는 PM 판정(문서가 뒤처진 경우 정본 이름의 롤백이 더 위험).
+     컴포넌트 확인 기록 3층: ① 구현 픽셀·이력 = 코드·툴 ② 확정 스펙 = §Components 행 + §States &amp; Interactions ③ 확정 사유 = 행 Notes(사유·ADR 링크만 — 토큰 실값·픽셀 수치 금지) + 이력은 git 커밋.
+     🔴 컴포넌트별 .md 파일 금지 — 컴포넌트당 문서는 제2의 SSOT이고, SSOT 둘은 drift한다. 스크린샷을 정본으로 붙이기 금지. --&gt;
+
+## Overview
+&lt;!-- 1단락: 어떤 제품 표면을 다루나 + 디자인 언어 한 줄. --&gt;
+
+## Design Tokens
+&lt;!-- 이 절이 토큰 값의 정본 — 실값(hex·px·rem)을 여기 적는다. **아래 고정 표만 export 입력**(산문에 흩어진 값은 입력이 아니다).
+     🔴 primitive 층(색상 팔레트 원자값)을 만들지 말 것 — 의미 이름에 값을 직결한 플랫 15~20개가 1인 운용에서 훨씬 멀리 간다.
+     토큰 이름 = semantic 케밥(`color-danger`·`space-md`) — 값 서술 이름(`color-red-500`) 금지.
+     축 4종을 한 표에: Color · Typography(family·scale·weight) · Spacing(간격·radius·elevation) · Layout(브레이크포인트·그리드·컨테이너 폭).
+| token | value | usage |
+|-------|-------|-------|
+--&gt;
+
+## Components
+&lt;!-- 인벤토리 — 컴포넌트당 1행. States 열 = 상태 이름 목록만(동작 서술 금지 — 동작은 §States &amp; Interactions 단독 원본).
+     "When not to use" = 표 1행이 못 담아 컴포넌트 문서가 비대해지는 원인 1위 → 열로 고정. Status = 실험/안정/폐기 예정.
+     Notes = 확정 사유·ADR 링크만(토큰 실값·픽셀 수치 금지 — 제2 원본 방지). 상태 이름은 여기 먼저 등록한 것만 §States에서 서술(같은 diff).
+| Component | States | When not to use | Status | Notes | 구현 링크 |
+|---|---|---|---|---|---|
+--&gt;
+
+## States &amp; Interactions
+&lt;!-- 정적 목업이 못 싣는 규칙의 단독 원본: focus/hover/disabled/loading/error 동작·전환·모션. --&gt;
+
+## Do's and Don'ts
+&lt;!-- 이 문서가 AI 워커에게 갖는 유일한 힘 = 네거티브 제약. "이렇게 하라"는 코드가 이미 하고 있고, "하지 마라"만 코드에 없다.
+     금지 규칙 한 줄씩 + 이유 — 예: 토큰 밖 hex 직접 사용 금지 · 모션 200ms 초과 금지 · 에러를 색만으로 표시 금지. --&gt;
+
+## Accessibility
+&lt;!-- 대비 기준·포커스 순서·키보드 조작. (브레이크포인트·그리드는 §Design Tokens의 Layout 축 소관.) --&gt;
+
+## Export
+&lt;!-- 이 문서의 토큰이 흘러가는 곳 — 코드 토큰 파일 경로 · 디자인 툴(Figma 등) 링크 · 동기 방식(수동 반영 / 스크립트) 한 줄.
+     🔴 검증 명령 + 실제 출력 발췌(실행일 병기)를 여기 기록 — [[RUNBOOK]] 검증 규율과 동형. 이 기록이 정본 주장의 유일한 탐지 장치다.
+     예: `rg -n "color-danger" src/tokens.css` → `--color-danger: #b3383d;` () — §Design Tokens 값과 일치.
+     불일치 시 자동 수정 금지 — PM 판정(문서가 뒤처졌을 수 있다). --&gt;
+
+## Open questions
+&lt;!-- 미결 — 결정은 여기서 하지 않는다, ADR 링크. --&gt;</textarea>
+
+    <h3 style="margin-top:18px">P_POLICY.md</h3>
+    <div class="editbar">
+      <button id="pp-save">파일로 저장 (P_POLICY-draft.md)</button>
+      <button id="pp-reset">기본값 복원</button>
+      <span id="pp-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="pp-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Project Policy — 프로젝트 내부 규범
+---
+&lt;!-- 제목 = 파일명(P_POLICY.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
+&lt;!-- 조항 단위 계약: 규칙 1건 = `## POL-NNN &lt;제목&gt;` 헤딩(번호 = 파일 내 연번, PM 발급) — 참조·서열 집행은 [[P_POLICY#POL-003]] 앵커로.
+     수록 판정 기준: "2개 이상 기능에 걸치는 규칙" — 단일 기능 규칙은 그 feature 파일로.
+     충돌 서열: 공통 policies(org) &gt; P_POLICY &gt; PRD §NFR — org 규범과 겹치면 재기술하지 말고 org로 승격하거나 포인터.
+     단일 파일 시작 — 비대해지면 구획 규칙대로 분리, 조항 헤딩이 파일명으로 자연 승격. --&gt;</textarea>
+
+    <h3 style="margin-top:18px">API_SPEC.md</h3>
+    <div class="editbar">
+      <button id="as-save">파일로 저장 (API_SPEC-draft.md)</button>
+      <button id="as-reset">기본값 복원</button>
+      <span id="as-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="as-editor" spellcheck="false">---
+status: draft                    # 미러 고정값 — 승인 개념 없음, 인용 근거는 source의 레포 스펙만
+updated: YYYY-MM-DDTHH:MM:SS     # 동기화 시점 갱신
+version: 0.0.0                   # 동기화 시 범프 — 주체 = 동기화 워커 (공통 규칙의 명시적 예외)
+species: API Spec — 레포 스펙 읽기 전용 미러
+source: &lt;레포 스펙 경로&gt;          # 정본 — OpenAPI/proto 등 (미러 3키 ①)
+readonly: true                   # 손편집 금지 — 손편집 = drift (미러 3키 ②)
+synced: YYYY-MM-DDTHH:MM:SS      # 마지막 동기 시각 (미러 3키 ③)
+---
+&lt;!-- 제목 = 파일명(API_SPEC.md) = # 레벨. 볼트 유일 예외 문서 — frontmatter 포함 파일 전체가 동기화 워커 생성물, frontmatter 수명 규칙도 예외(PM은 검증·경계 커밋만).
+     생성·갱신 주체 = 동기화 워커(API 생기면 트리거 생성) — 사람·PM 포함 손편집 전면 금지.
+     본문 = 스펙 요약 자동 생성물 — 골격 강제 없음. 계약 상세·승인은 source 경로의 레포가 정본. --&gt;</textarea>
+  </div>
+<div id="ed-ft" hidden>
+    <h3>feature 파일 0.2.0</h3>
+    <p class="sub">외부 8소스(Jama·AltexSoft·LogRocket·Google Design Docs·이랜서·애플피시·spec-kit 등) — 이랜서 실무 필드셋이 확정 frontmatter 9필드를 역검증. r17(GO 1 · CONDITIONAL-GO 3, 이의 전부 해소). 사용자 최종 서명 대기.</p>
+    <div class="tblwrap"><table>
+      <tr><th>결정</th><th>근거</th></tr>
+      <tr><td><b>FRD+TDC 통합 확정</b></td><td>"독자 분리" 근거는 1인+AI에서 소멸 — 선례: Google mini design doc(1~3쪽)·한국 기능정의서(이미 혼합체). 절 순서 = 무엇(Why·Scope·Rules·Acceptance) → 어떻게(Design)</td></tr>
+      <tr><td><b>수용 기준 = 원자 단문 목록</b></td><td>rule-oriented 리스트 기본 + 상태·이벤트 흐름만 GWT 선택 · 표 형식 금지(diff·AI 편집성 최악)</td></tr>
+      <tr><td><b>본문 무상태 원칙</b></td><td>(AC 진행 보드화)·(§Log 확정 모순)를 일괄 해소 — §Log 삭제(개정 이력 = git 티켓 태그 커밋 · 갱신 강제 = 티켓 DoD) · 구현 진행 축 frontmatter 신설 금지(볼트 병행 큐)</td></tr>
+      <tr><td><b>SSOT 범위 정밀화 ()</b></td><td>파일 전체 = 기능 명세 SSOT · frontmatter = 집계 필드의 유일 SSOT(feature.base 원료) · §Rules·§Acceptance = 행동·검증 계약</td></tr>
+      <tr><td><b>스키마 2건 ()</b></td><td>screen_id 목록형(`[]`) — §Screens 다중 화면 정합 · priority 축 정의 명시(기능 기획 중요도 — PRD MoSCoW·Huly 실행 우선순위와 별개, 상/중/하 어휘는 확정 유지)</td></tr>
+      <tr><td><b>출시 후 수명</b></td><td>살아있는 스펙 — 아카이브·이동 금지 (Google "design doc archaeology" · spec-kit 역공학 토큰 비용). H1 본문 금지 유지 — 제목 역할 = summary</td></tr>
+      <tr><td><b>보강 리서치 (사용자 지정 3소스 — todaystudying·minery·figma user-flow)</b></td><td><b>확정 양식을 뒤집는 항목 0건 — 역검증 3건</b>: <code>feasibility</code> 3값이 minery 실무 어휘와 문자 그대로 일치(임의 발명 아님) · frontmatter 14필드가 todaystudying 기능명세서 11항목 중 9개 흡수(82%) · userflow ⊥ dataflow 분리가 figma 정의차와 정합. <b>빈칸은 다이어그램 표기 어휘 1층뿐</b> → 채택 5건(전부 주석 지침, 절 신설 0): 도형 어휘 5종 고정 · 흐름당 목표 1개 · 입도 하한선 · 액터 명시(§Rules) · journey 예외 부기. 기각 6건(작업구분·변경여부/내역 = §Log 기각과 동일 축 · 메뉴트리 · 종료점 3유형 등). ⚠ figma 표기법은 원문 예시끼리 색·도형이 불일치 — 우리 정규화이지 외부 표준 인용 아님</td></tr>
+    </table></div>
+    <div class="editbar">
+      <button id="ft-save">파일로 저장 (feature-draft.md)</button>
+      <button id="ft-reset">기본값 복원</button>
+      <span id="ft-status" class="sub" style="margin:0"></span>
+    </div>
+    <textarea id="ft-editor" spellcheck="false">---
+status: created                  # created | draft | approved | deprecated — 문서 수명 축
+updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
+version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
+species: Feature — 기능 명세 (FRD+TDC 통합)
+id: &lt;PP&gt;_&lt;FP&gt;_00001              # 기능 ID — 파일명과 일치 · 불변
+screen_id: []                    # opt — 화면 ID 목록
+category:                        # 카테고리
+depth: []                        # 계층 경로 — 예: [회원가입, 간편가입, 카카오]
+priority:                        # 상 | 중 | 하 — 기능 기획 중요도 (PRD MoSCoW·Huly 실행 우선순위와 별개 축)
+devices: []                      # [mobile, web, ...]
+summary:                         # 1줄 — 검색 축 겸용 · 제목 역할 (본문 H1 없음)
+feasibility:                     # 가능 | 확인필요 | 불가능 — 기획 판정 축 (status와 직교)
+note: ""
+---
+&lt;!-- 파일 전체 = 기능 명세 SSOT — frontmatter는 집계 필드의 유일 SSOT(feature.base 원료) · §Rules·§Acceptance = 행동·검증 계약.
+     출시 후에도 살아있는 스펙 — 아카이브·이동 금지. 개정 이력 = git(티켓 ID 태그 커밋) · 갱신 강제 = 티켓 DoD("영향 문서 갱신").
+     🔴 본문 무상태 원칙: 구현 진행(todo/doing/done) 축 신설 금지 — 진행은 티켓(Huly)의 몫, 볼트 병행 큐 금지. --&gt;
+
+## Why
+&lt;!-- 목적 1~2문장 + [[PRD#요구사항]] 역링크 — 그 표의 행 키 = 이 파일의 id. --&gt;
+
+## Scope
+&lt;!-- 포함 범위 + 비목표(이 기능이 안 하는 것) 한 줄씩. --&gt;
+
+## Rules
+&lt;!-- 기능 규칙 — EARS풍 단문 한 줄씩. **트리거 주어에 액터를 명시**("&lt;액터&gt;가 ~하면 시스템은 ~한다") — 누가 하는 동작인지가 규칙의 축.
+     단일 기능 규칙의 수록처(P_POLICY 수록 기준 미달분). --&gt;
+
+## Acceptance
+&lt;!-- 수용 기준 = 이 기능의 테스트 DoD (CODE_CONVENTION §Test에서 위임).
+     원자 단문 목록(`- `) — 조건 명세이지 작업·통과 상태 기록이 아님(상태는 티켓·테스트 러너 소유, 체크박스 금지).
+     상태·이벤트 흐름 기능만 GWT 블록 선택 추가 · 표 형식 금지. --&gt;
+
+## Design
+&lt;!-- 선택 — "어떻게": 트레이드오프 단락 + 기능 수준 다이어그램(ARCHITECTURE에서 위임 — 기능과 수명 공유). 임베드 형식 = mermaid 인라인(기본) 또는 draw.io(`![[*.drawio.svg]]` 편집 원본 — 규칙은 ARCHITECTURE와 동일).
+     다이어그램 유형 — 필요한 것만, 유형 제한 없음(수 자유·AI DoD 갱신 확정):
+       · userflow — 화면·분기 사용자 흐름 (flowchart 기본 / journey는 예외 — journey는 전 접점·감정 축의 제품 수준 산출물이라 기능 입도와 어긋난다)
+       · dataflow — 데이터 이동·변환 (flowchart) — userflow와 별개 축, 한 장에 섞지 않는다
+       · sequence — 컴포넌트·API 호출 순서 (sequenceDiagram)
+       · state — 상태 머신 (stateDiagram — §Acceptance에 GWT 쓰는 기능의 짝)
+     userflow 도형 어휘 5종 고정 (파일마다 갈리지 않게 — 우리 정규화, 외부 표준 아님):
+       시작·종료 `([...])` · 화면·액션 `[...]` · 분기 `{...}` · 사용자 입력 `[/.../]` · 분기 라벨 `--&gt;|Yes|`
+       색은 의미를 운반하지 않는다 · 사용자 결정과 시스템 결정은 도형이 같고 라벨 텍스트로만 구분.
+     입도 규율 — 흐름 1장 = 목표 1개(다목표면 기능 분할 신호) · 모든 클릭·UI 조작을 그리지 않는다(화면 전환·분기만).
+     시스템 수준 그림(전체 구조·ERD)은 [[ARCHITECTURE]] 소유 — 여기는 이 기능 스코프만.
+     구현 매뉴얼이면 쓰지 마라 — 결정과 근거만. 되돌리기 어려운 결정은 ADR로. --&gt;
+
+## Screens
+&lt;!-- 선택 (screen_id 있을 때만) — 링크 허브: screen_id별 [[DESIGN]] 컴포넌트·토큰 링크 + 거동 1줄. 와이어프레임 이미지 인라인 금지(부패 축). --&gt;</textarea>
+  </div>
+<div id="ed-ss" hidden>
+<h3>세션 노트</h3>
+<p class="sub"><code>hippocampus/&lt;pp&gt;_YYYYMMDD_&lt;slug&gt;.md</code></p>
+<div class="editbar">
+    <button id="ss-save">파일로 저장 (SESSION.md)</button>
+    <button id="ss-reset">기본값 복원</button>
+    <span id="ss-status" class="sub" style="margin:0"></span>
+  </div>
+  <textarea id="ss-editor" spellcheck="false">---
+status: active
+project: &lt;project-slug&gt;
+updated: YYYY-MM-DDTHH:MM:SS
+related_ticket: &lt;system&gt;:&lt;id&gt;
+cc_session_ids:
+  - &lt;cc-session-id&gt;
+---
+
+## Goal
+&lt;목표 한 줄&gt;
+
+## Recall
+- &lt;노트 제목&gt; — &lt;소스 경로&gt;
+
+## Progress
+
+### YYYY-MM-DD
+**Next:** &lt;다음 착수점 한 줄&gt;
+#### Done
+- &lt;완료 항목&gt;
+#### Mistake
+- &lt;실수이름: 이유&gt;
+#### Learned
+- &lt;한 줄&gt;
+#### Outputs
+- &lt;생성 문서 경로&gt;
+- &lt;코드 파일명&gt;
+</textarea>
+</div>
+<div id="ed-idx" hidden>
+<h3>_index.md — schema 층</h3>
+<p class="sub">폴더의 노트 목록과 각 노트의 <code>summary</code> 를 담는다. <b>ToC 이므로 frontmatter 가 없다</b>(예외: <code>docs/policy/</code>·<code>docs/adr/</code> 인덱스의 <code>next_id</code> 한 줄). 파일을 만들거나 옮긴 주체가 <b>같은 커밋에서</b> 갱신한다. recall 이 전량 주입하는 유일한 대상.</p>
+<div class="editbar">
+  <button id="idx-save">파일로 저장 (_index.md)</button>
+  <button id="idx-reset">기본값 복원</button>
+  <span id="idx-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="idx-editor" spellcheck="false">&lt;!-- 폴더 목차(ToC). frontmatter 없음 — recall 이 전량 주입하는 파일이라 메타 한 줄도 예산이고,
+     린터도 _index 를 body document 검사에서 제외한다(validate.sh:380 "index/_index are folder meta").
+     ⚠ 예외 하나: docs/policy/ 와 docs/adr/ 의 인덱스만 아래 한 줄을 갖는다(ID 발급 카운터, validate.sh:382).
+         ---
+         next_id: 2
+         ---
+     재생성 산출물 — 손으로 고치지 않는다. 각 노트 frontmatter 의 summary·type 을 awk 로 긁어 전체를 덮어쓴다.
+     정본은 노트 frontmatter 한 곳. 위키링크 대상은 **파일명**(.md 제외)이지 frontmatter 값이 아니다.
+     헤딩 없음 — 불릿 나열 하나가 전부다. 하위 폴더도 같은 모양의 한 줄로 섞어 적는다.
+     docs/adr/ 는 type 이 없고, 뒤집힌 ADR 은 생성기가 supersedes 를 역방향으로 읽어 꼬리에 부기한다. --&gt;
+
+- [[&lt;파일명 stem&gt;]] — &lt;summary&gt; `&lt;type&gt;`
+- [[&lt;파일명 stem&gt;]] — &lt;summary&gt; `&lt;type&gt;`
+- [[&lt;하위폴더&gt;/_index]] — &lt;한 줄&gt;
+</textarea>
+</div>
+<div id="ed-dr" hidden>
+<h3>dream-logs.md — dreaming 실행 기록</h3>
+<p class="sub"><code>neocortex/dream-logs.md</code> · 단일 파일 누적. 폴더·<code>_index.md</code>·<code>.base</code> 없음. 헤딩 없이 불릿만.</p>
+<div class="editbar">
+  <button id="dr-save">파일로 저장 (dream-logs.md)</button>
+  <button id="dr-reset">기본값 복원</button>
+  <span id="dr-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="dr-editor" spellcheck="false">---
+updated: YYYY-MM-DDTHH:MM:SS
+---
+
+- [YYYY-MM-DD]-&lt;진행내용 1~3줄&gt;
+- [YYYY-MM-DD]-&lt;진행내용 1~3줄&gt;
+</textarea>
+</div>
+<div id="ed-pm" hidden>
+<h3>p_memory 노트 — 프로젝트 지식</h3>
+<p class="sub"><code>&lt;projects_root&gt;/NNN_&lt;slug&gt;/p_memory/&lt;pp&gt;_&lt;slug&gt;.md</code> · <code>sc</code> 가 세션을 닫으며 쓴다. 5자 회담 3라운드 확정(6/6).</p>
+<div class="editbar">
+  <button id="pm-save">파일로 저장 (p_memory.md)</button>
+  <button id="pm-reset">기본값 복원</button>
+  <span id="pm-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="pm-editor" spellcheck="false">---
+summary:                     # 한 줄 · "언제 쓰나 + 무엇을 주장하나" 두 성분 · recall 의 전 검색 표면
+type: gotcha                 # gotcha | lesson | reference — 3종 폐쇄, 확장 금지
+updated: YYYY-MM-DD
+related: []                  # sc 는 항상 []. dreaming 만 잇는다 · 두 홉으로 닿는 쌍 금지
+aliases: []                  # 개명·승격② 때만 구 basename 을 append
+---
+&lt;!-- 파일명 = &lt;pp&gt;_&lt;slug&gt;.md · 번호 없음 · 접두는 위키링크 전역 유일성용.
+     세션을 가리키는 필드가 없다 — raw 와 wiki 는 서로를 참조하지 않는다.
+     `title`·`status`·`species`·`version`·`projects`·`tags`·`dri`·`created` 는 전부 폐기됐다.
+     _index.md 줄:  - [[&lt;pp&gt;_&lt;slug&gt;]] — &lt;summary&gt; `&lt;type&gt;`   (재생성 산출물, 손 편집 금지) --&gt;
+
+## Trigger
+&lt;언제 이 노트를 떠올려야 하나 — 여는 에이전트의 적합성 게이트&gt;
+
+## Insight
+&lt;재사용 가능한 **명제**. 해법일 필요가 없다 — 정정된 사실도 여기 쓴다&gt;
+
+## Why
+&lt;명령 · 경로 · 숫자 · 버전 · 오류 메시지. dreaming 의 사실불변 검사가 걸리는 절&gt;
+</textarea>
+</div>
+<div id="ed-nc" hidden>
+<h3>neocortex 노트 — 볼트 전역 지식</h3>
+<p class="sub"><code>neocortex/NEO-&lt;slug&gt;.md</code> · <code>dreaming</code> 의 승격②만 여기 쓴다. p_memory 와 <b>키 집합 동일 + <code>projects</code> 1개</b>.</p>
+<div class="editbar">
+  <button id="nc-save">파일로 저장 (neocortex.md)</button>
+  <button id="nc-reset">기본값 복원</button>
+  <span id="nc-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="nc-editor" spellcheck="false">---
+summary:                     # p_memory 와 동일 규칙
+type: gotcha                 # gotcha | lesson | reference
+updated: YYYY-MM-DD
+projects: []                 # 승격②를 촉발한 서로 다른 프로젝트 slug 2개 이상
+                             #   ⚠ write-once — 승격 시점 1회 기록, 이후 append·삭제·개명 반영 금지.
+                             #      "현재 적용 범위"가 아니라 "그때의 판정 근거" 동결 기록이다
+related: []
+aliases: []                  # 승격 직전 basename(&lt;pp&gt;_&lt;slug&gt;)을 append
+---
+&lt;!-- 승격② 연산 전량:
+       1. git mv &lt;project&gt;/p_memory/&lt;pp&gt;_&lt;slug&gt;.md   neocortex/NEO-&lt;slug&gt;.md
+       2. aliases 에 &lt;pp&gt;_&lt;slug&gt; append
+       3. projects 키 삽입 (승격 판정에 쓴 slug 2개)
+     그 외 바이트 불변. 본문 무수정. species·status 편집 없음.
+     _index.md 줄:  - [[NEO-&lt;slug&gt;]] — &lt;summary&gt; `&lt;type&gt;` --&gt;
+
+## Trigger
+
+## Insight
+
+## Why
+</textarea>
+</div>
+<div id="ed-adr" hidden>
+<h3>ADR — 결정 1건</h3>
+<p class="sub"><code>docs/adr/&lt;pp&gt;-ADR-0000N.md</code> · <b>사람-승인 산출물</b>. 무인 사이클(sc·dreaming)은 이 파일을 읽지도 쓰지도 않는다.</p>
+<div class="editbar">
+  <button id="adr-save">파일로 저장 (ADR.md)</button>
+  <button id="adr-reset">기본값 복원</button>
+  <span id="adr-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="adr-editor" spellcheck="false">---
+id: &lt;PP&gt;-ADR-00001           # 불변 · 재사용 금지 · docs/adr/_index.md 의 next_id 로 PM 이 발급
+summary:                     # 결정 한 줄 · docs/adr/_index.md 로 기계 복사되는 유일한 검색 축
+status: approved             # created | draft | approved | deprecated (정본 = 이 문서, 사용자 확정 2026-08-02)
+                             #   이 경로로 만들어지면 항상 approved (사람이 그 자리에서 골랐으므로)
+                             #   ⚠ validate.sh:387·394 는 아직 stub 어휘 — 볼트 실사용 stub 61건과 함께 마이그레이션 대상
+updated: YYYY-MM-DD          # 생성 시 1회
+supersedes: []               # 이 결정이 뒤집은 구 ADR id 배열 · 방향은 신규→구 한쪽뿐
+                             #   superseded_by 금지 — 구 파일을 고치는 것이므로 불변 제약 위반
+---
+&lt;!-- 생성 경로: sc 가 대화에서 결정 후보를 한 줄 목록으로 제시 → 사람이 고른 것만 파일이 된다.
+       · 후보 0개면 질문하지 않는다.  · 사람이 안 고르면 그 내용은 p_memory 로만 간다.
+       · supersedes 도 사람이 그 목록에서 함께 지정한다 — 기계가 판정하면 살아 있는 결정이
+         죽은 것으로 표시되고, 파일이 불변이라 되돌릴 수 없다.
+     결정이 뒤집혀도 이 파일을 고치지 않는다. 뒤집힘은 신규 ADR 의 supersedes 로만 표현되고,
+     docs/adr/_index.md 생성기가 그것을 역방향으로 읽어 구 ADR 줄 끝에 (→ 신규 id) 를 부기한다.
+     폐기 필드: version(린터 미검사) · species(.base 가 file.inFolder 로 필터) · title(summary 로 통합)
+              · related(dreaming 이 ADR 을 안 읽음) · aliases(이동·개명 없음) · history --&gt;
+
+## Context
+&lt;무엇이 결정을 강요했나 — 당시 제약 · 숫자 · 버전. 뒤집혀도 읽혀야 할 동결 맥락&gt;
+
+## Options
+&lt;기각안 + 탈락 이유. ⚠ 기각안이 실재할 때만 쓴다 — 없으면 이 절 자체를 만들지 않는다.
+   Alternatives · 선택지 등 변종 이름 금지(실측 ADR 9파일에 3가지 이름 혼재)&gt;
+
+## Decision
+&lt;한 문단. 1결정만.&gt;
+
+## Consequences
+&lt;좋아지는 것 · 나빠지는 것 · 남은 부채&gt;
+</textarea>
+</div>
+
+<div id="ed-aw" hidden>
+<h3>agents/worker.md — ≤40줄 / 3,600 B</h3>
+<p class="sub">일반 워커 + <b>scribe 브리프</b>. scribe 는 4번째 에이전트가 아니라 이 파일 안의 절이다.</p>
+<div class="editbar">
+  <button id="aw-save">파일로 저장 (worker.md)</button>
+  <button id="aw-reset">기본값 복원</button>
+  <span id="aw-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="aw-editor" spellcheck="false">---
+name: worker
+description: 범용 작업 워커. PM 이 티켓·브리프를 위임할 때의 기본 프로필. scribe(기록) 브리프도 이 프로필이 받는다.
+---
+
+# worker
+
+## KERNEL-BEGIN
+- 브리프(Goal·제약·포인터·DoD)가 스코프 전부다. 모호하면 추측하지 말고 Ask 로 PM 에게 반송한다. 문서 충돌도 중재하지 말고 보고한다.
+- 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
+- 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
+- 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘기고, 기록은 PM 이 scribe 브리프로 위임한다.
+- 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
+- Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
+## KERNEL-END
+
+## 하위 워커
+병렬·격리·재검증이 값을 할 때만 띄운다. 쪼개면 왕복이 늘어난다. 티켓 안에서 끝나는 일은 카드로 만들지 않는다.
+
+## scribe 브리프일 때
+- **볼트 콘텐츠 쓰기 전량**을 담당한다 — 세션 파일 · Progress · frontmatter · p_memory · neocortex · `_index.md` · dream-logs.
+- **코드 금지 · 커밋 금지.** 커밋은 PM 이다(경계 기록 — 레포 전체를 보는 자만 안전하다).
+- **축어 필사.** 워커 Handoff 의 Learned·Outputs 를 글자 그대로 옮긴다. 요약·압축은 사용자 보고 채널에만.
+- **워커 → scribe 직행 금지.** 중첩을 보는 건 PM 뿐이고, 두 scribe 가 같은 파일을 조용히 덮는 것의 유일한 방어다.
+- **쓰기 도구는 `Edit`(기존)·`Write`(신규)만.** `Edit` 의 old_string 이 compare-and-swap 이라 동시 세션 충돌 시 소리 내며 실패한다.
+- **쓸 수 있는 곳**: `hippocampus/` · `<project>/p_memory/` · `neocortex/` · 각 폴더 `_index.md`. 🔴 `org/` 는 **사용자 지시가 브리프에 명시된 때만**.
+- **`_index.md` 는 재생성 산출물이다.** 노트를 만들거나 옮긴 그 커밋에서 같이 갱신한다. 줄 형식 `- [[&lt;basename&gt;]] — &lt;summary&gt; `&lt;type&gt;``, 링크 대상은 파일명. frontmatter 없음(`docs/policy/`·`docs/adr/` 의 `next_id` 만 예외).
+- 기록한 경로 전량을 반환한다.
+
+## Docs draft
+브리프가 가리킨 문서(아키텍처·API·배포·스키마)를 네 작업이 무효화하거나 확장했으면 — 또는 브리프가 예측 못 한 문서를 작업 중에 발견했으면 — `Risks` 에 이름을 적고 **`Docs draft` 절을 붙인다**. 네가 만든 것의 목표·구조·동작을 네가 쓴다(scribe 는 복사만 한다). 문서가 아직 없으면 **신규 문서로** 초안을 쓴다 — 실제로 만들지와 어디에 둘지는 PM 이 `doc-catalog` 로 정한다. 볼트 문서를 직접 만들거나 고치지 않는다.
+</textarea>
+</div>
+
+<div id="ed-ac" hidden>
+<h3>agents/coder.md — ≤45줄 / 4,500 B</h3>
+<p class="sub">현행 85줄 → 45줄. 삭제분은 <b>브랜치 어휘 재서술과 결정 이력(KJP-46 반전 경위)</b> — 어휘는 <code>docs/git-convention.md</code> 포인터로, 이력은 ADR 로.</p>
+<div class="editbar">
+  <button id="ac-save">파일로 저장 (coder.md)</button>
+  <button id="ac-reset">기본값 복원</button>
+  <span id="ac-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="ac-editor" spellcheck="false">---
+name: coder
+description: 구현 전용 워커. worktree 격리, 테스트 우선, 공식 문서 근거.
+isolation: worktree
+---
+
+# coder
+
+## KERNEL-BEGIN
+- 브리프(Goal·제약·포인터·DoD)가 스코프 전부다. 모호하면 추측하지 말고 Ask 로 PM 에게 반송한다. 문서 충돌도 중재하지 말고 보고한다.
+- 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
+- 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
+- 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘기고, 기록은 PM 이 scribe 브리프로 위임한다.
+- 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
+- Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
+## KERNEL-END
+
+## First action — 베이스 확인
+대상 코드를 한 줄도 읽기 전에. 브리프가 시키지 않아도 한다.
+```bash
+git log --oneline -1 && git log --oneline -1 main && git log --oneline main..HEAD
+```
+- **stale base 는 사고가 아니라 기본값이다** — 워크트리는 `origin/main` 에서 잘리는데 이 canon 은 사용자가 말할 때만 push 한다.
+- 뒤처짐 + 로컬 커밋 **없음** → `git reset --hard main`. 묻지 않는다.
+- 뒤처짐 + 로컬 커밋 **있음** → **멈추고 보고.** 그 커밋이 산출물이다.
+- 어느 쪽이든 찾은 베이스를 보고한다.
+
+## Branch
+```bash
+git switch -c &lt;type&gt;/&lt;PREFIX&gt;-&lt;번호&gt;-&lt;slug&gt;     # 전체 40자 상한. 티켓 없으면 &lt;PREFIX&gt;-adhoc-&lt;slug&gt;
+```
+`&lt;type&gt;` 어휘 정본 = `docs/git-convention.md`. **여기 다시 적지 않는다 — 가리킨다.** 상한이 넘치면 slug 를 줄인다(타입·ID 는 그대로). 베이스 확인 직후, 첫 커밋 전에 만든다.
+
+## 코드 품질
+- 새 함수는 비어 있지 않은 **40줄 이하**, 제어문 중첩 **3단 이하**. 넘으면 이름 있는 함수로 분리한다. 자동 생성 코드·선언형 매핑은 `Risks` 에 근거를 적은 경우만 예외.
+- 새 단일문자 이름은 **루프 인덱스만**. 새 축약어는 **프로젝트 공개 API·용어집 또는 분야 표준에 이미 있는 것만** 쓴다. 같은 비즈니스 판정 로직을 두 위치에 새로 복제하지 않는다.
+- 주석은 **제약·이유·의도적 절충**만. 코드가 하는 일을 번역한 주석 · 죽은 코드 · 주석 처리한 코드는 남기지 않는다.
+
+## 테스트 — 유닛과 e2e 둘 다
+- production code 를 바꾸기 **전에** 비즈니스 로직·파싱·경계값의 유닛 테스트를 쓰고 **실패 출력을 확인**한다. 그 뒤 구현하고, 완료 전 **사용자 경로 e2e 를 최소 1개 실행**한다.
+- e2e harness 가 없거나 외부 의존성으로 못 돌리면 **`Done` 으로 충족했다고 쓰지 않는다.** `Risks` 에 없는 기반·차단 원인·재현 명령을 적고, 유닛과 e2e 의 실제 명령·출력을 각각 붙인다.
+
+## 로그
+- 각 실패 경계의 구조화 로그: `operation` · `stage` · **correlation/request id** · 비밀값 제거한 입력 식별자 · 관련 상태 · 외부 의존성 status/error code · exception type/message 와 cause. stack 을 얻을 수 있으면 보존.
+- 🔴 **토큰·비밀번호·개인정보·원문 payload 는 기록하지 않는다.**
+- 🔴 **판정 규칙: 같은 correlation id 의 로그만으로 실패한 작업·단계·직접 원인을 특정할 수 없으면 `Done` 전에 필드를 보강한다.** `"실패했습니다"` 만 있는 로그 금지.
+
+## 근거와 실패 처리
+- 외부 SDK·API 는 구현 전에 **공식 문서에서 현재 서명과 예제를 확인**하고 출처를 남긴다.
+- 한 접근이 실패하면 **같은 명령·가정으로 재시도하지 않는다.** 다른 접근을 쓰고, **세 접근이 실패하면 PM 에 보고**한다.
+- 커밋은 사용자가 말할 때만. 비밀값은 절대 커밋하지 않는다.
+
+## Last action — 리모트 게이트 측정
+```bash
+gh api "repos/$OWNER/$REPO/rulesets" --jq '[.[]|select(.enforcement=="active")]|length'
+gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" &gt;/dev/null 2&gt;&1 && echo protected
+```
+- **게이트 없음 → 브랜치에서 멈춘다.** push 도 PR 도 하지 않는다. PM 이 로컬 머지한다. 이게 기본값이다.
+- **게이트 있음 → 토픽 브랜치만 push + `--draft` PR.** 제목 `&lt;type&gt;(&lt;PREFIX&gt;-&lt;번호&gt;): 요약`. ready 전환·머지는 PM.
+- `main` 은 어느 레포에서도 사용자 말 없이 push 하지 않는다. `gh` 부재·미인증 → 멈추고 보고.
+
+## Handoff
+`Outputs` 는 이 3줄로 연다. PM 이 이름으로 머지하기 때문이다.
+```
+branch: &lt;type&gt;/&lt;PREFIX&gt;-&lt;번호&gt;-&lt;slug&gt;
+base:   &lt;sha&gt; &lt;subject&gt;
+pr:     &lt;url&gt; | none (unprotected)      # 공란 불가 — 빈 줄은 "검사를 안 했다"와 구분되지 않는다
+```
+`Docs draft` 는 `worker.md` 와 동일 규칙.
+</textarea>
+</div>
+
+<div id="ed-av" hidden>
+<h3>agents/verifier.md — ≤20줄 / 1,800 B</h3>
+<p class="sub">현행 17줄. <b>재작성 대상이 아니다</b> — KERNEL 교체 + 볼트 쓰기 경계 1줄뿐.</p>
+<div class="editbar">
+  <button id="av-save">파일로 저장 (verifier.md)</button>
+  <button id="av-reset">기본값 복원</button>
+  <span id="av-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="av-editor" spellcheck="false">---
+name: verifier
+description: 검증·리뷰·반증 브리프용 워커. 보고 전용 — 고치지 않고 재현과 증거로 보고한다.
+disallowedTools: Write, Edit, NotebookEdit
+---
+
+# verifier
+
+## KERNEL-BEGIN
+- 브리프(Goal·제약·포인터·DoD)가 스코프 전부다. 모호하면 추측하지 말고 Ask 로 PM 에게 반송한다. 문서 충돌도 중재하지 말고 보고한다.
+- 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
+- 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
+- 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘기고, 기록은 PM 이 scribe 브리프로 위임한다.
+- 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
+- Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
+## KERNEL-END
+
+## QA — 기본 대상은 코드다
+- 재현 절차 · 테스트 실행 출력 · 경계값 · 회귀 범위. 수정 제안은 **텍스트로만** — 패치를 적용하지 않는다.
+
+## 보안 브리프일 때
+- `docs/security-audit.md` 를 `Read` 하고 동일하게 report-only 로 수행한다.
+- `daily` = 신뢰 8/10 이상만 보고 · `comprehensive` = 2/10. **오탐 1건이 신뢰 전체를 깎는다.**
+
+## 규칙
+- **보고 전용** — 고치지 않는다. 수정은 구현 브리프의 몫이다.
+- **`file:line` 인용 없는 발견은 unverified 로 강등**된다.
+- **하위 워커는 읽기 브리프만.** 읽기 전용 경계는 자식에게 상속되지 않으므로 규율로 강제한다.
+</textarea>
+</div>
+
+<div id="ed-ar" hidden>
+<h3>agents/researcher.md — ≤22줄 <span class="badge b-todo">신설</span></h3>
+<p class="sub">레포 <b>밖</b>을 뒤진다(<code>Explore</code> 는 레포 안). 신설 근거는 실측된 실패 — <i>"DESIGN 은 외부 리서치 0건으로 r16 사인오프까지 통과시켰고, 사용자 지적으로 뒤늦게 첫 조사를 돌려 값 축이 전복됐다."</i> 리서처가 없어서가 아니라 <b>필요하다는 걸 아무도 떠올리지 않아서</b> 난 실패다. <b>프로필 목록이 PM 의 체크리스트</b>다.</p>
+<div class="editbar">
+  <button id="ar-save">파일로 저장 (researcher.md)</button>
+  <button id="ar-reset">기본값 복원</button>
+  <span id="ar-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="ar-editor" spellcheck="false">---
+name: researcher
+description: 외부 근거 조사 전용. 1차 출처 우선, 반증 탐색 의무, 인용 필수. 코드를 바꾸지 않는다.
+disallowedTools: Write, Edit, NotebookEdit
+---
+
+# researcher
+
+## KERNEL-BEGIN
+- 브리프(Goal·제약·포인터·DoD)가 스코프 전부다. 모호하면 추측하지 말고 Ask 로 PM 에게 반송한다. 문서 충돌도 중재하지 말고 보고한다.
+- 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
+- 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
+- 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘기고, 기록은 PM 이 scribe 브리프로 위임한다.
+- 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
+- Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
+## KERNEL-END
+
+## First action — 스코프 게이트
+조사 범위를 한 줄로 적어 **PM 에게 확인받고 시작한다.** 확인 전 본조사 금지 — 범위를 안 물어서 값 축이 뒤집힌 실패가 실측돼 있다.
+
+## 규율
+- **출처 우선순위**: 1차 원본(스펙·소스·공식 문서) → 벤더 문서 → 커뮤니티. **블로그 단독 인용 금지.**
+- **반증 의무**: 주장마다 그것을 뒤집는 자료를 최소 1건 찾는다. 없으면 `반증 자료 없음` 이라고 명시한다.
+- **인용 형식**: URL + 접근일 + 그 문서의 버전/날짜. 못 채우면 `근거 없음 — 추정`.
+- 도구: `context7`(라이브러리 문서) · Exa/Tavily(웹) · WebFetch. 레포 안 검색은 `Explore` 의 몫이다.
+
+## Handoff
+`Outputs` = 출처표 — `주장 / 근거 URL / 반증 / 신뢰도`.
+</textarea>
+</div>
+
+<div id="ed-cm" hidden>
+<h3>프로젝트 CLAUDE.md — ≤30줄 / 2,200 B</h3>
+<p class="sub">메인 세션이 <b>매 턴</b> 100% 읽는 유일한 파일. 규칙집이 아니라 <b>라우터</b>다 — 볼트 트리·양식 필드·스킬 절차·문서 규약은 여기 없다.</p>
+<div class="editbar">
+  <button id="cm-save">파일로 저장 (CLAUDE.md)</button>
+  <button id="cm-reset">기본값 복원</button>
+  <span id="cm-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="cm-editor" spellcheck="false">&lt;!-- brain:begin --&gt;
+## brain config
+
+```
+org: &lt;org&gt;
+project: &lt;project&gt;
+prefix: &lt;PREFIX&gt;
+ticket-system: &lt;system&gt;   # 식별자만. 크레덴셜은 별도 env 파일
+schema_version: 2
+```
+
+## PM role
+
+- 단일 접점 — 요청을 분해·위임·집계·보고한다. 모르면 볼트 먼저, 추측 금지.
+- 외부 티켓 시스템이 정식 작업 큐다. 볼트에 병행 큐를 두지 않는다.
+- **볼트 콘텐츠를 직접 쓰지 않는다** — 기록은 `scribe` 브리프로 위임. **커밋은 PM 의 몫이다.**
+- 티켓 루프 — 크면 Plan(read-only) → coder → verifier. 작으면 바로 worker/coder. 탐색은 Explore(read-only).
+- 브리프에 Goal·제약·컨텍스트 포인터·DoD 를 명시한다. 동시 실행 워커 간 파일 중복 금지.
+- 문서 충돌 중재의 정본 우선순위는 Router 가 가리키는 `project-docs-convention.md`.
+
+## 쓰기 권한
+
+- **무인 사이클**(`sc` 승격① · `dreaming` 승격②) — `hippocampus/` · `&lt;project&gt;/p_memory/` · `neocortex/` 만.
+- 🔴 **`org/` 와 `docs/` 는 사용자 지시를 받은 AI 만.** 무인 사이클은 쓰기 직전과 커밋 직전 두 곳에서 거부한다.
+- recall 이 세션 시작에 주입하는 것은 **`_index.md` 뿐**이다. 노트 본문은 필요할 때 링크로 직접 읽는다.
+
+## 워커 프로필 · 세션 스킬
+
+- `worker` 일반 브리프(scribe 기록 브리프 포함) · `coder` 구현 전용, worktree 격리 · `verifier` QA·코드 점검·보안 감사, 보고 전용 · `researcher` 외부 근거 조사.
+- 계획은 내장 `Plan`(read-only) 에 위임한다 — 파일 3개 이상을 건드리거나, 되돌리기 비용이 있거나, 순서가 결과를 바꾸는 일. 그 밖은 PM 이 직접 브리프를 쓴다.
+- 🔴 탐색은 내장 `Explore` 에 위임한다 — **파일 2개 이상을 훑거나, 무엇을 찾을지가 결과를 봐야 정해지는 검색.** 경로·값 하나를 확인하는 것은 직접 한다.
+- 동사 하나에 스킬 하나 — `ss` 생성 · `sr` 재개 · `sl` 조회(읽기 전용) · `sh` 파킹 · `sc` 종료. **`ss` 는 재개 후보를 스캔하지 않는다.**
+&lt;!-- brain:end --&gt;
+</textarea>
+</div>
+
+<div id="ed-sk" hidden>
+<h3>skills/init · skills/onboard</h3>
+<p class="sub">스킬은 <b>호출될 때만</b> 로드된다 — 에이전트 정의와 같은 자로 재지 않는다. <code>init</code> ≤80줄 · <code>onboard</code> ≤50줄.</p>
+<div class="editbar">
+  <button id="sk-save">파일로 저장 (init-onboard.md)</button>
+  <button id="sk-reset">기본값 복원</button>
+  <span id="sk-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="sk-editor" spellcheck="false">═══════════ skills/init/SKILL.md — 골격 (≤80줄) ═══════════
+---
+name: init
+description: brain 하네스 구조 설치 — CLAUDE.md + CLAUDE.local.md + 볼트 스캐폴드. 구조만, 내용 인터뷰는 onboard.
+---
+
+## 1. 값 4개 수집
+org · vault-root · project · PREFIX. AskUserQuestion 1회.
+
+## 2. 두 설정 파일 (프로젝트 루트)
+- `CLAUDE.md` (커밋) = 공유 config + PM role + 쓰기 권한 + 프로필. **≤30줄.**
+- `CLAUDE.local.md` (gitignore) = `vault-root` + Router 표. 홈 디렉터리는 **리터럴로 확장**해 쓴다.
+- 둘 다 `&lt;!-- brain:begin --&gt;`…`&lt;!-- brain:end --&gt;` 사이만 교체. 파일 전체를 덮지 않는다.
+
+## 3. `.gitignore`
+`CLAUDE.local.md` · **`hippocampus/`**(세션은 git 밖이 0.2.0 확정).
+
+## 4. 볼트 스캐폴드 — scribe 브리프로 위임
+🔴 **첫 볼트 쓰기는 `.brain-paths` 다.** 리졸버가 그것 없이는 다른 어떤 경로도 못 정한다.
+```
+schema_version: 2
+common_root: org
+projects_root: projects
+tools_root:                # opt-in — 빈 값이면 조용히 스캔 안 함
+```
+그다음 트리:
+```
+org/{about,machines,network,platforms,policies}/
+neocortex/                          + dream-logs.md
+&lt;projects_root&gt;/&lt;NNN&gt;_&lt;project&gt;/
+    p_memory/
+    docs/{business,develop,develop/feature,adr,resources}/
+hippocampus/
+각 폴더 _index.md                    ← frontmatter 없음. docs/policy·docs/adr 만 next_id
+docs 스텁 6종                        ← status: created
+```
+- **삭제**: `candidates/`(0.2.0 폐기 층) · `knowledge/`(→ `p_memory/`)
+- tools 층은 만들지 않는다(opt-in).
+- 기존 볼트를 만나면 **덮지 않는다** — 차이를 보고하고 마이그레이션은 별도 1회성 작업으로 남긴다.
+
+## 5. 보고
+생성 경로 · 덮지 않은 것 · 마이그레이션 목록 → onboard 안내.
+
+
+═══════════ skills/onboard/SKILL.md — 골격 (≤50줄) ═══════════
+---
+name: onboard
+description: 프로젝트 내용 인터뷰 — 질문 5개, 답한 것만 문서에 채운다. 구조 설치는 init.
+---
+
+## 전제
+init 완료 · `.brain-paths` 의 `schema_version` 확인.
+
+## 인터뷰 — 질문 5개, AskUserQuestion 호출 **2블록**
+**블록 A** ① 티켓 시스템 ② 목표
+**블록 B** ③ 스택 (+하위: 배포 **통제 주체** / SaaS 여부 / 디자인 툴) ⑤ 배포 **대상** ④ 규제·민감정보
+- 🔴 ③하위와 ⑤ 를 **한 블록으로 묶는다.** 축은 다르다 — ③하위는 `RUNBOOK §Delivery` 의 **분류**(누가 통제하나), ⑤ 는 **좌표**(어디에 띄우나). 답이 서로를 함의하지 않는다.
+- ③하위 문항에서 **괄호 예시(`server·web·GitOps·self-host`)를 지운다** — 통제 주체를 묻는데 대상 목록을 보기로 주면 사용자가 대상을 답한다.
+- ⑤ 문구 교정: "배포 대상 환경은? (어디에 띄우는가 — AWS·Cloudflare·스토어 등)"
+
+## 환경 실측 (인터뷰 아님)
+opt-in 1문항: 이 머신의 도구 인벤토리를 만들/갱신할까?
+- **머신 설정**(OS·호스트명·주요 도구) → `org/machines/&lt;hostname&gt;.md` — 항상 실행
+- **도구 표면**(MCP·skill·CLI·plugin) → `&lt;tools_root&gt;/` — opt-in 일 때만
+- worker 브리프 1건. 멱등 — 기존 노트를 실측으로 갱신하고 `verified:` 를 찍는다.
+
+## 매핑 · 기록
+- 답변별 대상 문서로 worker 브리프. **답변 전문을 브리프에 그대로 싣는다.**
+- 채워지면 frontmatter `status: created` → `draft`, `updated:` 스탬프.
+- **답 안 한 것은 만들지도 추정하지도 않는다.**
+
+## 보고
+채운 문서 · 남은 스텁 · 환경 실측이 만든 노트 경로.
+</textarea>
+</div>
+
+<div id="ed-rc" hidden>
+<h3>skills/_session-shared/recall.md — 161줄 → ≤25줄 / 2,500 B</h3>
+<p class="sub">0.2.0 이 가장 크게 뒤집는 파일. <b>161줄 중 약 118줄이 랭커와 그 헬퍼</b>라 통째로 사라진다 — 전량 주입에는 순위를 매길 대상이 없다.</p>
+<div class="editbar">
+  <button id="rc-save">파일로 저장 (recall.md)</button>
+  <button id="rc-reset">기본값 복원</button>
+  <span id="rc-status" class="sub" style="margin:0"></span>
+</div>
+<textarea id="rc-editor" spellcheck="false"># Reference: Recall (0.2.0)
+
+세션 시작에 주입되는 것은 **`_index.md` 뿐이다.** 노트 본문은 주입하지 않는다 — 에이전트가 목록과
+`summary` 한 줄로 무엇이 어디 있는지 알고, 필요한 노트만 링크를 따라 직접 연다.
+랭킹 없음 · 상한 없음 · 후보 선별 없음.
+
+전제: `VAULT`(CLAUDE.local.md 의 vault-root) · `&lt;project&gt;`(project-inference.md).
+
+```bash
+. "${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh"    # BRAIN_COMMON · brain_project_dir
+PROJDIR=$(brain_project_dir "&lt;project&gt;")
+
+{ find "$PROJDIR"       -name '_index.md' 2&gt;/dev/null    # 현재 프로젝트 전량
+  find "$BRAIN_COMMON"  -name '_index.md' 2&gt;/dev/null    # org/**
+  ls    "$VAULT/neocortex/_index.md"      2&gt;/dev/null    # 볼트 전역 지식
+} | sort -u | while read -r f; do
+    printf '\n### %s\n' "${f#$VAULT/}"; cat "$f"
+  done
+```
+
+- `hippocampus/**` 는 스캔하지 않는다(raw 층).
+- **fail-visible**: 주입한 파일 수와 총 바이트를 항상 출력한다. 0건이면 0건이라고 말한다.
+- **`ss`(신규 세션)** — 결과를 `## Recall` 에 쓴다. **`sr`(재개)** — 화면 출력만, 파일을 고치지 않는다.
+
+## 상한을 두지 않는 이유 (실측 2026-08-02)
+```
+kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
+최대 프로젝트(006_infra)      247줄 / 34,893 B ≈ 9k 토큰
+```
+캡을 만들 규모가 아니다. **진짜 제어 변수는 캡이 아니라 `summary` 길이다** — 실측상 한 인덱스가
+전체의 82%를 차지하고 줄당 304 B 였다. 0.2.0 `summary` 는 한 줄이므로 여기가 줄어든다.
+
+## 폐기 (0.2.0)
+결정론적 가중합 랭커 · 4소스 스캔(K/C/X/M) · `RECALL_N` top-N 캡 · `useful:` 카운터 ·
+1-hop `related` 확장(인덱스에 없는 값은 확장 불가) · graphify 분기(본문 그래프 기반).
+</textarea>
+</div>
+  </div>
+</section>
+
+<!-- ═══ 원리 ═══ -->
+<section class="panel active" id="p-principles">
+  <h2>원리</h2>
+
+  <h3>설계 원칙</h3>
+  <div class="grid">
+    <div class="card"><b>정본 1곳 + 포인터</b>같은 사실을 두 문서에 쓰면 반드시 한쪽이 썩는다. 모든 사실은 정본 문서 한 곳에만 쓰고, 다른 모든 곳은 링크로 그 정본을 가리킨다. 재서술이 발견되면 그건 스타일 문제가 아니라 수정해야 할 드리프트다.</div>
+    <div class="card"><b>검색 축 = <code>summary</code> 한 줄</b>기억 노트는 <code>title</code> + <code>summary</code> 로 목표 겹침을 계산한다. 그 한 줄이 <code>_index.md</code> 에 그대로 복사돼 schema 층의 원료가 된다.</div>
+    <div class="card"><b>Small docs</b>큰 문서는 사람도 안 읽고, 토큰 예산이 있는 에이전트는 통째로 읽지 못한다. 문서는 작게 유지하고, 절이 실제로 무거워졌을 때만 파일로 쪼갠다. 선제 분리는 하지 않는다.</div>
+    <div class="card"><b>빈 문서 = 정보 없음</b><code>status: created</code> 는 아직 아무도 안 쓴 문서라는 뜻이므로 근거로 인용하지 않는다. 빈 헤딩을 보고 "이 항목은 없다"고 읽는 것이 대표적인 오독 — 없는 게 아니라 안 쓴 것이다.</div>
+    <div class="card"><b>기억보다 실측</b>환경 사실(설치된 도구·서버 상태·경로)을 에이전트가 기억으로 단언하면 틀린다. 반드시 명령을 실행해 그 출력으로 확인하고, 기록에는 <code>verified:</code> 날짜를 남긴다.</div>
+    <div class="card"><b>fail-visible</b>실패와 거부를 조용히 삼키지 않는다. 스캔이 0건이면 그 사실을 출력하고, 경로 차단은 왜 막았는지 말하며, 되돌린 변경은 기록으로 남는다. 가장 비싼 실패는 조용한 실패다.</div>
+  </div>
+  <p><b>소유권 경계</b>: 플러그인은 <b>규칙</b>을, 볼트는 <b>콘텐츠</b>를 소유한다. 한 플러그인이 모든 볼트를 섬기고, 볼트의 인덱스·문서는 규칙을 가리키되 재서술하지 않는다.</p>
+
+  <h3>층</h3>
+  <p>빠르고 손실 있는 포착, 주기적 통합. 포착이 무거우면 아예 일어나지 않는다. dedup·재계층화·staleness 같은 어려운 일은 배치로 미룬다.</p>
+  <div class="tree"><pre>
+<span class="b">raw</span>     <span class="f">hippocampus/</span>              <span class="c">세션. git 밖. recall 대상 아님</span>
+<span class="b">wiki</span>    <span class="f">&lt;project&gt;/p_memory/</span>       <span class="c">프로젝트 지식</span>
+        <span class="f">neocortex/</span>               <span class="c">볼트 전역 지식</span>
+        <span class="f">org/</span>                     <span class="c">사실 기록</span>
+<span class="b">schema</span>  <span class="f">각 폴더 _index.md</span>        <span class="c">목록 + summary</span>
+</pre></div>
+  <p><b>raw 와 wiki 는 서로를 가리키지 않는다.</b> 세션에서 뽑아낸 것은 wiki 에 새로 쓰이고, 세션에는 아무 표시도 남지 않는다. 원료는 원료로 남고 지식은 지식으로 선다. 폴더 이름은 뇌에서 가져왔지만 이름은 은유일 뿐 규범이 아니다.</p>
+
+  <h3>쓰기 권한</h3>
+  <div class="tblwrap"><table>
+    <tr><th>주체</th><th>쓸 수 있는 곳</th></tr>
+    <tr><td>무인 사이클</td><td><code>hippocampus/</code> · <code>&lt;project&gt;/p_memory/</code> · <code>neocortex/</code></td></tr>
+    <tr><td>사용자 지시를 받은 AI</td><td>제한 없음. <code>org/</code> 포함</td></tr>
+  </table></div>
+  <p><code>org/</code> 는 실측으로 갱신하는 사실 기록이다. 무인 사이클은 <code>org/</code> 에 쓰지 않는다 — 쓰기 직전과 커밋 직전 두 곳에서 경로를 검사해 거부한다.</p>
+
+  <h3>recall</h3>
+  <p>세션 시작 때 주입되는 것은 <b><code>_index.md</code> 뿐이다.</b> 노트 본문은 주입하지 않는다.</p>
+  <div class="tblwrap"><table>
+    <tr><th>대상</th><th>주입</th></tr>
+    <tr><td>현재 프로젝트의 모든 <code>_index.md</code></td><td>전량</td></tr>
+    <tr><td><code>neocortex/_index.md</code></td><td>전량</td></tr>
+    <tr><td><code>org/**/_index.md</code></td><td>전량</td></tr>
+    <tr><td>노트 본문</td><td>주입하지 않는다</td></tr>
+    <tr><td><code>hippocampus/**</code></td><td>주입하지 않는다</td></tr>
+  </table></div>
+  <p>에이전트는 목록과 <code>summary</code> 한 줄로 무엇이 어디 있는지 알고, 필요한 노트만 링크를 따라 직접 읽는다. 주입량은 노트 수에 비례하지 문서 크기에 비례하지 않는다.</p>
+
+  <h3>_index.md</h3>
+  <p>폴더의 노트 목록과 각 노트의 <code>summary</code> 를 담는다. 파일을 만들거나 옮긴 주체가 <b>같은 커밋에서</b> 갱신한다. 사후 재생성하지 않는다 — 갱신되지 않은 중간 상태가 생기면 그 사이의 recall 이 거짓말을 한다.</p>
+
+  <h3>승격</h3>
+  <p>지식은 두 번 올라간다.</p>
+  <ul>
+    <li><b>세션 → <code>p_memory</code></b> — 세션을 닫을 때. 대화에서 사용자가 정정한 것과 AI 가 스스로 실수를 인정하고 복구한 것을 뽑아 프로젝트 지식으로 다시 쓴다.</li>
+    <li><b><code>p_memory</code> → <code>neocortex</code></b> — 같은 지식이 서로 다른 프로젝트 두 곳에 서면 볼트 전역으로 올린다. 프로젝트를 가리지 않는 지식이라는 증거가 그때 생긴다.</li>
+  </ul>
+  <p>동일한 지식인지는 <b>내용으로 판정한다.</b> 파일명이나 제목이 같은지는 후보를 좁히는 데만 쓰고, 실제 병합 여부는 두 노트가 같은 것을 주장하는지로 정한다. 숫자·경로·버전·조건이 어긋나면 다른 지식이다.</p>
+
+  <h3>번호와 이름</h3>
+  <p>노트에 번호를 붙이지 않는다. <code>p_memory</code> 는 <code>&lt;pp&gt;_&lt;slug&gt;.md</code>, <code>neocortex</code> 는 <code>NEO-&lt;slug&gt;.md</code>. 층을 옮기는 일은 접두를 갈아끼우고 파일을 옮기는 것이 전부다. 이름이 바뀌면 옛 이름을 <code>aliases:</code> 에 남겨 기존 링크가 그대로 열리게 한다.</p>
+
+  <h3>미정</h3>
+  <ul>
+    <li><code>neocortex</code> 지식의 stale 판정</li>
+    <li>반복 정제로 인한 문장 열화의 정지 조건</li>
+    <li>AI 가 자기 실수를 판정할 때의 편향 보정</li>
+    <li>되돌린 변경 기록의 저장 위치와 수명</li>
+    <li><code>done</code> 세션의 보관 기간</li>
+  </ul>
+</section>
+
+<!-- ═══ 문서 양식 ═══ -->
+
+
+<!-- ═══ 세션 ═══ -->
+
+
+<!-- ═══ init·onboard ═══ -->
+
+
+<!-- ═══ 에이전트 ═══ -->
+<section class="panel" id="p-agents">
+  <h2>에이전트 — 페르소나는 죽었다</h2>
+  <p>살아남는 것은 <b>컨텍스트 격리 · 런타임 권한 · 브리프</b> 셋뿐. 프로필 3개는 이것만 다르다. <b>scribe는 4번째 에이전트가 아니다</b> — worker에 실리는 기록 브리프의 라벨 (planning·architecture·security 등 owner 라벨 전부 동일 구조).</p>
+
+  <h3>KERNEL — 3파일 바이트 동일, 8줄 <span class="badge b-ok">✅ 회담 확정</span></h3>
+  <p>세 정의가 공유하는 규율을 <b>복붙하되 기계로 감시한다.</b> 포인터·요약·부분복제 3안이 전부 드리프트를 못 막았다 — 실측: 현행 <code>coder.md:9</code>·<code>verifier.md:9</code> 가 "All worker discipline applies" 포인터를 쓰고 <b>곧바로 worker.md 세 문단을 재서술</b>한다. 같은 파일 <code>coder.md:41</code> 은 정반대로 못 박는다 — <i>"Do not restate the list elsewhere — point."</i></p>
+  <div class="tree"><pre>
+<span class="c">## KERNEL-BEGIN</span>
+- 브리프(Goal·제약·포인터·DoD)가 스코프 전부다. 모호하면 추측하지 말고 Ask 로 PM 에게 반송한다. 문서 충돌도 중재하지 말고 보고한다.
+- 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
+- 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
+- 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘기고, 기록은 PM 이 scribe 브리프로 위임한다.
+- 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
+- Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
+<span class="c">## KERNEL-END</span>
+</pre></div>
+  <p>🔴 <b><code>Docs draft</code> 는 KERNEL 이 아니다</b> — <code>verifier</code> 는 report-only 라 문서 초안을 산출하지 않는다. 셋 중 둘에만 참인 규칙이다. <b>바이트 일치보다 정확성이 이긴다</b>: 셋에 전부 참인 것만 넣으면 일치는 자동으로 성립한다. 감시는 <code>scripts/kernel-check.sh</code> — <code>validate.sh</code> 는 <code>&lt;vault-root&gt;</code> 만 받으므로 플러그인 레포를 못 본다.</p>
+
+  <h3>줄 수 상한 — 합의가 아니라 덧셈</h3>
+  <div class="tblwrap"><table>
+    <tr><th>파일</th><th>현행</th><th>상한</th><th>바이트</th><th>구성 (덧셈)</th></tr>
+    <tr><td><b>worker.md</b></td><td>25줄 / 2,543 B</td><td><b>40</b></td><td>3,600 B</td><td>frontmatter 4 + KERNEL 8 + scribe 절 10 + 하위워커 2 + Docs draft 5</td></tr>
+    <tr><td><b>coder.md</b></td><td><span class="red">85 / 9,413</span></td><td><b>50</b></td><td>5,000 B</td><td>frontmatter 5 + KERNEL 8 + First 8 + Branch 4 + <b>코드품질 4 + 테스트 3 + 로그 3</b> + Last 8 + Outputs 5 = 48</td></tr>
+    <tr><td><b>verifier.md</b></td><td>17 / 1,135</td><td><b>22</b></td><td>2,000 B</td><td>frontmatter 5 + KERNEL 8 + <b>QA 2 + 보안 3</b> + 규칙 3 = 21. <b>보안 본문은 문서 포인터</b></td></tr>
+    <tr><td><b>researcher.md</b> <span class="badge b-todo">신설</span></td><td>—</td><td><b>22</b></td><td>2,000 B</td><td>frontmatter 5 + KERNEL 8 + 스코프 게이트 2 + 규율 4 + Handoff 2 = 21</td></tr>
+  </table></div>
+  <p><code>coder.md</code> 의 삭제분 40줄 = <b>브랜치 어휘 재서술</b>(→ <code>docs/git-convention.md</code> 포인터)과 <b>결정 이력</b>(KJP-46 반전 경위 → ADR). 상한은 이 셋이 <b>spawn 마다 100% 주입</b>되고 PM 이 한 턴에 워커 5개를 띄우면 5배로 들기 때문이다. 양식은 «폴더 트리 및 양식» 탭 §하네스 파일.</p>
+  <div class="tblwrap"><table>
+    <tr><th>프로필</th><th>격리·권한</th><th>핵심 규율</th></tr>
+    <tr><td><b>worker</b></td><td>기본</td><td>브리프(Goal·제약·포인터·DoD)가 스코프 전부 — 모호하면 추측 말고 Ask 반송 · 사실은 볼트→실측→Ask · 주장엔 증거(파일·줄·출력) · 문서 충돌은 중재 말고 보고 · <b>Handoff 고정형</b>: Done/Mistake/Learned/Outputs/Risks/Next/Ask (+Docs draft — 문서를 무효화한 작업은 워커 본인이 초안·scribe는 복사만) · 볼트 직접 쓰기 금지</td></tr>
+    <tr><td><b>coder</b></td><td>worktree 격리</td><td><b>First action</b>: 베이스 확인 — stale base는 사고가 아니라 기본값(로컬 커밋 없으면 <code>reset --hard main</code> 묻지 말고, 있으면 중단·보고) + 브랜치 자가 명명 <code>&lt;type&gt;/&lt;PREFIX&gt;-&lt;N&gt;-&lt;slug&gt;</code>(40자 상한) · TDD · 같은 접근 재시도 금지(3회=보고) · Done = 테스트 실행 출력 · <b>Last action</b>: 리모트 게이트 측정(rulesets+protection <b>둘 다</b>) — 게이트 없으면 브랜치에서 멈춤(push·PR 금지, PM 로컬 머지가 기본값) / 있으면 토픽 브랜치만 push + <b>draft PR</b>(ready·머지는 PM) · Outputs 3줄 고정: branch / base / pr(<span class="red">공란 불가</span> — "none (unprotected)"이 곧 지시)</td></tr>
+    <tr><td><b>verifier</b></td><td>Write·Edit 금지</td><td>보고 전용 — 고치지 않는다 · file:line 인용 없는 발견은 unverified 강등 · 서브워커는 읽기 브리프만 (읽기 전용 경계는 상속되지 않으므로 규율로 강제)</td></tr>
+  </table></div>
+  <h3>scribe 거버넌스</h3>
+  <ul>
+    <li>볼트 콘텐츠 쓰기 <b>전량</b> 담당 (세션 파일·Progress·frontmatter·knowledge·TOC·reject-log·docs history)</li>
+    <li><b>코드 금지 · 커밋 금지</b> — 커밋은 PM(경계 기록, 레포 전체를 삼키므로 전체를 보는 자만 안전)</li>
+    <li><b>축어 필사자</b> — 워커 Handoff의 Learned·Outputs를 글자 그대로. 요약·압축은 사용자 보고 채널에만</li>
+    <li><b>워커→scribe 직행 금지</b> — 중첩을 보는 건 PM뿐. 두 scribe가 같은 파일을 조용히 덮는 것의 유일한 방어 = 단일 scribe + PM 중재</li>
+    <li>쓰기 도구는 <b>Edit(기존)·Write(신규)만</b> — Edit의 old_string이 CAS라 동시 세션 충돌 시 소리 내며 실패. <code>obsidian create</code> 금지(이름 충돌 시 조용히 <code>X 1.md</code> 포크)</li>
+  </ul>
+</section>
+
+<!-- ═══ 기억 ═══ -->
+
+
+<!-- ═══ 검증 ═══ -->
+<section class="panel" id="p-verify">
+  <h2>검증·스크립트 — bash 3.2 · 의존성 0</h2>
+  <div class="tblwrap"><table>
+    <tr><th>구성물</th><th>역할</th></tr>
+    <tr><td><b>vault-paths.sh</b></td><td>유일한 트리 리졸버 — <code>.brain-paths</code> 3키 해석. 공통 루트 부재 = <span class="red">시끄럽게</span>(스캔 0건이 "볼트에 기억 없음"으로 위장하는 게 이 파일이 태어난 사고) · tools 부재 = 조용히(합법 상태) · 9xx 제외 프로젝트 열거·NNN 계산 헬퍼</td></tr>
+    <tr><td><b>validate.sh</b></td><td>층별 린터 · 스코프는 <code>&lt;vault-root&gt;</code> <b>하나뿐</b>(플러그인 레포는 못 본다): <b>raw</b>(<code>hippocampus/</code> — 필수 5키 · status 3값 · 폐기된 <code>cancel</code>·<code>uid</code>·<code>writer</code> 엔 마이그레이션 지시 메시지) · <b>wiki</b>(<code>p_memory</code>+<code>neocortex</code> — <code>summary</code> 필수 · <code>type</code> 어휘 3종 · 폐기 키 검출) · <b>schema</b>(<code>_index.md</code> — 줄 형식 + 위키링크 dangle · frontmatter 금지, <code>policy</code>·<code>adr</code> 의 <code>next_id</code> 만 예외) · <b>docs</b>(status 필수+어휘 <code>created\|draft\|approved\|deprecated</code> · POL/ADR id · 미러 키 · date-only updated = warn) · <b><code>.brain-paths</code></b>(<code>schema_version</code> 존재·값). 매 실행 스캔 수 출력 — 무너진 스캔이 깨끗한 볼트처럼 안 보이게</td></tr>
+    <tr><td><b>value-axis-drift.sh</b></td><td>가격·티어 literal 탐지 — §Value Axes 표를 매 실행 읽음(자체 축 목록 = 4번째 정본이라 금지) · 코드펜스·인라인코드·frontmatter 제외 · <b>보고 전용</b>: "[[BUSINESS]] §BM 링크로 교체"</td></tr>
+    <tr><td><b>validate-selftest.sh</b></td><td>~150 어서트 — 모든 스코프 경계를 <b>양성 픽스처</b>로 못박음 (no-match 단독은 "스캔 안 함"과 구분 불가 = vacuous assert). 뮤테이션 테스트로 검증됨</td></tr>
+    <tr><td><b>kernel-check.sh</b> <span class="badge b-todo">신설</span></td><td><b>4</b> 에이전트 정의의 <code>## KERNEL-BEGIN</code>…<code>## KERNEL-END</code> 블록 <b>바이트 일치</b> 검사. <code>validate.sh</code> 에 넣을 수 없다 — 그쪽 스코프는 볼트뿐이고 <code>agents/*.md</code> 는 플러그인 레포다. KERNEL 방식이 그냥 복붙으로 퇴화하는 것을 막는 유일한 방어</td></tr>
+    <tr><td><b>hooks</b></td><td><b>SessionStart</b>: <code>~/.claude/brain-docs</code> 심링크를 플러그인 docs로 재링크 — Router가 버전 범프·레포 이동을 견디는 메커니즘 · <b>force-delegate.sh</b>(opt-in): PM의 Edit/Write를 기계로 차단(서브에이전트는 통과) · <b>org-guard.sh</b> <span class="badge b-todo">신설</span>: 무인 사이클의 <code>org/</code> 쓰기를 <b>사전 차단</b> — <code>writer</code> 키 폐기로 파일 상태만으로는 작성 주체를 알 수 없어 린터로는 원리적으로 불가</td></tr>
+  </table></div>
+  <p><b>공통 규율</b>: 볼트 경로는 find의 start path로만(글롭 splice 금지 — 메타문자가 스캔을 조용히 0으로 만듦) · CRLF 프렐류드 · awk interval 미사용(one-true-awk에서 조용히 절대 미매치) · 읽기 불가 파일은 스킵이 아니라 finding · 알려진 한계는 <code>ponytail:</code> 주석으로 명시(수용이지 못 본 게 아님).</p>
+
+  <h3>0.2.0 갱신 — 실행 순서대로 <span class="badge b-todo">📝 5자 회담 2R 확정</span></h3>
+  <p class="sub">🔴 <b>0번이 먼저다.</b> 린터를 먼저 바꾸면 기존 볼트가 일괄 실패한다.</p>
+  <div class="tblwrap"><table>
+    <tr><th>#</th><th>대상</th><th>변경</th></tr>
+    <tr><td><b>0</b></td><td>볼트</td><td>🔴 <code>status: stub</code> <b>61건</b> → <code>created</code> 일괄 치환. <b>린터보다 먼저.</b> 실측 <code>draft</code> 111 · <code>stub</code> 61 · <code>approved</code> 6 · <code>created</code> 0</td></tr>
+    <tr><td>1</td><td><code>validate-selftest.sh</code></td><td>어서트 먼저 갱신 → <b>빨간불 확인</b>(픽스처가 실제로 스캔되는지 증명)</td></tr>
+    <tr><td>2</td><td><code>validate.sh:88</code></td><td>세션 필수키 6 → <b>5</b>: <code>status project updated related_ticket cc_session_ids</code>. <code>uid</code>·<code>created</code>·<code>writer</code> 폐기</td></tr>
+    <tr><td>3</td><td><code>validate.sh:90-107</code></td><td><code>uid</code> 형식·파일명 일치 블록 <b>전량 삭제</b>(키가 사라졌다)</td></tr>
+    <tr><td>4</td><td><code>validate.sh:132</code></td><td>스캔 루트 <code>$d/knowledge</code> → <code>$d/p_memory</code> + 볼트 루트 <code>neocortex/</code>. <code>candidates/</code> 제거</td></tr>
+    <tr><td>5</td><td><code>validate.sh:177-178</code></td><td><code>title:</code> 필수 → <code>summary:</code> 필수</td></tr>
+    <tr><td>6</td><td><code>validate.sh:185~</code></td><td><code>sessions/</code> → <code>hippocampus/</code></td></tr>
+    <tr><td>7</td><td><code>validate.sh:387,394</code></td><td>docs status 어휘 <code>stub</code> → <code>created</code>. 구 <code>stub</code> 은 <code>:118</code> 의 <code>cancel</code> 과 같은 <b>retired 메시지</b> 패턴으로</td></tr>
+    <tr><td>8</td><td>—</td><td><b>초록불 확인</b></td></tr>
+  </table></div>
+
+  <h3>신규 검사 5종 — 그 이상은 넣지 않는다</h3>
+  <div class="tblwrap"><table>
+    <tr><th>검사</th><th>왜 이것만</th></tr>
+    <tr><td><b>a</b> <code>_index.md</code> 줄 형식 + 위키링크 dangle</td><td>🔴 <b>0.2.0 의 유일한 새 실패 모드.</b> recall 이 <code>_index.md</code> 만 주입하므로 인덱스가 없는 파일을 가리키면 <b>recall 전체가 거짓말을 하고 아무도 모른다.</b> 본문이 주입되던 시절엔 없던 위험. 생성 주체가 결정론적 바이너리가 아니라 scribe <b>브리프</b>(LLM)라 산출물 게이트가 린터뿐이다</td></tr>
+    <tr><td><b>b</b> <code>summary:</code> 부재</td><td><code>title:</code> 검사(<code>:177-178</code>)의 자리를 그대로 물려받는다. 순비용 0</td></tr>
+    <tr><td><b>c</b> <code>type</code> 어휘 3종</td><td><b>a 와 같은 스캔·같은 정규식에 얹힌다</b> — <code>_index</code> 줄 꼬리의 <code>`&lt;type&gt;`</code> 를 보면서 노트 어휘를 같이 검사. 한계비용이 픽스처 1세트뿐. 폐쇄 어휘라 오탐 0</td></tr>
+    <tr><td><b>e</b> 폐기 키 검출</td><td>🔴 <b>마이그레이션 안전망.</b> 560건에서 <code>uid</code>·<code>title</code>·<code>tags</code>·<code>dri</code>·<code>species</code>·<code>source_sessions</code>·<code>recalled</code>·<code>useful</code> 를 걷어내는데, 놓친 파일을 잡는 것은 이 검사뿐. <code>:118</code> 의 retired 메시지가 이미 같은 코드 형태 — 새 패턴이 아니라 재사용</td></tr>
+    <tr><td><b>h</b> <code>.brain-paths</code> <code>schema_version</code></td><td>init 이 쓰는 첫 값. 없으면 리졸버가 구 기본값으로 조용히 떨어져 스캔이 0이 된다 — <code>vault-paths.sh</code> 가 태어난 그 사고</td></tr>
+  </table></div>
+  <p><b>뺀 것</b>: <code>projects</code> ≥2(dreaming 이 자기가 넣은 값을 자기가 검사) · ADR <code>supersedes</code> 무결성(실측 9건, 손으로 보이는 규모) · <code>dream-logs.md</code> 전용(볼트 전체에 파일 1개) · raw↔wiki 상호참조(<b>e</b> 가 frontmatter 경로를 이미 잡는다).</p>
+  <p>🔴 <b><code>org/</code> 쓰기 주체 검사는 원리적으로 불가</b> — <code>writer</code> 키가 폐기되어 <b>파일 상태만으로 작성 주체를 알 수 없다.</b> 사후 검출이 아니라 사전 차단이어야 하므로 <code>hooks/</code> 의 경로 차단 훅으로 간다.</p>
+  <p>🔴 <b>KERNEL 바이트 일치 검사는 <code>validate.sh</code> 밖이다</b> — <code>validate.sh:30</code> <code>usage: validate.sh &lt;vault-root&gt;</code>, 이 스크립트는 <b>볼트만</b> 본다. <code>agents/*.md</code> 는 플러그인 레포다. 별도 <code>scripts/kernel-check.sh</code> 또는 CI 로 분리한다.</p>
+  <p><b><code>validate-selftest.sh</code>(603줄)</b>: 신규 5검사 × (positive + negative) = 10세트 추가, 폐기 축(<code>knowledge</code>·<code>candidates</code>·<code>source_sessions</code>·카운터) 픽스처 삭제분이 더 커서 <b>순감</b>. <b>양성 픽스처 필수</b> — no-match 단독은 "스캔 안 함"과 구분 불가한 vacuous assert 이고, 그게 이 파일이 태어난 이유다.</p>
+</section>
+
+<!-- ═══ git ═══ -->
+<section class="panel" id="p-skills">
+  <h2>스킬</h2>
+  <p class="sub">동사 하나에 스킬 하나. 볼트 콘텐츠 쓰기는 <code>scribe</code> 위임, 커밋은 PM.</p>
+
+  <h3>ss — 만든다</h3>
+  <div class="tblwrap"><table>
+    <tr><th>#</th><th>동작</th></tr>
+    <tr><td>1</td><td>프로젝트를 해석하고 볼트를 확인한다</td></tr>
+    <tr><td>2</td><td><code>hippocampus/&lt;pp&gt;_YYYYMMDD_&lt;slug&gt;.md</code> 를 만든다</td></tr>
+    <tr><td>3</td><td>frontmatter 5키를 쓴다 — <code>status: active</code> · <code>project</code> · <code>updated</code> · <code>related_ticket</code> · <code>cc_session_ids</code></td></tr>
+    <tr><td>4</td><td>recall 을 <code>## Recall</code> 에 주입한다</td></tr>
+    <tr><td>5</td><td>경로를 보고한다</td></tr>
+  </table></div>
+  <p>열린 세션을 스캔하거나 고지하지 않는다. 재개는 <code>sr</code> 의 몫이다.</p>
+
+  <h3>sr — 되찾는다</h3>
+  <div class="tblwrap"><table>
+    <tr><th>#</th><th>동작</th></tr>
+    <tr><td>1</td><td><code>status</code> 가 <code>active</code> 또는 <code>parked</code> 이고 <code>project</code> 가 일치하는 세션을 찾는다</td></tr>
+    <tr><td>2</td><td>후보마다 <code>## Goal</code> 과 최신 Progress 엔트리를 awk 로 뽑아 한 줄씩 제시한다. 파일을 통째로 읽지 않는다</td></tr>
+    <tr><td>3</td><td>사용자가 고르면 <code>status</code> 를 <code>active</code> 로 되돌리고, <code>cc_session_ids</code> 맨 위에 현재 id 를 넣고, <code>updated</code> 를 갱신한다</td></tr>
+    <tr><td>4</td><td>recall 을 화면에 다시 보인다. 파일은 고치지 않는다</td></tr>
+  </table></div>
+  <p>세션 파일을 새로 만들지 않는다.</p>
+
+  <h3>sl — 보여준다</h3>
+  <p>열린 세션을 <code>updated</code> 내림차순으로 한 줄씩 나열한다. <code>active</code> 와 <code>parked</code> 를 모두 보이며 상태를 구분해 표시한다. 아무것도 쓰지 않고 아무것도 채택하지 않는다.</p>
+
+  <h3>sh — 재운다</h3>
+  <div class="tblwrap"><table>
+    <tr><th>#</th><th>동작</th></tr>
+    <tr><td>1</td><td>Progress 에 날짜 엔트리를 쓴다 — <code>**Next:**</code> 한 줄 + Done · Mistake · Learned · Outputs</td></tr>
+    <tr><td>2</td><td><code>status</code> 를 <code>parked</code> 로, <code>updated</code> 를 현재 시각으로</td></tr>
+    <tr><td>3</td><td>PM 이 커밋한다. 세션 파일은 git 밖이므로 커밋 대상에서 빠진다</td></tr>
+  </table></div>
+  <p>승격하지 않는다. 승격은 <code>sc</code> 하나뿐이다.</p>
+
+  <h3>sc — 닫는다</h3>
+  <div class="tblwrap"><table>
+    <tr><th>#</th><th>동작</th></tr>
+    <tr><td>1</td><td><code>cc_session_ids</code> 로 대화 원문 파일을 연다</td></tr>
+    <tr><td>2</td><td>회고해서 사용자 정정과 AI 자기 실수·복구를 뽑는다</td></tr>
+    <tr><td>3</td><td><code>#### Mistake</code> · <code>#### Learned</code> 에 적는다</td></tr>
+    <tr><td>4</td><td>전체 slug 와 대조한다. 같은 주제면 기존 노트에 병합한다</td></tr>
+    <tr><td>5</td><td><code>p_memory/&lt;pp&gt;_&lt;slug&gt;.md</code> 를 쓴다. 세션에는 아무것도 남기지 않는다</td></tr>
+    <tr><td>6</td><td><code>p_memory/_index.md</code> 를 갱신한다</td></tr>
+    <tr><td>7</td><td>Outputs 가 아키텍처 · API · 배포 · 스키마를 건드렸으면 영향 문서 갱신을 브리프에 넣는다</td></tr>
+    <tr><td>8</td><td><code>status: done</code> 을 쓴다</td></tr>
+    <tr><td>9</td><td>PM 이 커밋한다</td></tr>
+    <tr><td>10</td><td>dreaming 을 발동한다</td></tr>
+  </table></div>
+  <p>8 은 4~6 이 끝난 뒤에만 실행한다.</p>
+
+  <h3>dreaming</h3>
+  <p><code>sc</code> 가 발동한다. 입력은 <code>p_memory</code> 와 <code>neocortex</code> 뿐이다. 세션을 읽지도 쓰지도 않는다.</p>
+  <div class="tblwrap"><table>
+    <tr><th>동작</th><th>내용</th><th>경계</th></tr>
+    <tr><td>정제</td><td>양식에 맞추고, 군더더기를 지우고, 중복 문단을 합치고, 서식을 고른다</td><td>사실을 바꾸지 않는다. 코드블록 · 명령 · 경로 · 오류 메시지 · 숫자 · 버전 · 부정어는 그대로 둔다. 고치기 전후로 이 값들을 뽑아 비교하고 하나라도 사라졌으면 쓰기를 취소한다</td></tr>
+    <tr><td>링크</td><td>서로 관련된 노트를 찾아 <code>related</code> 로 잇는다. 방향은 없다</td><td>이미 이어진 노트 사이에 지름길을 새로 놓지 않는다 — A가 B와, B가 C와 이어져 있으면 A와 C는 잇지 않는다. 두 홉이면 닿기 때문이고, 이 규칙이 없으면 노트가 늘수록 링크가 제곱으로 불어난다</td></tr>
+    <tr><td>승격 ②</td><td>같은 지식이 서로 다른 프로젝트 두 곳에 있으면 <code>neocortex/NEO-&lt;slug&gt;.md</code> 로 옮기고 원본을 지운다</td><td>같은 지식인지는 내용으로 판정한다. 파일명·제목 일치는 후보를 좁히는 데만 쓴다. 숫자 · 경로 · 버전 · 조건이 어긋나면 다른 지식이므로 옮기지 않고 링크만 잇는다</td></tr>
+  </table></div>
+  <div class="tblwrap"><table>
+    <tr><th>항목</th><th>규칙</th></tr>
+    <tr><td>동시성</td><td>볼트 루트에 원자적 락. 이미 돌고 있으면 건너뛴다. <code>active</code> 세션이 있는 프로젝트의 <code>p_memory</code> 는 스캔에서 뺀다</td></tr>
+    <tr><td>격리</td><td>별도 git worktree 에서 작업하고 <code>merge --ff-only</code> 로 합친다. 실패하면 결과를 버리고 커서를 옮기지 않는다</td></tr>
+    <tr><td>커밋</td><td>실행 1회 = 커밋 1개</td></tr>
+    <tr><td>되돌리기</td><td><code>git revert</code>. 되돌린 조합은 기록해 두고 다시 만들지 않는다</td></tr>
+    <tr><td>판정</td><td>같은 판정을 두 번 돌려 답이 다르면 손대지 않는다</td></tr>
+    <tr><td>스캔</td><td>증분. 커서는 마지막 성공 커밋</td></tr>
+    <tr><td>경로</td><td><code>org/</code> 는 쓰기 직전과 커밋 직전 두 곳에서 거부한다</td></tr>
+  </table></div>
+
+  <h3>init</h3>
+  <div class="tblwrap"><table>
+    <tr><th>#</th><th>동작</th></tr>
+    <tr><td>1</td><td>값 4개를 받는다 — org · vault-root · project · PREFIX</td></tr>
+    <tr><td>2</td><td><code>CLAUDE.md</code>(커밋) 와 <code>CLAUDE.local.md</code>(gitignore) 를 쓴다</td></tr>
+    <tr><td>3</td><td><code>.gitignore</code> 에 <code>CLAUDE.local.md</code> 와 <code>hippocampus/</code> 를 넣는다</td></tr>
+    <tr><td>4</td><td>볼트를 스캐폴드한다 — <b>첫 볼트 쓰기는 <code>.brain-paths</code></b>(<code>schema_version: 2</code> + <code>common_root</code>·<code>projects_root</code>·<code>tools_root</code>) → <code>org/</code> → <code>neocortex/</code>(+<code>dream-logs.md</code>) → <code>&lt;projects_root&gt;/&lt;NNN&gt;_&lt;project&gt;/{p_memory,docs}</code> → <code>hippocampus/</code> → 각 폴더 <code>_index.md</code></td></tr>
+    <tr><td>5</td><td>생성 경로 · 덮지 않은 것 · 마이그레이션 목록을 보고하고 onboard 를 안내한다</td></tr>
+  </table></div>
+  <p>tools 층은 만들지 않는다. API_SPEC · ADR · 기능 문서를 미리 만들지 않는다. <b><code>candidates/</code> 와 <code>knowledge/</code> 는 스캐폴드하지 않는다</b> — 0.2.0 폐기 층이다. 기존 볼트를 만나면 덮지 않고 차이만 보고한다. <b>상한 80줄</b>(호출 시에만 로드되므로 에이전트 정의와 다른 자로 잰다).</p>
+
+  <h3>onboard</h3>
+  <p>질문 <b>5개</b>를 <code>AskUserQuestion</code> <b>2블록</b>으로 묻는다 — <b>A</b> 티켓 시스템 · 목표 / <b>B</b> 스택(+하위: 배포 <b>통제 주체</b> · SaaS 여부 · 디자인 툴) · 배포 <b>대상</b> · 규제. 이어서 환경을 실측해 머신 사실을 <code>org/machines/</code> 에 쓴다. 답한 것만 채우고 모르는 것은 그대로 둔다. <b>상한 50줄.</b></p>
+  <p>🔴 <b>배포 관련 두 문항을 한 블록으로 묶되 합치지는 않는다.</b> 축이 다르다 — 하위 문항은 <code>RUNBOOK §Delivery</code> 의 <b>분류</b>(누가 통제하나), 배포 대상은 <b>좌표</b>(어디에 띄우나). 답이 서로를 함의하지 않는다(통제는 나인데 대상이 미정인 프로젝트가 흔하다). 대신 하위 문항의 <b>괄호 예시를 지운다</b> — 통제 주체를 묻는데 대상 목록을 보기로 주면 사용자가 대상을 답한다.</p>
+
+  </section>
+
+<!-- ═══ 0.2.0 ═══ -->
+
+
+<footer>
+  정본 — docs <b>9</b>: vault-tree · sessions-note · knowledge · knowledge-escalate · memory-control · project-docs · doc-catalog · doc-templates · <b>git-convention</b>(2026-08-03 versioning-convention 흡수) (+ skills 8 · scripts <b>5</b> · hooks <b>3</b> · agents <b>4</b>) · 이 문서는 0.2.0 완성까지의 목표 스펙 — 배지가 랜딩 여부를 표시
+</footer>
+</main>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.t).classList.add('active');
+    window.scrollTo({ top: 0 });
+  }));
+</script>
+<script>
+(() => {
+  // 트리 파일명 클릭 → 해당 양식 열기
+  const EDS = [...document.querySelectorAll('#tree-editors > div')].map(d => d.id);
+  document.querySelectorAll('.fnode').forEach(b => b.addEventListener('click', () => {
+    const want = 'ed-' + b.dataset.e;
+    EDS.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = id !== want; });
+    document.getElementById(want)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+
+  // 초안 에디터 공통 — localStorage 자동 저장 + downloads로 파일 저장
+  function initEditor(prefix, storageKey, filename) {
+    const ta = document.getElementById(prefix + '-editor');
+    const st = document.getElementById(prefix + '-status');
+    const DEFAULT = ta.value;
+    try { const s = localStorage.getItem(storageKey); if (s !== null && s !== DEFAULT) { ta.value = s; st.textContent = '이전 편집본 불러옴'; } } catch (e) {}
+
+    let t;
+    ta.addEventListener('input', () => {
+      st.textContent = '편집 중…';
+      clearTimeout(t);
+      t = setTimeout(() => {
+        try { localStorage.setItem(storageKey, ta.value); st.textContent = '이 브라우저에 자동 저장됨'; }
+        catch (e) { st.textContent = '자동 저장 실패 — 파일로 저장을 이용하세요'; }
+      }, 400);
+    });
+
+    // 기본값 복원 — confirm() 대신 2클릭 무장
+    let armed = false;
+    const resetBtn = document.getElementById(prefix + '-reset');
+    resetBtn.addEventListener('click', () => {
+      if (!armed) { armed = true; resetBtn.textContent = '정말 복원? (한 번 더)'; setTimeout(() => { armed = false; resetBtn.textContent = '기본값 복원'; }, 3000); return; }
+      armed = false; resetBtn.textContent = '기본값 복원';
+      ta.value = DEFAULT;
+      try { localStorage.removeItem(storageKey); } catch (e) {}
+      st.textContent = '기본값으로 복원됨';
+    });
+
+    document.getElementById(prefix + '-save').addEventListener('click', async () => {
+      if (!window.claude || !window.claude.downloads) { st.textContent = '이 뷰에선 파일 저장 불가 — 본문을 복사해 Claude에게 붙여넣으세요'; return; }
+      st.textContent = '저장 확인 대기…';
+      try {
+        await window.claude.downloads.save({ filename: filename, data: ta.value });
+        st.textContent = '✅ 저장됨 — Claude에게 "적용했어"라고 말하면 반영됩니다';
+      } catch (e) {
+        const c = e && e.code;
+        st.textContent = c === 'declined' ? '저장 취소됨' : c === 'rate_limited' ? '요청이 겹침 — 잠시 후 다시' : '저장 실패 (' + (c || '?') + ') — 본문을 복사해 전달하세요';
+      }
+    });
+  }
+  initEditor('prd', 'kjp-prd-v1', 'PRD.md');
+  initEditor('mkt', 'kjp-mkt-v1', 'MARKETING.md');
+  initEditor('mst', 'kjp-mst-v1', 'MILESTONE.md');
+  initEditor('cmp', 'kjp-cmp-v1', 'COMPLIANCE.md');
+  initEditor('tos', 'kjp-tos-v1', 'TERMS_OF_SERVICE.md');
+  initEditor('arc', 'kjp-arc-v1', 'ARCHITECTURE.md');
+  initEditor('cc', 'kjp-cc-v1', 'CODE_CONVENTION.md');
+  initEditor('rb', 'kjp-rb-v1', 'RUNBOOK.md');
+  initEditor('tm', 'kjp-tm-v1', 'THREAT_MODEL.md');
+  initEditor('ds', 'kjp-ds-v1', 'DESIGN.md');
+  initEditor('pp', 'kjp-pp-v1', 'P_POLICY.md');
+  initEditor('as', 'kjp-as-v1', 'API_SPEC.md');
+  initEditor('ft', 'kjp-ft-v1', 'feature.md');
+  initEditor('ss', 'kjp-ss-v1', 'SESSION.md');
+  initEditor('idx', 'kjp-idx-v1', '_index.md');
+  initEditor('dr',  'kjp-dr-v1',  'dream-logs.md');
+  initEditor('pm',  'kjp-pm-v1',  'p_memory.md');
+  initEditor('nc',  'kjp-nc-v1',  'neocortex.md');
+  initEditor('adr', 'kjp-adr-v1', 'ADR.md');
+  initEditor('aw',  'kjp-aw-v1',  'worker.md');
+  initEditor('ac',  'kjp-ac-v1',  'coder.md');
+  initEditor('av',  'kjp-av-v1',  'verifier.md');
+  initEditor('cm',  'kjp-cm-v1',  'CLAUDE.md');
+  initEditor('sk',  'kjp-sk-v1',  'init-onboard.md');
+  initEditor('rc',  'kjp-rc-v1',  'recall.md');
+  initEditor('ar',  'kjp-ar-v1',  'researcher.md');
+})();
+</script>
+
+

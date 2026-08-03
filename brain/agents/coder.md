@@ -19,7 +19,7 @@ git log --oneline main..HEAD  # your local commits; empty output = none
 ```
 
 - **Your base is `origin/<branch>`, not the local integration branch.** Measured 2026-07-26 (KJP-45): the harness cuts the worktree branch with `branch: Created from origin/main` — read it back yourself with `git reflog show <your-branch> | tail -1`.
-- **So a stale base is the default, not an accident.** This canon pushes only when the user says so (`docs/versioning-convention.md`), which leaves `origin/` parked while local `main` advances. Measured: five consecutive coders (KJP-40 · 43 · 48 · 39 · 45) all started at `41b11ae` while `main` moved five commits past it.
+- **So a stale base is the default, not an accident.** This canon pushes only when the user says so (`docs/git-convention.md`), which leaves `origin/` parked while local `main` advances. Measured: five consecutive coders (KJP-40 · 43 · 48 · 39 · 45) all started at `41b11ae` while `main` moved five commits past it.
 - **Behind, no local commits** → `git reset --hard main`, then proceed. Do not ask first.
 - **Behind, local commits exist** → **stop and report to the PM.** Never rebase or reset on your own judgment; those commits are the deliverable.
 - **Report the base you found either way** — it is a fact about the run, not just a problem when it goes wrong.
@@ -39,7 +39,7 @@ git switch -c refactor/KJP-45-worktree-base
 - 🔴 **The one ground that survives, recorded because it will be the friction point.** Type is mutable and the branch is the **only surface that cannot be renamed once a PR is open on it** — a ticket is re-typed, a commit is amended, a PR title is edited, but a pushed branch under review is fixed. **If re-classification turns out to be frequent, this is where it will hurt, and this bullet is where to start reading.** Not grounds to deviate on your own: follow the format, and report the friction to the PM if you hit it.
 - **Human branch prefixes in a repo are still not your business.** A project's `RUNBOOK §Delivery` records what that repo's humans actually name their branches, as a measurement — `feature/*` and the like included. That is theirs; agent branches use the format above in every repo, and a collision between the two is a measurement to report, not a conflict to resolve.
 - **Create it right after the base check**, before any commit — the name has to be stable and reportable even if you end up committing nothing.
-- The harness's `worktree-agent-<hash>` branch is then **left behind empty, pointing at the base**. Accepted cost. Leave it alone; the PM sweeps it at cleanup (`docs/versioning-convention.md` §Worktree integration order).
+- The harness's `worktree-agent-<hash>` branch is then **left behind empty, pointing at the base**. Accepted cost. Leave it alone; the PM sweeps it at cleanup (`docs/git-convention.md` §Worktree integration order).
 
 ## Coding rules
 - **TDD** — tests first for business logic, APIs, and parsing. Skipping is OK for UI, config, and typo fixes.
@@ -50,7 +50,7 @@ git switch -c refactor/KJP-45-worktree-base
 
 ## Last action — a draft PR, but only if the remote demands one
 
-**Measure before you assume.** Run both checks (`docs/versioning-convention.md` §Pull / merge requests) — classic protection and rulesets are separate systems, and either can gate the branch:
+**Measure before you assume.** Run both checks (`docs/git-convention.md` §Pull / merge requests) — classic protection and rulesets are separate systems, and either can gate the branch:
 
 ```bash
 gh api "repos/$OWNER/$REPO/rulesets" --jq '[.[] | select(.enforcement == "active")] | length'

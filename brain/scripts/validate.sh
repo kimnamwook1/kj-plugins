@@ -180,7 +180,7 @@ while IFS= read -r f; do
 done < "$LIST" >> "$OUT"
 
 # ------------------------------------------- session wikilinks on the shared surface
-# Canon: versioning-convention.md:6 (§Share scope) + knowledge-convention.md:14
+# Canon: git-convention.md §Share scope + knowledge-convention.md:14
 # (`source_sessions`). The shared surface is what a teammate pulls; `sessions/` sits
 # outside it and a team vault gitignores it, so a `[[<uid>]]` written on the shared
 # surface dangles in any vault that lacks that session. Shared notes cite a session as
@@ -260,7 +260,7 @@ done < "$LIST" >> "$OUT"
 #   · `session:` key anywhere in docs frontmatter. Upgraded from the old "no session
 #     wikilink" rule: team vaults gitignore sessions/, so even a *plain uid* is a
 #     reference no teammate can resolve. Team provenance = history `ticket`; the
-#     session uid rides the boundary commit message (versioning-convention.md).
+#     session uid rides the boundary commit message (git-convention.md).
 #   · `status:` absent, or a value outside stub|draft|approved|deprecated — the only
 #     required key (meta files exempt; they are folder TOCs, not body documents).
 #   · v1 history subkeys `date:`/`by:` — the top-level key regex cannot see inside a
