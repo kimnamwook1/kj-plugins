@@ -1320,7 +1320,7 @@ tools_root:                # opt-in — 빈 값이면 조용히 스캔 안 함
 ```
 그다음 트리:
 ```
-org/{about,machines,network,platforms,policies}/
+&lt;common_root&gt;/{about,machines,network,platforms,policies}/
 neocortex/                          + dream-logs.md
 &lt;projects_root&gt;/&lt;NNN&gt;_&lt;project&gt;/
     p_memory/
@@ -1533,7 +1533,7 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
   </table></div>
   <h3>scribe 거버넌스</h3>
   <ul>
-    <li>볼트 콘텐츠 쓰기 <b>전량</b> 담당 (세션 파일·Progress·frontmatter·knowledge·TOC·reject-log·docs history)</li>
+    <li>볼트 콘텐츠 쓰기 <b>전량</b> 담당 (세션 파일·Progress·frontmatter·p_memory·neocortex·TOC·reject-log·docs history)</li>
     <li><b>코드 금지 · 커밋 금지</b> — 커밋은 PM(경계 기록, 레포 전체를 삼키므로 전체를 보는 자만 안전)</li>
     <li><b>축어 필사자</b> — 워커 Handoff의 Learned·Outputs를 글자 그대로. 요약·압축은 사용자 보고 채널에만</li>
     <li><b>워커→scribe 직행 금지</b> — 중첩을 보는 건 PM뿐. 두 scribe가 같은 파일을 조용히 덮는 것의 유일한 방어 = 단일 scribe + PM 중재</li>
@@ -1554,7 +1554,7 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
     <tr><td><b>value-axis-drift.sh</b></td><td>가격·티어 literal 탐지 — §Value Axes 표를 매 실행 읽음(자체 축 목록 = 4번째 정본이라 금지) · 코드펜스·인라인코드·frontmatter 제외 · <b>보고 전용</b>: "[[BUSINESS]] §BM 링크로 교체"</td></tr>
     <tr><td><b>validate-selftest.sh</b></td><td>~150 어서트 — 모든 스코프 경계를 <b>양성 픽스처</b>로 못박음 (no-match 단독은 "스캔 안 함"과 구분 불가 = vacuous assert). 뮤테이션 테스트로 검증됨</td></tr>
     <tr><td><b>kernel-check.sh</b> <span class="badge b-todo">신설</span></td><td><b>4</b> 에이전트 정의의 <code>## KERNEL-BEGIN</code>…<code>## KERNEL-END</code> 블록 <b>바이트 일치</b> 검사. <code>validate.sh</code> 에 넣을 수 없다 — 그쪽 스코프는 볼트뿐이고 <code>agents/*.md</code> 는 플러그인 레포다. KERNEL 방식이 그냥 복붙으로 퇴화하는 것을 막는 유일한 방어</td></tr>
-    <tr><td><b>hooks</b></td><td><b>SessionStart</b>: <code>~/.claude/brain-docs</code> 심링크를 플러그인 docs로 재링크 — Router가 버전 범프·레포 이동을 견디는 메커니즘(신선도는 «릴리스·적용» 참조) · <b>force-delegate.sh</b>(opt-in): PM의 Edit/Write를 기계로 차단(서브에이전트는 통과) · <b>org-guard.sh</b> <span class="badge b-todo">신설</span>: 무인 사이클의 <code>org/</code> 쓰기를 <b>사전 차단</b> — <code>writer</code> 키 폐기로 파일 상태만으로는 작성 주체를 알 수 없어 린터로는 원리적으로 불가</td></tr>
+    <tr><td><b>hooks</b></td><td><b>SessionStart</b>: <code>~/.claude/brain-docs</code> 심링크를 플러그인 docs로 재링크 — Router가 버전 범프·레포 이동을 견디는 메커니즘(신선도는 «릴리스·적용» 참조) · <b>force-delegate.sh</b>(opt-in): PM의 Edit/Write를 기계로 차단(서브에이전트는 통과) · <b>org-guard.sh</b> <span class="badge b-todo">신설</span>: 무인 사이클의 <code>&lt;common_root&gt;/</code> 쓰기를 <b>사전 차단</b>(경로는 <code>.brain-paths</code> 에서 읽는다 — 리터럴로 검사하면 값이 <code>personal</code> 인 볼트가 무방비다) — <code>writer</code> 키 폐기로 파일 상태만으로는 작성 주체를 알 수 없어 린터로는 원리적으로 불가</td></tr>
   </table></div>
   <p><b>공통 규율</b>: 볼트 경로는 find의 start path로만(글롭 splice 금지 — 메타문자가 스캔을 조용히 0으로 만듦) · CRLF 프렐류드 · awk interval 미사용(one-true-awk에서 조용히 절대 미매치) · 읽기 불가 파일은 스킵이 아니라 finding · 알려진 한계는 <code>ponytail:</code> 주석으로 명시(수용이지 못 본 게 아님).</p>
 
@@ -1657,7 +1657,7 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
     <tr><td>되돌리기</td><td><code>git revert</code>. 되돌린 조합은 기록해 두고 다시 만들지 않는다</td></tr>
     <tr><td>판정</td><td>같은 판정을 두 번 돌려 답이 다르면 손대지 않는다</td></tr>
     <tr><td>스캔</td><td>증분. 커서는 마지막 성공 커밋</td></tr>
-    <tr><td>경로</td><td><code>org/</code> 는 쓰기 직전과 커밋 직전 두 곳에서 거부한다</td></tr>
+    <tr><td>경로</td><td><code>&lt;common_root&gt;/</code> 는 쓰기 직전과 커밋 직전 두 곳에서 거부한다 — 경로는 리터럴이 아니라 <code>.brain-paths</code> 에서 읽는다</td></tr>
   </table></div>
 
   <h3>init</h3>
@@ -1666,7 +1666,7 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
     <tr><td>1</td><td>값 4개를 받는다 — org · vault-root · project · PREFIX</td></tr>
     <tr><td>2</td><td><code>CLAUDE.md</code>(커밋) 와 <code>CLAUDE.local.md</code>(gitignore) 를 쓴다</td></tr>
     <tr><td>3</td><td><code>.gitignore</code> 에 <code>CLAUDE.local.md</code> 와 <code>hippocampus/</code> 를 넣는다</td></tr>
-    <tr><td>4</td><td>볼트를 스캐폴드한다 — <b>첫 볼트 쓰기는 <code>.brain-paths</code></b>(<code>schema_version: 2</code> + <code>common_root</code>·<code>projects_root</code>·<code>tools_root</code>) → <code>org/</code> → <code>neocortex/</code>(+<code>dream-logs.md</code>) → <code>&lt;projects_root&gt;/&lt;NNN&gt;_&lt;project&gt;/{p_memory,docs}</code> → <code>hippocampus/</code> → 각 폴더 <code>_index.md</code></td></tr>
+    <tr><td>4</td><td>볼트를 스캐폴드한다 — <b>첫 볼트 쓰기는 <code>.brain-paths</code></b>(<code>schema_version: 2</code> + <code>common_root</code>·<code>projects_root</code>·<code>tools_root</code>) → <code>&lt;common_root&gt;/</code> → <code>neocortex/</code>(+<code>dream-logs.md</code>) → <code>&lt;projects_root&gt;/&lt;NNN&gt;_&lt;project&gt;/{p_memory,docs}</code> → <code>hippocampus/</code> → 각 폴더 <code>_index.md</code></td></tr>
     <tr><td>5</td><td>생성 경로 · 덮지 않은 것 · 마이그레이션 목록을 보고하고 onboard 를 안내한다</td></tr>
   </table></div>
   <p>tools 층은 만들지 않는다. API_SPEC · ADR · 기능 문서를 미리 만들지 않는다. <b><code>candidates/</code> 와 <code>knowledge/</code> 는 스캐폴드하지 않는다</b> — 0.2.0 폐기 층이다. 기존 볼트를 만나면 덮지 않고 차이만 보고한다. <b>상한 80줄</b>(호출 시에만 로드되므로 에이전트 정의와 다른 자로 잰다).</p>
@@ -1712,7 +1712,7 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
     <tr><td><b>beafter</b></td><td><code>000_common</code></td><td><code>.</code> — 프로젝트가 <b>볼트 루트 직속</b></td></tr>
   </table></div>
   <p><code>beafter</code> 는 <code>tools_root: 999_tools</code> 가 선언돼 있으나 <span class="red">디렉터리가 부재</span>하다.</p>
-  <p><b>마이그레이션 스크립트는 반드시 <code>.brain-paths</code> 구동이어야 한다.</b> 경로를 리터럴로 박으면 <code>beafter</code> 에서 <b>전량 미스한다.</b> 지금 «스킬» 탭 <code>init</code> §4 가 <code>org</code>·<code>projects</code> 를 리터럴로 쓰는 것이 그 위험의 실례다.</p>
+  <p><b>마이그레이션 스크립트는 반드시 <code>.brain-paths</code> 구동이어야 한다.</b> 경로를 리터럴로 박으면 <code>beafter</code> 에서 <b>전량 미스한다.</b> «스킬» 탭 <code>init</code> §4 의 리터럴은 2026-08-04 에 <code>&lt;common_root&gt;</code> 로 고쳤고, 차단 게이트 2곳(<code>org-guard.sh</code>·dreaming §경로)도 함께 닫았다. <b>남은 실례 2곳</b> — <code>onboard</code> 가 머신 사실을 <code>org/machines/</code> 에 쓰는 지시(§onboard)와 recall 주입 표의 <code>org/**/_index.md</code>(실행부는 <code>$BRAIN_COMMON</code> 을 쓰는데 표만 리터럴이다). 둘 다 사람이 읽는 산문이라 급하지 않으나, <b>산문의 리터럴이 코드로 베껴지는 것이 이 결함의 전파 경로다.</b></p>
 
   <p><b><code>beafter</code> 노출 실측</b> (2026-08-03):</p>
   <div class="tblwrap"><table>
