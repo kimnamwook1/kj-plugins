@@ -131,6 +131,7 @@
   <button class="tab" data-t="p-skills">스킬</button>
   <button class="tab" data-t="p-agents">에이전트</button>
   <button class="tab" data-t="p-verify">검증·스크립트</button>
+  <button class="tab" data-t="p-release">릴리스·적용</button>
 </nav>
 
 <!-- ═══ 그린필드 트리 ═══ -->
@@ -912,13 +913,13 @@ cc_session_ids:
          ---
          next_id: 2
          ---
-     재생성 산출물 — 손으로 고치지 않는다. 각 노트 frontmatter 의 summary·type 을 awk 로 긁어 전체를 덮어쓴다.
+     재생성 산출물 — 손으로 고치지 않는다. 각 노트 frontmatter 의 summary 를 awk 로 긁어 전체를 덮어쓴다.
      정본은 노트 frontmatter 한 곳. 위키링크 대상은 **파일명**(.md 제외)이지 frontmatter 값이 아니다.
      헤딩 없음 — 불릿 나열 하나가 전부다. 하위 폴더도 같은 모양의 한 줄로 섞어 적는다.
-     docs/adr/ 는 type 이 없고, 뒤집힌 ADR 은 생성기가 supersedes 를 역방향으로 읽어 꼬리에 부기한다. --&gt;
+     뒤집힌 ADR 은 생성기가 supersedes 를 역방향으로 읽어 꼬리에 부기한다. --&gt;
 
-- [[&lt;파일명 stem&gt;]] — &lt;summary&gt; `&lt;type&gt;`
-- [[&lt;파일명 stem&gt;]] — &lt;summary&gt; `&lt;type&gt;`
+- [[&lt;파일명 stem&gt;]] — &lt;summary&gt;
+- [[&lt;파일명 stem&gt;]] — &lt;summary&gt;
 - [[&lt;하위폴더&gt;/_index]] — &lt;한 줄&gt;
 </textarea>
 </div>
@@ -948,15 +949,14 @@ updated: YYYY-MM-DDTHH:MM:SS
 </div>
 <textarea id="pm-editor" spellcheck="false">---
 summary:                     # 한 줄 · "언제 쓰나 + 무엇을 주장하나" 두 성분 · recall 의 전 검색 표면
-type: gotcha                 # gotcha | lesson | reference — 3종 폐쇄, 확장 금지
 updated: YYYY-MM-DD
 related: []                  # sc 는 항상 []. dreaming 만 잇는다 · 두 홉으로 닿는 쌍 금지
 aliases: []                  # 개명·승격② 때만 구 basename 을 append
 ---
 &lt;!-- 파일명 = &lt;pp&gt;_&lt;slug&gt;.md · 번호 없음 · 접두는 위키링크 전역 유일성용.
      세션을 가리키는 필드가 없다 — raw 와 wiki 는 서로를 참조하지 않는다.
-     `title`·`status`·`species`·`version`·`projects`·`tags`·`dri`·`created` 는 전부 폐기됐다.
-     _index.md 줄:  - [[&lt;pp&gt;_&lt;slug&gt;]] — &lt;summary&gt; `&lt;type&gt;`   (재생성 산출물, 손 편집 금지) --&gt;
+     p_memory 양식 기준 — `title`·`type`·`status`·`species`·`version`·`projects`·`tags`·`dri`·`created` 는 전부 폐기됐다.
+     _index.md 줄:  - [[&lt;pp&gt;_&lt;slug&gt;]] — &lt;summary&gt;   (재생성 산출물, 손 편집 금지) --&gt;
 
 ## Trigger
 &lt;언제 이 노트를 떠올려야 하나 — 여는 에이전트의 적합성 게이트&gt;
@@ -978,7 +978,6 @@ aliases: []                  # 개명·승격② 때만 구 basename 을 append
 </div>
 <textarea id="nc-editor" spellcheck="false">---
 summary:                     # p_memory 와 동일 규칙
-type: gotcha                 # gotcha | lesson | reference
 updated: YYYY-MM-DD
 projects: []                 # 승격②를 촉발한 서로 다른 프로젝트 slug 2개 이상
                              #   ⚠ write-once — 승격 시점 1회 기록, 이후 append·삭제·개명 반영 금지.
@@ -991,7 +990,7 @@ aliases: []                  # 승격 직전 basename(&lt;pp&gt;_&lt;slug&gt;)�
        2. aliases 에 &lt;pp&gt;_&lt;slug&gt; append
        3. projects 키 삽입 (승격 판정에 쓴 slug 2개)
      그 외 바이트 불변. 본문 무수정. species·status 편집 없음.
-     _index.md 줄:  - [[NEO-&lt;slug&gt;]] — &lt;summary&gt; `&lt;type&gt;` --&gt;
+     _index.md 줄:  - [[NEO-&lt;slug&gt;]] — &lt;summary&gt; --&gt;
 
 ## Trigger
 
@@ -1044,7 +1043,7 @@ supersedes: []               # 이 결정이 뒤집은 구 ADR id 배열 · 방�
 
 <div id="ed-aw" hidden>
 <h3>agents/worker.md — ≤40줄 / 3,600 B</h3>
-<p class="sub">일반 워커 + <b>scribe 브리프</b>. scribe 는 4번째 에이전트가 아니라 이 파일 안의 절이다.</p>
+<p class="sub">일반 워커 + <b>scribe 브리프</b>. scribe 는 별도 에이전트가 아니라 이 파일 안의 절이다.</p>
 <div class="editbar">
   <button id="aw-save">파일로 저장 (worker.md)</button>
   <button id="aw-reset">기본값 복원</button>
@@ -1076,7 +1075,7 @@ description: 범용 작업 워커. PM 이 티켓·브리프를 위임할 때의 
 - **워커 → scribe 직행 금지.** 중첩을 보는 건 PM 뿐이고, 두 scribe 가 같은 파일을 조용히 덮는 것의 유일한 방어다.
 - **쓰기 도구는 `Edit`(기존)·`Write`(신규)만.** `Edit` 의 old_string 이 compare-and-swap 이라 동시 세션 충돌 시 소리 내며 실패한다.
 - **쓸 수 있는 곳**: `hippocampus/` · `<project>/p_memory/` · `neocortex/` · 각 폴더 `_index.md`. 🔴 `org/` 는 **사용자 지시가 브리프에 명시된 때만**.
-- **`_index.md` 는 재생성 산출물이다.** 노트를 만들거나 옮긴 그 커밋에서 같이 갱신한다. 줄 형식 `- [[&lt;basename&gt;]] — &lt;summary&gt; `&lt;type&gt;``, 링크 대상은 파일명. frontmatter 없음(`docs/policy/`·`docs/adr/` 의 `next_id` 만 예외).
+- **`_index.md` 는 재생성 산출물이다.** 노트를 만들거나 옮긴 그 커밋에서 같이 갱신한다. 줄 형식 `- [[&lt;basename&gt;]] — &lt;summary&gt;`, 링크 대상은 파일명. frontmatter 없음(`docs/policy/`·`docs/adr/` 의 `next_id` 만 예외).
 - 기록한 경로 전량을 반환한다.
 
 ## Docs draft
@@ -1085,8 +1084,8 @@ description: 범용 작업 워커. PM 이 티켓·브리프를 위임할 때의 
 </div>
 
 <div id="ed-ac" hidden>
-<h3>agents/coder.md — ≤45줄 / 4,500 B</h3>
-<p class="sub">현행 85줄 → 45줄. 삭제분은 <b>브랜치 어휘 재서술과 결정 이력(KJP-46 반전 경위)</b> — 어휘는 <code>docs/git-convention.md</code> 포인터로, 이력은 ADR 로.</p>
+<h3>agents/coder.md — ≤50줄 / 5,000 B</h3>
+<p class="sub">현행 85줄 → 48줄. 삭제분은 <b>브랜치 어휘 재서술과 결정 이력(KJP-46 반전 경위)</b> — 어휘는 <code>docs/git-convention.md</code> 포인터로, 이력은 ADR 로.</p>
 <div class="editbar">
   <button id="ac-save">파일로 저장 (coder.md)</button>
   <button id="ac-reset">기본값 복원</button>
@@ -1165,7 +1164,7 @@ pr:     &lt;url&gt; | none (unprotected)      # 공란 불가 — 빈 줄은 "�
 </div>
 
 <div id="ed-av" hidden>
-<h3>agents/verifier.md — ≤20줄 / 1,800 B</h3>
+<h3>agents/verifier.md — ≤22줄 / 2,000 B</h3>
 <p class="sub">현행 17줄. <b>재작성 대상이 아니다</b> — KERNEL 교체 + 볼트 쓰기 경계 1줄뿐.</p>
 <div class="editbar">
   <button id="av-save">파일로 저장 (verifier.md)</button>
@@ -1500,10 +1499,10 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
 <!-- ═══ 에이전트 ═══ -->
 <section class="panel" id="p-agents">
   <h2>에이전트 — 페르소나는 죽었다</h2>
-  <p>살아남는 것은 <b>컨텍스트 격리 · 런타임 권한 · 브리프</b> 셋뿐. 프로필 3개는 이것만 다르다. <b>scribe는 4번째 에이전트가 아니다</b> — worker에 실리는 기록 브리프의 라벨 (planning·architecture·security 등 owner 라벨 전부 동일 구조).</p>
+  <p>살아남는 것은 <b>컨텍스트 격리 · 런타임 권한 · 브리프</b> 셋뿐. 프로필 4개는 이것만 다르다. <b>scribe는 별도 에이전트가 아니다</b> — worker에 실리는 기록 브리프의 라벨 (planning·architecture·security 등 owner 라벨 전부 동일 구조).</p>
 
-  <h3>KERNEL — 3파일 바이트 동일, 8줄 <span class="badge b-ok">✅ 회담 확정</span></h3>
-  <p>세 정의가 공유하는 규율을 <b>복붙하되 기계로 감시한다.</b> 포인터·요약·부분복제 3안이 전부 드리프트를 못 막았다 — 실측: 현행 <code>coder.md:9</code>·<code>verifier.md:9</code> 가 "All worker discipline applies" 포인터를 쓰고 <b>곧바로 worker.md 세 문단을 재서술</b>한다. 같은 파일 <code>coder.md:41</code> 은 정반대로 못 박는다 — <i>"Do not restate the list elsewhere — point."</i></p>
+  <h3>KERNEL — 4파일 바이트 동일, 8줄 <span class="badge b-ok">✅ 회담 확정</span></h3>
+  <p>네 정의가 공유하는 규율을 <b>복붙하되 기계로 감시한다.</b> 포인터·요약·부분복제 3안이 전부 드리프트를 못 막았다 — 실측: 현행 <code>coder.md:9</code>·<code>verifier.md:9</code> 가 "All worker discipline applies" 포인터를 쓰고 <b>곧바로 worker.md 세 문단을 재서술</b>한다. 같은 파일 <code>coder.md:41</code> 은 정반대로 못 박는다 — <i>"Do not restate the list elsewhere — point."</i></p>
   <div class="tree"><pre>
 <span class="c">## KERNEL-BEGIN</span>
 - 브리프(Goal·제약·포인터·DoD)가 스코프 전부다. 모호하면 추측하지 말고 Ask 로 PM 에게 반송한다. 문서 충돌도 중재하지 말고 보고한다.
@@ -1514,7 +1513,7 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
 - Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
 <span class="c">## KERNEL-END</span>
 </pre></div>
-  <p>🔴 <b><code>Docs draft</code> 는 KERNEL 이 아니다</b> — <code>verifier</code> 는 report-only 라 문서 초안을 산출하지 않는다. 셋 중 둘에만 참인 규칙이다. <b>바이트 일치보다 정확성이 이긴다</b>: 셋에 전부 참인 것만 넣으면 일치는 자동으로 성립한다. 감시는 <code>scripts/kernel-check.sh</code> — <code>validate.sh</code> 는 <code>&lt;vault-root&gt;</code> 만 받으므로 플러그인 레포를 못 본다.</p>
+  <p>🔴 <b><code>Docs draft</code> 는 KERNEL 이 아니다</b> — <code>verifier</code> 는 report-only 라 문서 초안을 산출하지 않는다. 넷 중 셋에만 참인 규칙이다. <b>바이트 일치보다 정확성이 이긴다</b>: 넷에 전부 참인 것만 넣으면 일치는 자동으로 성립한다. 감시는 <code>scripts/kernel-check.sh</code> — <code>validate.sh</code> 는 <code>&lt;vault-root&gt;</code> 만 받으므로 플러그인 레포를 못 본다.</p>
 
   <h3>줄 수 상한 — 합의가 아니라 덧셈</h3>
   <div class="tblwrap"><table>
@@ -1524,12 +1523,13 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
     <tr><td><b>verifier.md</b></td><td>17 / 1,135</td><td><b>22</b></td><td>2,000 B</td><td>frontmatter 5 + KERNEL 8 + <b>QA 2 + 보안 3</b> + 규칙 3 = 21. <b>보안 본문은 문서 포인터</b></td></tr>
     <tr><td><b>researcher.md</b> <span class="badge b-todo">신설</span></td><td>—</td><td><b>22</b></td><td>2,000 B</td><td>frontmatter 5 + KERNEL 8 + 스코프 게이트 2 + 규율 4 + Handoff 2 = 21</td></tr>
   </table></div>
-  <p><code>coder.md</code> 의 삭제분 40줄 = <b>브랜치 어휘 재서술</b>(→ <code>docs/git-convention.md</code> 포인터)과 <b>결정 이력</b>(KJP-46 반전 경위 → ADR). 상한은 이 셋이 <b>spawn 마다 100% 주입</b>되고 PM 이 한 턴에 워커 5개를 띄우면 5배로 들기 때문이다. 양식은 «폴더 트리 및 양식» 탭 §하네스 파일.</p>
+  <p><code>coder.md</code> 의 삭제분 37줄 = <b>브랜치 어휘 재서술</b>(→ <code>docs/git-convention.md</code> 포인터)과 <b>결정 이력</b>(KJP-46 반전 경위 → ADR). 상한은 이 넷이 <b>spawn 마다 100% 주입</b>되고 PM 이 한 턴에 워커 5개를 띄우면 5배로 들기 때문이다. 양식은 «폴더 트리 및 양식» 탭 §하네스 파일.</p>
   <div class="tblwrap"><table>
     <tr><th>프로필</th><th>격리·권한</th><th>핵심 규율</th></tr>
     <tr><td><b>worker</b></td><td>기본</td><td>브리프(Goal·제약·포인터·DoD)가 스코프 전부 — 모호하면 추측 말고 Ask 반송 · 사실은 볼트→실측→Ask · 주장엔 증거(파일·줄·출력) · 문서 충돌은 중재 말고 보고 · <b>Handoff 고정형</b>: Done/Mistake/Learned/Outputs/Risks/Next/Ask (+Docs draft — 문서를 무효화한 작업은 워커 본인이 초안·scribe는 복사만) · 볼트 직접 쓰기 금지</td></tr>
     <tr><td><b>coder</b></td><td>worktree 격리</td><td><b>First action</b>: 베이스 확인 — stale base는 사고가 아니라 기본값(로컬 커밋 없으면 <code>reset --hard main</code> 묻지 말고, 있으면 중단·보고) + 브랜치 자가 명명 <code>&lt;type&gt;/&lt;PREFIX&gt;-&lt;N&gt;-&lt;slug&gt;</code>(40자 상한) · TDD · 같은 접근 재시도 금지(3회=보고) · Done = 테스트 실행 출력 · <b>Last action</b>: 리모트 게이트 측정(rulesets+protection <b>둘 다</b>) — 게이트 없으면 브랜치에서 멈춤(push·PR 금지, PM 로컬 머지가 기본값) / 있으면 토픽 브랜치만 push + <b>draft PR</b>(ready·머지는 PM) · Outputs 3줄 고정: branch / base / pr(<span class="red">공란 불가</span> — "none (unprotected)"이 곧 지시)</td></tr>
     <tr><td><b>verifier</b></td><td>Write·Edit 금지</td><td>보고 전용 — 고치지 않는다 · file:line 인용 없는 발견은 unverified 강등 · 서브워커는 읽기 브리프만 (읽기 전용 경계는 상속되지 않으므로 규율로 강제)</td></tr>
+    <tr><td><b>researcher</b> <span class="badge b-todo">신설</span></td><td>Write·Edit·NotebookEdit 금지</td><td>외부 근거 조사 전용 — 레포 <b>밖</b>을 뒤진다(레포 안 검색은 <code>Explore</code>) · 코드를 바꾸지 않는다 · <b>First action = 스코프 게이트</b>: 조사 범위를 한 줄로 적어 PM 에게 확인받고 시작, <b>확인 전 본조사 금지</b> · 출처 우선순위 1차 원본(스펙·소스·공식 문서) → 벤더 문서 → 커뮤니티, <b>블로그 단독 인용 금지</b> · <b>반증 의무</b> — 주장마다 뒤집는 자료 최소 1건, 없으면 <code>반증 자료 없음</code> 명시 · 인용 = URL + 접근일 + 그 문서의 버전/날짜, 못 채우면 <code>근거 없음 — 추정</code> · 도구 <code>context7</code>·Exa/Tavily·WebFetch · <b>Outputs</b> = 출처표(주장 / 근거 URL / 반증 / 신뢰도)</td></tr>
   </table></div>
   <h3>scribe 거버넌스</h3>
   <ul>
@@ -1550,11 +1550,11 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
   <div class="tblwrap"><table>
     <tr><th>구성물</th><th>역할</th></tr>
     <tr><td><b>vault-paths.sh</b></td><td>유일한 트리 리졸버 — <code>.brain-paths</code> 3키 해석. 공통 루트 부재 = <span class="red">시끄럽게</span>(스캔 0건이 "볼트에 기억 없음"으로 위장하는 게 이 파일이 태어난 사고) · tools 부재 = 조용히(합법 상태) · 9xx 제외 프로젝트 열거·NNN 계산 헬퍼</td></tr>
-    <tr><td><b>validate.sh</b></td><td>층별 린터 · 스코프는 <code>&lt;vault-root&gt;</code> <b>하나뿐</b>(플러그인 레포는 못 본다): <b>raw</b>(<code>hippocampus/</code> — 필수 5키 · status 3값 · 폐기된 <code>cancel</code>·<code>uid</code>·<code>writer</code> 엔 마이그레이션 지시 메시지) · <b>wiki</b>(<code>p_memory</code>+<code>neocortex</code> — <code>summary</code> 필수 · <code>type</code> 어휘 3종 · 폐기 키 검출) · <b>schema</b>(<code>_index.md</code> — 줄 형식 + 위키링크 dangle · frontmatter 금지, <code>policy</code>·<code>adr</code> 의 <code>next_id</code> 만 예외) · <b>docs</b>(status 필수+어휘 <code>created\|draft\|approved\|deprecated</code> · POL/ADR id · 미러 키 · date-only updated = warn) · <b><code>.brain-paths</code></b>(<code>schema_version</code> 존재·값). 매 실행 스캔 수 출력 — 무너진 스캔이 깨끗한 볼트처럼 안 보이게</td></tr>
+    <tr><td><b>validate.sh</b></td><td>층별 린터 · 스코프는 <code>&lt;vault-root&gt;</code> <b>하나뿐</b>(플러그인 레포는 못 본다): <b>raw</b>(<code>hippocampus/</code> — 필수 5키 · status 3값 · 폐기된 <code>cancel</code>·<code>uid</code>·<code>writer</code> 엔 마이그레이션 지시 메시지) · <b>wiki</b>(<code>p_memory</code>+<code>neocortex</code> — <code>summary</code> 필수 · 폐기 키 검출) · <b>schema</b>(<code>_index.md</code> — 줄 형식 + 위키링크 dangle · frontmatter 금지, <code>policy</code>·<code>adr</code> 의 <code>next_id</code> 만 예외) · <b>docs</b>(status 필수+어휘 <code>created\|draft\|approved\|deprecated</code> · POL/ADR id · 미러 키 · date-only updated = warn) · <b><code>.brain-paths</code></b>(<code>schema_version</code> 존재·값). 매 실행 스캔 수 출력 — 무너진 스캔이 깨끗한 볼트처럼 안 보이게</td></tr>
     <tr><td><b>value-axis-drift.sh</b></td><td>가격·티어 literal 탐지 — §Value Axes 표를 매 실행 읽음(자체 축 목록 = 4번째 정본이라 금지) · 코드펜스·인라인코드·frontmatter 제외 · <b>보고 전용</b>: "[[BUSINESS]] §BM 링크로 교체"</td></tr>
     <tr><td><b>validate-selftest.sh</b></td><td>~150 어서트 — 모든 스코프 경계를 <b>양성 픽스처</b>로 못박음 (no-match 단독은 "스캔 안 함"과 구분 불가 = vacuous assert). 뮤테이션 테스트로 검증됨</td></tr>
     <tr><td><b>kernel-check.sh</b> <span class="badge b-todo">신설</span></td><td><b>4</b> 에이전트 정의의 <code>## KERNEL-BEGIN</code>…<code>## KERNEL-END</code> 블록 <b>바이트 일치</b> 검사. <code>validate.sh</code> 에 넣을 수 없다 — 그쪽 스코프는 볼트뿐이고 <code>agents/*.md</code> 는 플러그인 레포다. KERNEL 방식이 그냥 복붙으로 퇴화하는 것을 막는 유일한 방어</td></tr>
-    <tr><td><b>hooks</b></td><td><b>SessionStart</b>: <code>~/.claude/brain-docs</code> 심링크를 플러그인 docs로 재링크 — Router가 버전 범프·레포 이동을 견디는 메커니즘 · <b>force-delegate.sh</b>(opt-in): PM의 Edit/Write를 기계로 차단(서브에이전트는 통과) · <b>org-guard.sh</b> <span class="badge b-todo">신설</span>: 무인 사이클의 <code>org/</code> 쓰기를 <b>사전 차단</b> — <code>writer</code> 키 폐기로 파일 상태만으로는 작성 주체를 알 수 없어 린터로는 원리적으로 불가</td></tr>
+    <tr><td><b>hooks</b></td><td><b>SessionStart</b>: <code>~/.claude/brain-docs</code> 심링크를 플러그인 docs로 재링크 — Router가 버전 범프·레포 이동을 견디는 메커니즘(신선도는 «릴리스·적용» 참조) · <b>force-delegate.sh</b>(opt-in): PM의 Edit/Write를 기계로 차단(서브에이전트는 통과) · <b>org-guard.sh</b> <span class="badge b-todo">신설</span>: 무인 사이클의 <code>org/</code> 쓰기를 <b>사전 차단</b> — <code>writer</code> 키 폐기로 파일 상태만으로는 작성 주체를 알 수 없어 린터로는 원리적으로 불가</td></tr>
   </table></div>
   <p><b>공통 규율</b>: 볼트 경로는 find의 start path로만(글롭 splice 금지 — 메타문자가 스캔을 조용히 0으로 만듦) · CRLF 프렐류드 · awk interval 미사용(one-true-awk에서 조용히 절대 미매치) · 읽기 불가 파일은 스킵이 아니라 finding · 알려진 한계는 <code>ponytail:</code> 주석으로 명시(수용이지 못 본 게 아님).</p>
 
@@ -1573,19 +1573,18 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
     <tr><td>8</td><td>—</td><td><b>초록불 확인</b></td></tr>
   </table></div>
 
-  <h3>신규 검사 5종 — 그 이상은 넣지 않는다</h3>
+  <h3>신규 검사 4종 — 그 이상은 넣지 않는다</h3>
   <div class="tblwrap"><table>
     <tr><th>검사</th><th>왜 이것만</th></tr>
     <tr><td><b>a</b> <code>_index.md</code> 줄 형식 + 위키링크 dangle</td><td>🔴 <b>0.2.0 의 유일한 새 실패 모드.</b> recall 이 <code>_index.md</code> 만 주입하므로 인덱스가 없는 파일을 가리키면 <b>recall 전체가 거짓말을 하고 아무도 모른다.</b> 본문이 주입되던 시절엔 없던 위험. 생성 주체가 결정론적 바이너리가 아니라 scribe <b>브리프</b>(LLM)라 산출물 게이트가 린터뿐이다</td></tr>
     <tr><td><b>b</b> <code>summary:</code> 부재</td><td><code>title:</code> 검사(<code>:177-178</code>)의 자리를 그대로 물려받는다. 순비용 0</td></tr>
-    <tr><td><b>c</b> <code>type</code> 어휘 3종</td><td><b>a 와 같은 스캔·같은 정규식에 얹힌다</b> — <code>_index</code> 줄 꼬리의 <code>`&lt;type&gt;`</code> 를 보면서 노트 어휘를 같이 검사. 한계비용이 픽스처 1세트뿐. 폐쇄 어휘라 오탐 0</td></tr>
-    <tr><td><b>e</b> 폐기 키 검출</td><td>🔴 <b>마이그레이션 안전망.</b> 560건에서 <code>uid</code>·<code>title</code>·<code>tags</code>·<code>dri</code>·<code>species</code>·<code>source_sessions</code>·<code>recalled</code>·<code>useful</code> 를 걷어내는데, 놓친 파일을 잡는 것은 이 검사뿐. <code>:118</code> 의 retired 메시지가 이미 같은 코드 형태 — 새 패턴이 아니라 재사용</td></tr>
+    <tr><td><b>e</b> 폐기 키 검출</td><td>🔴 <b>마이그레이션 안전망.</b> 560건에서 <code>uid</code>·<code>title</code>·<code>type</code>·<code>tags</code>·<code>dri</code>·<code>species</code>·<code>source_sessions</code>·<code>source_items</code>·<code>recalled</code>·<code>useful</code> 를 걷어내는데, 놓친 파일을 잡는 것은 이 검사뿐. <code>:118</code> 의 retired 메시지가 이미 같은 코드 형태 — 새 패턴이 아니라 재사용</td></tr>
     <tr><td><b>h</b> <code>.brain-paths</code> <code>schema_version</code></td><td>init 이 쓰는 첫 값. 없으면 리졸버가 구 기본값으로 조용히 떨어져 스캔이 0이 된다 — <code>vault-paths.sh</code> 가 태어난 그 사고</td></tr>
   </table></div>
   <p><b>뺀 것</b>: <code>projects</code> ≥2(dreaming 이 자기가 넣은 값을 자기가 검사) · ADR <code>supersedes</code> 무결성(실측 9건, 손으로 보이는 규모) · <code>dream-logs.md</code> 전용(볼트 전체에 파일 1개) · raw↔wiki 상호참조(<b>e</b> 가 frontmatter 경로를 이미 잡는다).</p>
   <p>🔴 <b><code>org/</code> 쓰기 주체 검사는 원리적으로 불가</b> — <code>writer</code> 키가 폐기되어 <b>파일 상태만으로 작성 주체를 알 수 없다.</b> 사후 검출이 아니라 사전 차단이어야 하므로 <code>hooks/</code> 의 경로 차단 훅으로 간다.</p>
   <p>🔴 <b>KERNEL 바이트 일치 검사는 <code>validate.sh</code> 밖이다</b> — <code>validate.sh:30</code> <code>usage: validate.sh &lt;vault-root&gt;</code>, 이 스크립트는 <b>볼트만</b> 본다. <code>agents/*.md</code> 는 플러그인 레포다. 별도 <code>scripts/kernel-check.sh</code> 또는 CI 로 분리한다.</p>
-  <p><b><code>validate-selftest.sh</code>(603줄)</b>: 신규 5검사 × (positive + negative) = 10세트 추가, 폐기 축(<code>knowledge</code>·<code>candidates</code>·<code>source_sessions</code>·카운터) 픽스처 삭제분이 더 커서 <b>순감</b>. <b>양성 픽스처 필수</b> — no-match 단독은 "스캔 안 함"과 구분 불가한 vacuous assert 이고, 그게 이 파일이 태어난 이유다.</p>
+  <p><b><code>validate-selftest.sh</code>(603줄)</b>: 신규 4검사 × (positive + negative) = 8세트 추가, 폐기 축(<code>knowledge</code>·<code>candidates</code>·<code>source_sessions</code>·카운터) 픽스처 삭제분이 더 커서 <b>순감</b>. <b>양성 픽스처 필수</b> — no-match 단독은 "스캔 안 함"과 구분 불가한 vacuous assert 이고, 그게 이 파일이 태어난 이유다.</p>
 </section>
 
 <!-- ═══ git ═══ -->
@@ -1679,7 +1678,58 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
   </section>
 
 <!-- ═══ 0.2.0 ═══ -->
+<section class="panel" id="p-release">
+  <h2>릴리스·적용 범위 — 0.2.0 이 도달하는 경로</h2>
+  <p class="sub">나머지 탭이 <b>무엇을 만드나</b>라면 여기는 <b>그것이 어떻게 도달하나</b>다. 설계와 무관하게 따로 실패하는 구간이라 따로 적는다.</p>
 
+  <h3>릴리스·배포 <span class="badge b-ok">✅ 사용자 확정 2026-08-03</span></h3>
+  <p><b>릴리스 컷은 0.2.0 작업을 완주한 뒤 1회.</b> 중간 버전을 내지 않는다.</p>
+  <p><b>버전 정본은 <code>brain/.claude-plugin/plugin.json</code> 의 <code>version</code> 한 곳뿐이다.</b> 릴리스 때 함께 건드리는 파일은 <code>brain/CHANGELOG.md</code> 에 새 섹션을 추가하는 것 하나. <code>marketplace.json</code> 에는 version 필드가 없어 무관하다.</p>
+
+  <p><b>드리프트는 3층이다</b> — 2층이 아니다.</p>
+  <div class="tblwrap"><table>
+    <tr><th>층</th><th>위치</th><th>여기까지 오게 하는 것</th></tr>
+    <tr><td><b>레포</b></td><td>레포 HEAD</td><td>커밋</td></tr>
+    <tr><td><b>원격</b></td><td>GitHub <code>origin/main</code></td><td>push</td></tr>
+    <tr><td><b>설치본</b></td><td><code>~/.claude/plugins/cache/</code></td><td>캐시 재설치</td></tr>
+  </table></div>
+
+  <p>🔴 <b>버전 문자열로는 드리프트를 감지할 수 없다.</b> 실측 2026-08-03 — 레포와 설치본이 <span class="red">10커밋</span> 차이인데 양쪽 <code>plugin.json</code> 의 version 이 <b>둘 다 <code>0.1.7</code></b> 이었다. 마켓플레이스 클론은 자동 갱신됐으나 캐시는 되지 않았다. <b>version 문자열이 안 바뀌면 캐시가 갱신되지 않는다.</b></p>
+
+  <p><b>순서가 강제된다</b> — push → 마켓플레이스 클론 갱신 → 캐시 재설치. <b><code>origin</code> 에 push 되지 않은 커밋은 어떤 재설치로도 설치본에 도달하지 않는다.</b></p>
+
+  <p>🔴 <b>작업 중에는 구버전 canon 을 읽게 된다.</b> <code>~/.claude/brain-docs</code> 심링크가 <b>설치 캐시의 <code>docs/</code></b> 를 가리키므로, 재설치 전까지 Router 가 읽는 정본 9종은 <b>마지막 릴리스 시점의 내용</b>이다. 릴리스 컷을 뒤로 미루는 선택은 이 비용을 감수하는 선택이다.</p>
+
+  <p><b>릴리스 후 검증</b> — 설치본과 레포 <code>brain/</code> 를 <code>diff -rq</code> 로 대조해 <b>차이 0</b> 을 확인한다.</p>
+
+  <h3>볼트 적용 범위 <span class="badge b-ok">✅ 사용자 확정 2026-08-03</span></h3>
+  <p><b>적용 순서 = <code>techtainment</code> 완주 → <code>beafter</code> 후속.</b> 동시에 적용하지 않는다. 마이그레이션은 되돌리기 비용이 최대인 구간이라, 한 볼트에서 스크립트를 검증한 뒤 두 번째에 태운다.</p>
+
+  <p>🔴 <b>볼트마다 축이 다르다.</b> 실측:</p>
+  <div class="tblwrap"><table>
+    <tr><th>볼트</th><th><code>common_root</code></th><th><code>projects_root</code></th></tr>
+    <tr><td><b>techtainment</b></td><td><code>org</code></td><td><code>projects</code></td></tr>
+    <tr><td><b>beafter</b></td><td><code>000_common</code></td><td><code>.</code> — 프로젝트가 <b>볼트 루트 직속</b></td></tr>
+  </table></div>
+  <p><code>beafter</code> 는 <code>tools_root: 999_tools</code> 가 선언돼 있으나 <span class="red">디렉터리가 부재</span>하다.</p>
+  <p><b>마이그레이션 스크립트는 반드시 <code>.brain-paths</code> 구동이어야 한다.</b> 경로를 리터럴로 박으면 <code>beafter</code> 에서 <b>전량 미스한다.</b> 지금 «스킬» 탭 <code>init</code> §4 가 <code>org</code>·<code>projects</code> 를 리터럴로 쓰는 것이 그 위험의 실례다.</p>
+
+  <p><b><code>beafter</code> 노출 실측</b> (2026-08-03):</p>
+  <div class="tblwrap"><table>
+    <tr><th>항목</th><th>실측 · 귀결</th></tr>
+    <tr><td>지식노트</td><td><b>127건</b> — <code>title:</code> 127/127 · <code>summary:</code> <span class="red">0/127</span></td></tr>
+    <tr><td>폐기 키 실보유</td><td><code>status</code> 126 · <code>created</code> 126 · <code>source_sessions</code> 122 · <code>uid</code> 121 · <code>projects</code> 121 · <code>tags</code> 64 · <code>dri</code> 56 · <code>source_items</code> 49 · <code>recalled</code> 14 · <code>useful</code> 10</td></tr>
+    <tr><td>세션</td><td><b>22건</b> — <code>done</code> 13 · <code>active</code> 8 · 폐기 어휘 <code>cancel</code> 1</td></tr>
+    <tr><td><code>.brain-paths</code></td><td><code>schema_version</code> 없음 → <b>1줄 추가</b></td></tr>
+    <tr><td><code>candidates/</code></td><td><b>0건</b> — 소멸 단계가 no-op</td></tr>
+    <tr><td><code>.gitignore</code></td><td><code>sessions/</code> 이미 등재 → <b>치환 1줄</b></td></tr>
+    <tr><td>폴더 TOC</td><td><code>_index.md</code> <b>0건</b> / <code>index.md</code> <b>65건</b>. <code>techtainment</code> 는 이미 뒤집혀 있어(<code>_index.md</code> 112 / <code>index.md</code> 0) <b><code>beafter</code> 만 "개명 + 재생성" 2연산이다</b></td></tr>
+  </table></div>
+
+  <p>🔴 <b><code>beafter</code> 선행조건</b> — <code>008_xrella-model/</code> 디렉터리가 통째로 <span class="red">untracked</span> 다(<code>.md</code> 6건). <code>git mv</code> 기반 마이그레이션에서 untracked 파일은 대상이 되지 않아 <b>조용히 누락된다.</b> 착수 전에 커밋하거나 제외를 확정한다.</p>
+
+  <p><b>분리 원칙</b> — <code>beafter</code> 린터 지적 <b>267건</b>은 <b>docs frontmatter v2 부채</b>(254/267 = <b>95%</b>)이고 지식노트·트리 마이그레이션과 <b>직교</b>한다. 이 마이그레이션으로 없어지지 않으므로 <b>별도 티켓</b>으로 둔다. 대조군 — 같은 린터를 <code>techtainment</code> 에 돌리면 <code>OK — no issues</code>.</p>
+</section>
 
 <footer>
   정본 — docs <b>9</b>: vault-tree · sessions-note · knowledge · knowledge-escalate · memory-control · project-docs · doc-catalog · doc-templates · <b>git-convention</b>(2026-08-03 versioning-convention 흡수) (+ skills 8 · scripts <b>5</b> · hooks <b>3</b> · agents <b>4</b>) · 이 문서는 0.2.0 완성까지의 목표 스펙 — 배지가 랜딩 여부를 표시
