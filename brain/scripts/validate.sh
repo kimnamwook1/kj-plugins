@@ -126,39 +126,36 @@ while IFS= read -r f; do
   ' "$f"
 done < "$LIST" >> "$OUT"
 
-# -------------------------------------------------------------- knowledge notes
+# ------------------------------------------------------------------- wiki notes
 # Collect the scan roots as directories, then hand them to find as start paths.
 # Indexed arrays are bash 3.2-safe (only *associative* arrays are 4.0+).
 KDIRS=()
 while IFS= read -r d; do
-  [ -d "$d/knowledge" ] && KDIRS[${#KDIRS[@]}]="$d/knowledge"
+  [ -d "$d/p_memory" ] && KDIRS[${#KDIRS[@]}]="$d/p_memory"
 done < <(brain_projects)
+# Vault-wide knowledge. Root-fixed like the session layer, so no manifest key resolves it
+# (vault-paths.sh manifests only the axes that move between vaults) — a restructured vault
+# moves its common and projects roots and still keeps `neocortex/` here. It is the wiki layer's
+# second half: `p_memory` is what one project knows, `neocortex` is what the vault knows.
+[ -d "$VAULT/neocortex" ] && KDIRS[${#KDIRS[@]}]="$VAULT/neocortex"
 # The tools root (`999_tools/` by default) = machine-global tool inventory (vault-tree.md
-# §The tools root). recall scans it as a [C] source at the facts tier (recall.md source 2), and *this*
-# scan is the recall mirror — so it is a scan root here too. It does not arrive via brain_projects:
-# that helper excludes the reserved 9xx band outright, and a 9xx folder has no knowledge/ subfolder
+# §The tools root). recall scans it, and *this* scan is the recall mirror — so it is a scan root
+# here too. It does not arrive via brain_projects: that helper excludes the reserved 9xx band
+# outright, and a 9xx folder has no p_memory/ subfolder
 # anyway (measured). The root resolves through vault-paths (`tools_root` key / BRAIN_TOOLS_REL);
 # empty = the folder is absent, a legal state (machine-global, git-untracked), skipped silently —
 # unlike the common root, whose absence is loud.
 [ -n "$BRAIN_TOOLS" ] && KDIRS[${#KDIRS[@]}]="$BRAIN_TOOLS"
-# The candidates pool (`<vault>/candidates/`) — promotion candidates awaiting the gate
-# (vault-tree.md §Tree axes). Root-fixed, so no manifest key resolves it (same class as
-# sessions/ — vault-paths.sh manifests only the axes that move between vaults). recall excludes
-# the pool BY DESIGN (unvalidated candidates must not prime sessions — recall.md), so this root
-# is a deliberate divergence from the recall mirror: a parked note is one file move from the
-# common layer, and a broken one would otherwise surface only at promotion time. Same lint,
-# same meta exclusions, same -maxdepth 1 (the pool is flat — promotion is a move, not a tree).
-# Absence is legal (a vault that never parked a candidate) and silent. The shared-surface scan
-# below does not take this root — scope extends on decision, not by drift.
-[ -d "$VAULT/candidates" ] && KDIRS[${#KDIRS[@]}]="$VAULT/candidates"
 
 : > "$LIST"
 # An empty array expanded under `set -u` is an unbound-variable error in bash 3.2 — guard it.
 if [ ${#KDIRS[@]} -gt 0 ]; then
-  # Project knowledge/ stays -maxdepth 1: its subfolders are deliberately out of scope.
-  # Meta-file exclusion (`index.md` + `0.*`) mirrors skills/_session-shared/recall.md:11-14.
+  # Project p_memory/ stays -maxdepth 1: its subfolders are deliberately out of scope.
+  # `dream-logs.md` is dreaming's run log, not a note — it lives in neocortex/ by canon and its
+  # frontmatter is one key (`updated`), so scanning it would report a phantom missing summary on
+  # every real vault. Excluded by name here, the same way the folder TOCs and reject logs are.
   find "${KDIRS[@]}" -maxdepth 1 -type f -name '*.md' \
-    ! -name 'index.md' ! -name '_index.md' ! -name '0.*' 2>/dev/null >> "$LIST"
+    ! -name 'index.md' ! -name '_index.md' ! -name '0.*' ! -name 'dream-logs.md' 2>/dev/null >> "$LIST"
 fi
 # The common layer recurses instead. Its sub-axes are not the same shape in every vault — flat
 # `{facts,patterns,policies}/` in one, `patterns/` plus `_company/<folder>/` in another — so
