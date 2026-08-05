@@ -2,42 +2,38 @@
 
 > Tree & naming → [[vault-tree]]
 
-## Frontmatter
-- `uid` — unique id (`PROJECT_PREFIX-YYYYMMDD-HHMMSS`).
-- `project` — project slug. **Never parsed from the uid prefix** — recall and the `sl`/`sr` active-session scan grep `^project:` directly (`skills/_session-shared/active-sessions.md`).
-- `git_branch` — working branch (empty for non-code sessions). `ss` fills it from `git rev-parse --abbrev-ref HEAD`.
-- `git_worktree` — working worktree. **`ss` always writes this empty** — a PM session runs in the current tree, and worktree isolation belongs to the `coder` agent (`agents/coder.md` `isolation: worktree`), not to session start. The field stays in the schema so a coder's worktree path can be recorded later if something needs it (KJP-42).
-- `created`
-- `updated` — **new writes and edits use `YYYY-MM-DDTHH:MM:SS`** (local time — the same clock the uid is minted from). This format rule is the canon for `updated` across note kinds (docs · knowledge point here). **Existing `YYYY-MM-DD` values are legacy-legal — never force-rewrite them.** Backward-compat is measured, not assumed: recall's `ymd()` strips non-digits and reads the first 8 (`skills/_session-shared/recall.md`), so a datetime parses identically to a date.
+## Frontmatter — 5 keys, all required
+
+The **filename is the session's identifier** (`PROJECT_PREFIX-YYYYMMDD-HHMMSS.md`); there is no id key in the frontmatter. Uniqueness is guaranteed by the second-resolution timestamp.
+
 - `status` — `active` | `parked` | `done` — **hard rule: these 3 values are all there is. No extensions**
   - `active` — in progress. Written by `ss` at creation and restored by `sr` on resume.
   - `parked` — suspended, resumable. Written by `sh`. **A first-class status, not a flavour of `active`** — it is the machine-readable answer to "is this session running or waiting", and the only one (KJP-48).
-  - `done` — closed. Written by `sc`, and by dreaming for its reports.
-  - **An abandoned session is `done` + an `abandoned` tag, not a fourth value.** `cancel` was a status until KJP-48 and is retired: "did we finish it" and "was it worth finishing" are different questions, and only the first belongs in a lifecycle field. `validate.sh` reports a surviving `cancel` with that migration instruction in the message.
-- `session_type` — (optional) marks special sessions such as `dreaming`. Absent = a normal work session.
-- `result` — **dreaming reports only; a separate axis orthogonal to `status`**: `success` | `partial` | `failed`. For dreaming, "is it finished" (`status: done`) and "did it go well" (`result:`) are different questions, so the axes are split. That is, a dreaming report = `status: done` + `result: success|partial|failed` + `session_type: dreaming`. **Never used on normal sessions.**
-- `writer` — the actual (human) user (exception: dreaming reports use `writer: scribe`)
-- `cc_session_ids` — [CC session ids that touched this file; prepend on every resume]
-- `related_ticket` — when linked to an external ticket
-- `tags` — []
+  - `done` — closed. Written by `sc`.
+  - **An abandoned session is `done` + an `abandoned` marker, not a fourth value.** `cancel` was a status until KJP-48 and is retired: "did we finish it" and "was it worth finishing" are different questions, and only the first belongs in a lifecycle field. `validate.sh` reports a surviving `cancel` with that migration instruction in the message.
+- `project` — project slug. **Never parsed from the filename prefix** — the `sl`/`sr` open-session scan greps `^project:` directly (`skills/_session-shared/active-sessions.md`).
+- `updated` — **new writes and edits use `YYYY-MM-DDTHH:MM:SS`** (local time — the same clock the filename is minted from). This format rule is the canon for `updated` across note kinds; memory notes point here. **Existing `YYYY-MM-DD` values are legacy-legal — never force-rewrite them.**
+- `related_ticket` — `<system>:<id>`, the external ticket this session serves. The canonical work queue is the ticket system, never the session note.
+- `cc_session_ids` — CC session ids that touched this file; prepend on every resume.
+
+🔴 **Retired keys — never write them back.** `uid` · `created` · `writer` · `tags` · `session_type` · `result`. `dreaming` no longer writes a session file at all, which is what `session_type` and `result` existed to mark.
 
 > ⚠️ **The `status:` vocabulary differs per object kind — never mix them.** The same key name uses different value sets in three places. Grep one side with the other's vocabulary and you silently get 0 hits.
 >
 > | Object | Value set | Canon |
 > |---|---|---|
-> | **Session note** (`sessions/<uid>.md`) | `active` \| `parked` \| `done` | this document |
+> | **Session note** (`hippocampus/<filename>.md`) | `active` \| `parked` \| `done` | this document |
 > | **Docs document** (PRD·FRD·TDC·POL·ADR…) | `created` \| `draft` \| `approved` \| `deprecated` | [[project-docs-convention]] §frontmatter Standard |
-> | **Knowledge note** | `fresh` \| `stale?` | [[knowledge-convention]] |
+> | **Memory note** (`p_memory` · `neocortex`) | *(no status key)* — freshness is derived from `updated:` | [[knowledge-convention]] |
 
 ## Sections
 - `## Goal` — this session's goal (minimum achievable unit)
-- `## Context` — why this goal. **★ recall is injected here by `ss`**: at session start, pull in related Knowledge and past Mistakes. `sr` (resume) re-presents recall **on screen only** and never rewrites this block — canon: [[memory-control-convention]] §Recall
+- `## Recall` — **★ recall is injected here by `ss`**: at session start, the folder indexes relevant to this project. `sr` (resume) re-presents recall **on screen only** and never rewrites this block — canon: [[memory-control-convention]] §Recall
 - `## To-Do-List` — **lightweight resume actions** (open items the next session reads — chores that never became cards, resume memos, unresolved verification items). What the canonical work queue is: **canon = the PM role document** (the `CLAUDE.md` PM-role section generated by `/brain:init`) — linked via session frontmatter `related_ticket`. **Never duplicate the task status graph in session notes**
 - `## Progress` — by date, newest on top
   - `### YYYY-MM-DD` — date heading. An optional **status suffix** may follow (`(parked)` / `(completed)`); see [§Progress entry status suffix](#progress-entry-status-suffix-record-notation) below. The suffix records **what happened at that entry** and is never the machine-readable session state — that is frontmatter `status:`.
     - `#### Done` — completed
-    - `#### Mistake` — mistakes  ← highest reuse value (prevents repeating the same mistake). Also used as a salience signal.
-      - **(optional) skill-step tag** — a Mistake made **while executing a brain skill's step** may end with one inline tag `[skill:<skill>§<step>]` (e.g. `- ran recall before GOAL was set [skill:ss§3a]`). `<step>` = the step label exactly as that skill document writes it; **at most one tag per Mistake line, at the end of the line**. Absent = the mistake is not tied to a skill step — **never guess a tag**. Dreaming counts these tags by exact string for per-skill-step aggregation (`skills/dreaming/SKILL.md` §3). The tag is additive metadata — the free-text description stays the record. It is **not** a Progress status suffix (that closed set below is untouched).
+    - `#### Mistake` — mistakes  ← highest reuse value (prevents repeating the same mistake). `sc` reads this section when it promotes.
     - `#### Fixed` — how the mistake was fixed
     - `#### Learned` — things learned (write atomically → input to promotion)
     - `#### Outputs` — outputs (paths/content), documents created under docs, code file names, etc.

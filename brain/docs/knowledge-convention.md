@@ -1,67 +1,63 @@
-# Knowledge Layer (neocortex = semantic long-term memory)
+# Memory Notes — `p_memory` (project) + `neocortex` (vault-wide)
 
-> Tree & naming → [[vault-tree]] · sessions → [[sessions-note-convention]]
+> Tree & naming → [[vault-tree]] · promotion → [[knowledge-escalate-convention]] · sessions → [[sessions-note-convention]]
 
-## Note Form — atomic + trigger-first (optimal for LLM recall)
+Two tiers, one note form. `<projects_root>/NNN_<slug>/p_memory/<pp>_<slug>.md` holds project knowledge; `neocortex/NEO-<slug>.md` holds knowledge that has proven itself in more than one project. Both are recall targets — the raw session layer is not.
+
+## Note form — 4 keys, 3 sections
+
 Recall is symptom-driven, so **the trigger goes first**.
+
 ```
 ---
-type: lesson | gotcha | decision | reference
-title: <title containing the trigger>
-uid: <anchor; same generator as session uids>
-created / updated           # updated (new writes) = YYYY-MM-DDTHH:MM:SS local; date-only = legacy-legal — format canon: [[sessions-note-convention]]
-projects: [x, y]            # tags, not folders (cross-membership allowed)
-source_sessions: [uid...]   # vertical backlink: source sessions (required). Plain uid strings — a session may sit outside the shared surface (a team vault gitignores sessions/; per-vault choice), so never `[[wikilink]]` a session from a knowledge note (body included); it dangles for any teammate who lacks it
-source_items: ["<verbatim line>", ...]   # item-level provenance (optional) — the raw Mistake/Learned line(s) this note restates, verbatim. See §Item-level provenance
-related: [[note-a]], [[note-b]]   # horizontal links: topical neighbor Knowledge (planted by the scribe worker at promotion)
-status: fresh | stale?      # flagged by Dreaming
-recalled: N                 # feedback counter (optional, default 0) — sessions this note was injected into. See §Feedback counters
-useful: N                   # feedback counter (optional, default 0) — sessions where it actually helped. See §Feedback counters
+summary:                     # one line · two components: "when to use it" + "what it claims" · recall's entire search surface
+updated: YYYY-MM-DD
+related: []                  # sc always writes []. Only dreaming links · no pair already reachable in two hops
+aliases: []                  # append the old basename on rename or on promotion ②
 ---
-## Trigger   when this becomes relevant (symptom/situation)
-## Insight   the core reusable knowledge
-## Why       rationale + sources
+## Trigger   when this note should come to mind — the opening agent's relevance gate
+## Insight   the reusable **claim**. It need not be a solution — a corrected fact belongs here too
+## Why       commands · paths · numbers · versions · error messages. The section dreaming's fact-invariance check reads
 ```
+
+- **Filename is the identity key. No numbers.** The `<pp>` prefix exists for wikilink uniqueness across the vault. Changing tiers is swapping the prefix and moving the file.
+- **A note points at no session.** raw and wiki do not reference each other ([[vault-tree]] §Layers).
 - **1 note = 1 reusable claim** (atomic). No essays.
-- **update-over-create**: if similar, don't create anew — add nuance to the existing note (living note). **Tooling follows from this**: edit an existing note with `Edit` (its `old_string` is a compare-and-swap — safe against a concurrent session), and reserve `Write` for a note that does not exist yet (`Write` on an existing note silently discards whatever a concurrent edit put there).
-- **Horizontal links are the precondition for recall** — `source_sessions` (vertical) alone gives weak topic-to-topic connectivity. At promotion, weave adjacent Knowledge into `related` (when not merging). Explicit links only — with weak links, every recall tool fails at multi-hop recall. **Orphans (0 inbound) and missing cross-refs are audited & reinforced by Dreaming**.
+- **update-over-create**: if a similar note exists, add nuance to it rather than creating a second one. **Tooling follows from this** — edit an existing note with `Edit` (its `old_string` is a compare-and-swap, safe against a concurrent session), and reserve `Write` for a note that does not exist yet (`Write` on an existing note silently discards whatever a concurrent edit put there).
+- **Retired keys — do not reintroduce.** `uid` · `type` · `tags` · `dri` · `species` · `source_sessions` · `source_items` · `recalled` · `useful` · `created` · `writer`. `title` was **renamed** to `summary`, not retired. Freshness is derived from `updated:`, never stored as a status field.
 
-## Feedback counters — `recalled:` / `useful:` (canonical here — KJP-7)
+## `summary` — the whole search surface
 
-Promotion used to be one-way: nothing fed back whether recalled knowledge actually helped. Two optional integer frontmatter fields close that loop.
+recall injects `_index.md` only, never note bodies (`skills/_session-shared/recall.md`). Each `_index.md` line is `- [[<filename stem>]] — <summary>`, so **the one `summary` line is everything an agent sees before deciding to open the note**. Write both components: when it applies, and what it asserts. A summary that states only the topic makes the note unfindable.
 
-- **Semantics**: `recalled:` = number of sessions this note was **injected** into (appeared in the session's `## Context` recall block). `useful:` = number of sessions where it was **actually used** (PM judgment at park/close). `useful ≤ recalled` by construction.
-- **Absence = 0 (fallback).** Both fields are optional; pre-KJP-7 notes carry neither. Every reader — the recall ranker's W_CONFIDENCE term (`skills/_session-shared/recall.md` §ranker), Dreaming — treats a missing field as 0. **Never backfill `recalled: 0` across existing notes** — the field appears on a note at its first bump.
-- **Who updates**: `sh`/`sc` only, inside their existing scribe delegation. The PM reads the session's `## Context` recall block (the canonical injected-notes record — `recall.md` §Injection), judges which notes were actually used, and briefs scribe to bump `recalled:` on every injected note and `useful:` on the used subset.
-- **Edit-based (+1 on the literal current value)**: `recalled: 2` → `recalled: 3` via `Edit` — the `old_string` is a compare-and-swap, so a concurrent bump fails loudly instead of losing a count. Absent field → insert the line with value 1 (anchor on an existing frontmatter line, e.g. `status:`).
-- **Once per session — marker-guarded.** scribe appends one marker line at the end of the session's recall block: `<!-- counters: recalled@YYYY-MM-DD · useful: <note-basename>, … -->`. Marker present ⇒ `recalled:` is already counted for this session (never re-bumped — parks repeat, injection happened once). A later `sh`/`sc` may still **top-up `useful:`** for notes newly judged used and not yet in the marker's list — scribe extends the marker line with the same Edit discipline.
-- **Scope**: note paths in the recall block (`[K]`·`[C]`·`[X]` lines) — **except the common layer's normative axis** (`*policies*` directory segments — identification canon: [[vault-tree]] §The common layer), the signature tier no agent writes, counters included (`knowledge-escalate-convention`; a policies note is simply not counted). `[M]` lines point at **session files, not notes** — never counted, never marked.
-- 🔴 **No automatic deletion from counters — ever.** A low `useful`/`recalled` ratio has exactly two consequences: **ranking demotion** (the ranker's W_CONFIDENCE term is `useful`-based, so unhelpful notes sink on their own) and a **Dreaming rewrite·merge-candidate flag** (proposal only — dreaming §1). It never deletes, deprecates, or auto-archives a note — a note can sit at `useful: 0` for years and still be the one that prevents a production incident.
+`_index.md` is a regenerated artifact — never hand-edit it. The canon lives in the note's own frontmatter, and the party that creates or moves a file updates the folder's `_index.md` **in the same commit**.
 
-## Item-level provenance — `source_items:` (KJP-9)
-
-- **What**: the verbatim raw line(s) — session `#### Mistake` / `#### Learned` text — that this note restates. `source_sessions` answers *which session*; `source_items` answers *which exact line*, making the note comparable against session text (Dreaming's Mistake-recurrence scan matches candidate lines against it — canon: `skills/dreaming/SKILL.md` §3).
-- **Who writes**: scribe at promotion — the promotion brief already carries every Learned item verbatim, so this is a copy, not a rewrite (`skills/_session-shared/knowledge-promotion.md` Step 2). On update-over-create, append the new source line; never rewrite existing entries.
-- **Fallback — pre-existing notes have no `source_items`** (none in the vault carried it at introduction). A note without the field can only be matched at **uid granularity** via `source_sessions`; item-level comparison and item-level suppression are **not possible** for it — any scan consuming this field must know that and say so, not guess (dreaming §3 states the consequence).
-
-## `common/` = 3 Axes (origin, lifespan, and trust model each differ)
-
-Layer flow — locations are canon in [[vault-tree]] (§The common layer owns the `*policies*` identification · §The candidates layer, the pool):
+## `neocortex` — the same keys plus `projects`
 
 ```
-<project>/knowledge/  ─▶  candidates/ (cross-project candidate pool — pre-gate)  ─▶  common layer (facts = topic folder · norms = *policies* folder)
+---
+summary:                     # same rule as p_memory
+updated: YYYY-MM-DD
+projects: []                 # 2+ distinct project slugs that triggered promotion ②
+                             #   ⚠ write-once — recorded once at promotion. Never appended to, deleted from, or updated on rename.
+                             #      Not "current scope" but a frozen record of the evidence used at that moment
+related: []
+aliases: []                  # append the pre-promotion basename (<pp>_<slug>)
+---
 ```
 
-- The three axes below are **conceptual**; on disk only the norms axis is identified structurally (a `*policies*` directory segment — canon: [[vault-tree]]). Every other common-layer folder is a free topic folder on the facts tier, and the `facts/`·`patterns/`·`policies/` columns are the default example, not required folder names.
-- **`candidates/` notes use this same note form** — no separate schema; the path is the state. Gate & routing: [[knowledge-escalate-convention]].
+Promotion ② is a three-line operation and nothing else — canon: [[knowledge-escalate-convention]].
 
-| | A. `facts/` (facts) | B. `patterns/` (distilled lessons) | C. `policies/` (norms) |
-|---|---|---|---|
-| Content | infra · credential locations · CLI inventory · accounts · conventions | lessons & patterns shared across projects | org-wide binding norms every project must follow — origin-agnostic |
-| Question asked | "what is true" | "what works well" | "what must be done" |
-| Origin | environment/world — written directly or auto-derived | upward distillation of project Knowledge (promotion) | set directly by decision — external mandate (law/reg/cert) **or** self-imposed org invariant |
-| Verification | "still true?" (checkable against reality) | "still best?" (judgment) | "still in force?" (whether the mandate or org decision still holds) |
-| Binding force | none (descriptive) | none (advisory) | yes (no project exceptions) |
-| staleness | fast → rescan | slow | slow (only when the mandate/decision changes) |
+## `related` — links are the precondition for recall
 
-- **Why split off the 3rd axis**: facts are *facts*, patterns are *techniques*, policies are *norms*. "What is true" and "what must be done" differ in both verification method and binding force — mix norms into facts and "checking against reality" becomes impossible (a norm is an ought, not a reality); mix them into patterns and advice becomes indistinguishable from obligation.
+- **Undirected.** Only `dreaming` writes them; `sc` always leaves `related: []`.
+- 🔴 **No shortcut between notes already connected.** If A–B and B–C exist, do not add A–C — two hops already reach it, and without this rule the link count grows quadratically with the note count.
+- Orphans (zero inbound links) are surfaced by dreaming as proposals, never auto-restructured.
+
+## Where a note lives
+
+```
+hippocampus/ (raw · not recalled)  ──sc──▶  <project>/p_memory/  ──dreaming──▶  neocortex/
+```
+
+`<common_root>/` is a separate axis, not a rung on this ladder: it is a **fact record** maintained by measurement, and the unattended cycle (`sc` · `dreaming`) never writes there ([[vault-tree]] §Write permission). Its `*policies*` directories carry the normative tier — on a contradiction, policies win ([[project-docs-convention]] §Document Conflict Precedence).

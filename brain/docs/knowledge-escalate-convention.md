@@ -1,45 +1,42 @@
-# Promotion Topology (episodic → semantic, 3 stages)
+# Promotion Topology — two stages, judged by content
 
-> Tree → [[vault-tree]] · knowledge → [[knowledge-convention]] · sessions → [[sessions-note-convention]]
+> Tree → [[vault-tree]] · note form → [[knowledge-convention]] · sessions → [[sessions-note-convention]]
 
-## <project>/knowledge/ Promotion
-```
-session Learned  ──(scribe, realtime)──▶  <project>/knowledge/
-```
-- **Stage 1 (realtime, `scribe`)**: at session close, each Learned → (a) **two-gate judgment** (canon: `skills/_session-shared/knowledge-promotion.md`) — **score gate (sum ≥ 3), then a similar-note verdict** (`promote / already_known / not_durable / unsupported`, closed enum); **only `promote` writes — every reject → one coded line at `<project>/knowledge/0.rejected.md`** (not discarded — audit trail + recurrence signal for Dreaming. No `title:`, so it never hits recall) (b) query for similars via graphify → update/create (c) atomic note, trigger-first (d) uid backlink. **Never force perfect dedup** — write roughly and let Dreaming clean up.
+Knowledge rises exactly twice.
 
-## common/patterns/ Promotion
 ```
-<project>/knowledge/  ──(Dreaming, gate pass)───────────────────────▶  common layer (topic folder)
-<project>/knowledge/  ──(Dreaming, gate miss + cross-project value)──▶  candidates/
-candidates/           ──(later gate pass — one file move)───────────▶  common layer
+hippocampus/  ──① sc──▶  <project>/p_memory/  ──② dreaming──▶  neocortex/
 ```
-- **Stage 2 (batch, Dreaming)**: a `scribe` worker that sees only one session cannot spot cross-recurrence. Dreaming, which sees the whole, elevates project knowledge recurring across ≥3 projects up to the common layer (`patterns/` is the default example; actual root & topic-folder freedom — [[vault-tree]] §The common layer).
-- **`candidates/` waypoint (design confirmed 2026-07-30)** — the gate and scoring are unchanged; only the destinations are routed. **Gate pass → the common layer directly** (no forced stop in the pool). **Gate miss but visible cross-project value → `candidates/`** (vault root — layer canon: [[vault-tree]] §The candidates layer), where the note waits instead of staying invisible in one project's folder. A later Dreaming run re-judges the pool with the same gate; **promotion out of the pool is one file move** — a topic folder for facts/patterns, a `*policies*` folder for norms (which keeps the signature gate below). A candidate primes nothing until promoted — the recall exclusion is canonical in [[vault-tree]].
 
-## common/facts/ Promotion
-```
-environment facts  ──(direct / auto-derived)──▶  common/facts/
-```
-- **Facts**: not promotion — maintained directly / auto-derived.
+There is no score, no weight, and no threshold anywhere on this path. **Sameness is decided by content**: matching filenames or titles only narrow the candidate set, and the merge itself turns on whether the two notes assert the same thing. If a number, path, version, or condition disagrees, they are different knowledge — link them, do not merge them.
 
-## common/policies/ Promotion
-```
-org-wide binding norm (external mandate OR self-imposed invariant)  ──(draft=agent / signature=user)──▶  common/policies/
-```
-- **Policies**: **not** promotion **on the patterns/knowledge axis** — accumulated advice (patterns) does not become obligation (policies). They are set directly by decision, origin-agnostic (an external mandate like a law/regulation, or a self-imposed org-wide invariant); the transcription path from such a norm is the next item.
-- **Human sign-off gate (canon: this section)** — **no agent writes the common layer's normative axis (`*policies*` folders — identification: [[vault-tree]] §The common layer) on its own. Agents draft; the user signs.** A candidate that reads as obligation is still recorded on its normal tier (project `knowledge/` — nothing is lost) and **additionally returned as a `common-policy candidates` list**; the calling skill presents the list **in one batch** at the promotion point (`skills/sh`·`sc` · dreaming §7), and only approved items get a follow-up `scribe` brief writing to `common/policies/`. **Never interrupt per item.** The gate is destination-bound, not origin-bound: a note leaving `candidates/` for a `*policies*` folder passes this same draft=agent / signature=user gate — the file move happens only after the signature.
-- **Why only policies**: they sit at the top of Document Conflict Precedence (`docs/project-docs-convention.md`), so one wrong entry silently overrides every other document. Project `knowledge/` · `facts/` · `patterns/` keep the **automatic** two-gate judgment unchanged (`skills/_session-shared/knowledge-promotion.md`).
+## ① session → `p_memory` — `sc` writes it
 
-## docs/adr/
-```
-decision occurs  ──(architecture, immediate)──▶  <project>/docs/adr/
-```
-- **ADR**: **no** promotion — a single tier in `docs/adr/` from birth. They never rise out of feature folders (they are never written there in the first place).
-- **Cross-project decisions are not raised into ADRs either** — a decision that binds every project in this vault goes to `common/policies/` (origin-agnostic — external mandate or self-imposed invariant); one that may legitimately differ per project stays split (each project its own ADR, or a per-project norm in `<project>/docs/policy/`). **The test is whether an exception can arise inside this vault, not whether the org differs** — a convention that needs a per-project exception is not a policy at all: admit one exception and its binding force is gone. So bundling a genuinely divergent decision into `common/policies/` makes exceptions impossible. In a single-org vault git branch strategy does *not* diverge — it stays in `common/policies/`; it would split per project only if several distinct orgs shared one vault.
+At session close, `sc` reads the conversation and extracts two things: **what the user corrected**, and **what the AI admitted was its own mistake and then recovered from**. Those become project knowledge, rewritten in the note form ([[knowledge-convention]]).
 
-## <project>/docs/policy/ Promotion
+- Compare against existing slugs first. Same subject ⇒ **merge into the existing note**, do not create a second one.
+- The note lands at `<project>/p_memory/<pp>_<slug>.md`, and `p_memory/_index.md` is updated in the same commit.
+- **Nothing is written back to the session.** raw stays raw — the session carries no promotion marker, no backlink, no counter.
+- `related:` is left `[]`. Linking is stage ②'s job.
+
+## ② `p_memory` → `neocortex` — `dreaming` moves it
+
+When the same knowledge stands in **two different projects**, it has earned the claim that it does not depend on either. `dreaming` moves it up.
+
+**The whole operation is three lines. Everything else is byte-identical.**
+
 ```
-<feature>/policy/  ──(detection=Dreaming / approval=user)──▶  <project>/docs/policy/
+1. git mv <project>/p_memory/<pp>_<slug>.md   neocortex/NEO-<slug>.md
+2. append <pp>_<slug> to aliases
+3. insert the projects key (the 2 slugs the judgment was made on)
 ```
-- **Policy**: a **separate axis** from the 3 stages above (norms, not knowledge). Feature policy → project policy promotion
+
+- **The body is not edited.** No reformatting, no re-summarizing, no status field.
+- `projects:` is **write-once** — it freezes the evidence used at that moment, not the note's current scope. Never appended to or corrected later.
+- The old name survives in `aliases:`, so links written before the move still resolve.
+- Two notes that are related but not the same knowledge get a `related:` link instead of a move.
+
+## What does not ride this ladder
+
+- **`<common_root>/` is a fact record, not a promotion tier.** It is maintained by measurement. The unattended cycle (`sc` · `dreaming`) never writes there, and the refusal is enforced twice — once before the write and once before the commit ([[vault-tree]] §Write permission). Its `*policies*` directories are the normative axis and sit at the top of Document Conflict Precedence ([[project-docs-convention]]), which is why no agent may set one on its own.
+- **ADRs are a human-approved artifact.** They live at `<project>/docs/adr/<pp>-ADR-0000N.md` from birth, at a single tier, and the unattended cycle neither reads nor writes them. A decision is never promoted into an ADR and an ADR never rises out of one.

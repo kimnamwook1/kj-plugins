@@ -12,23 +12,23 @@ Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask   (+ optional: D
 ## Recall — cue-based
 - **CLAUDE.local.md Router pointers** (per project): a **thin router / hot-cache** auto-loaded every session. (Machine-local absolute paths — lives in `CLAUDE.local.md`, never the committed `CLAUDE.md`.)
   - Rules: **pointers only, no content** (token savings). **Auto-maintained** (Dreaming/`scribe`). No hand-curation (it rots).
-- **★ recall step**: at session start, pull in related memory — **canon: `skills/_session-shared/recall.md`** (source composition, related hops, caps, and source-path discipline are all defined only there). Two callers, two dispositions:
-  - **`ss` (new session)** — recall is **written into `## Context`** (`scribe` delegation). That block is the session's canonical injected-notes record, which `sh`/`sc` later read to bump `recalled:`/`useful:`.
-  - **`sr` (resume)** — recall is **re-presented on screen only, never written**. Feedback counters count injection once per session, so a resume extends neither the record nor any counter. Skipping it would leave a resumed session with zero priming, so it is required, not optional.
+- **★ recall step**: at session start, inject the folder indexes — **canon: `skills/_session-shared/recall.md`** (what is scanned and what is not is defined only there). **`_index.md` whole, note bodies never**; no ranking, no cap, no candidate selection. Two callers, two dispositions:
+  - **`ss` (new session)** — recall is **written into `## Recall`** (`scribe` delegation).
+  - **`sr` (resume)** — recall is **re-presented on screen only, never written**. Skipping it would leave a resumed session with zero priming, so it is required, not optional.
+  - **fail-visible** — both callers report the injected file count and total bytes, 0 included.
 
 ## Dreaming Skill (sleep consolidation)
-Keep realtime cheap; batch the hard parts. Runs periodically (scheduled).
-- **dedup / consolidation** — merge accumulated similar notes.
-- **staleness flags** — mark claims unreferenced for N months / grown stale (not deletion; flagged for review).
-- **Stage-2 promotion + graph links** — elevate cross-project recurrences to common, add missing cross-links.
-- **Recall-layer refresh** — regenerate the CLAUDE.local.md Router pointers + rescan the facts inventory.
+Keep realtime cheap; batch the hard parts. Triggered by `sc` at session close. Inputs are `p_memory` and `neocortex` only — it neither reads nor writes sessions.
+- **refine** — conform notes to the form and fold duplicates together, without changing a single fact.
+- **link** — join related notes with `related`, never a shortcut between notes already two hops apart.
+- **promotion ②** — the same knowledge standing in two projects moves to `neocortex/`, a three-line operation ([[knowledge-escalate-convention]]).
 
 **Guardrails (violate these and memory gets polluted)**:
 - **Incremental** — not the whole vault every time; only what changed or aged since the last dream.
 - **Destruction is proposed, never automatic** — only low-risk actions like dead-link fixes run automatically. Merges/deletions need PM/human approval. Never silently overwrite memory.
 
 ## Governance (scribe + PM mediation)
-- **`scribe` = the vault (memory) recording worker** (spawn = the `worker` profile — spec: knowledge-promotion §Write boundary)**.** All vault writes (Progress, outputs, stage-1 promotion) are delegated by the PM as recording briefs. **Code is strictly forbidden** — code goes straight to the repo/worktree via an **implementation worker**, bypassing `scribe`. A `scribe` brief's payload is knowledge/documents only, so it stays light.
+- **`scribe` = the vault (memory) recording worker** (spawn = the `worker` profile — spec: knowledge-promotion §Write boundary)**.** All vault writes (session files, Progress, frontmatter, `p_memory`, `neocortex`, folder TOCs, docs `history`) are delegated by the PM as recording briefs. **Code is strictly forbidden, and so is committing** — code goes straight to the repo/worktree via an **implementation worker**, and the commit is the PM's (a boundary record that swallows the whole repo, so only whoever sees the whole is safe). A `scribe` brief's payload is notes and documents only, so it stays light.
 - **`scribe` = a verbatim scribe (not a summarizer).** Records the `Learned`/`Outputs` of worker Handoffs **word for word**. PM compression belongs **only to the user-reporting channel** — the Handoff `scribe` receives is the original text (→ prevents losing the conditional nuances of Mistake/Fixed).
 - **Never force realtime dedup** — on duplicates, record both for now; merging & cleanup is Dreaming's job (batch). (fast-but-lossy capture + periodic consolidation)
 - **PM mediation**: worker Handoff → PM → `scribe`. **Direct worker→`scribe` is forbidden** — only the PM can see whether delegations overlap. Go direct, and two `scribe` workers silently overwrite the same file.

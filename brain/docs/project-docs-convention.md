@@ -69,10 +69,10 @@ history:
 
 ### history & session linkage
 
-- 🔴 **The `session` key is banned in docs frontmatter altogether** — not merely the wikilink form; the key itself, plain uid included. A team vault gitignores `sessions/` ([[git-convention]] §Share scope), so even a plain uid is a reference no teammate can resolve. Enforced by `scripts/validate.sh`.
+- 🔴 **The `session` key is banned in docs frontmatter altogether** — not merely the wikilink form; the key itself, plain identifier included. `hippocampus/` sits outside git ([[vault-tree]] §Layers), so even a plain filename is a reference no teammate can resolve. Enforced by `scripts/validate.sh`.
 - **Team provenance = `ticket`** in `history` entries — a tracker ID resolves for everyone.
-- **Session↔document linkage lives in the vault boundary commit message** (the PM's commit carries the session uid) — canon: [[git-convention]].
-- Knowledge notes' `source_sessions` is a **separate axis** (promotion-source tracing) and unchanged — canon: [[knowledge-convention]]. Do not read this ban as applying there.
+- **Session↔document linkage lives in the vault boundary commit message** (the PM's commit names the session) — canon: [[git-convention]].
+- **Memory notes point at no session either.** raw and wiki do not reference each other, and `source_sessions` is retired ([[knowledge-convention]]).
 
 ### Rules that outlived their fields
 
@@ -109,7 +109,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 - **TDC = prose + §Diagrams in one file**: the data-flow · sequence · state diagrams live **inside the TDC as a `§Diagrams` section** (they absorbed the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files — only diagrams remained there once prose was banned from them). **Prose (why it flows this way) lives only in the prose sections; §Diagrams holds diagrams only** — scatter prose into diagram captions and the two drift apart. A state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.) — otherwise omit it.
 - **Reference direction (one-way)**: `FRD → TDC → (ADR · policy)`. Never create reverse references — with a cycle, which one is upstream disappears (the conflict order ("Document Conflict Precedence" below) stops working).
 
-> **Non-code decisions** (stack, vendor, scope) go to `type: decision` notes in `knowledge/`, not ADRs — only code/design decisions get an ADR.
+> **Non-code decisions** (stack, vendor, scope) go to a memory note in `p_memory/`, not an ADR — only code/design decisions get an ADR.
 
 ## Policy System
 
@@ -119,7 +119,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 |---|---|---|
 | **Yes** | `<project>/docs/policy/` | project |
 | **No** | `<project>/docs/feature/<F>/policy/` | feature |
-| (shared across all projects) | `common/policies/` | 3-axis definition → [[knowledge-convention]] |
+| (shared across all projects) | the common root's `*policies*` directory | normative-axis identification → [[vault-tree]] §The common layer |
 
 - **ID = `<PREFIX>-POL-0000N`** — **a single per-project sequence. Independent of tier/location, and immutable.**
 - **Never put the feature name in the filename or ID.** Tier is expressed solely by the path (§kind ← path matrix — no `scope` field). (Baking the feature name into the ID means the ID changes on promotion → every reference breaks. ID immutability is the mechanism that lets promotion finish as **a file move alone**.)
@@ -142,7 +142,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 The pecking order when documents disagree — the higher one wins:
 
 ```
-common/policies (global)  >  docs/policy  >  PRD §비기능 요구(NFR)  >  PRD  >  FRD  >  TDC
+*policies* (vault-global)  >  docs/policy  >  PRD §비기능 요구(NFR)  >  PRD  >  FRD  >  TDC
 ```
 
 - 🔴 **This table is the PM's arbitration tool — not for workers.** Worker instructions carry only one line: "on conflict, don't judge on your own — report to the PM". Hand workers the pecking order and it becomes "I won, so ignore that one", and fixing the losing document never happens.
