@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.8 — 2026-08-05
+
+**Release cut for drift, not for features.** The installed copy had fallen 6 commits behind `main`, and `plugin.json` read `0.1.7` on both sides — so the version string could not detect it. Measured against the `0.1.7` cache: **29 differing entries**, including a canon file that no longer exists in the repo and two new files the install had never seen. Since the Router symlinks `~/.claude/brain-docs` at the *installed* docs, every skill run was reading stale canon while the repo held the current one.
+
+### Removed
+- **`docs/versioning-convention.md` is gone — `docs/git-convention.md` absorbed it (commit `05cd3c8`).** The PR-title rule had two sources of truth; the vocabulary, surface notation, and branch/worktree naming now live in one document. 🔴 **The installed copy still carried the deleted file**, so pointers into it resolved against a document the repo had already retired — the exact failure this release exists to close.
+
+### Added
+- **`scripts/kernel-check.sh`** (commit `327ca4d`) — byte-identity check across the agent definitions' `## KERNEL-BEGIN … ## KERNEL-END` blocks. It cannot live in `validate.sh`: that script's scope is `<vault-root>` alone, and `agents/*.md` is plugin-repo. 🔴 **Known pre-existing defect, measured 2026-08-04:** the marker pair is absent from all three agent files (`grep -rn KERNEL agents/` → 0), so every agent currently reports `missing KERNEL block`. Landing the markers is 0.2.0 work (ticket KJP-64).
+- **`hooks/org-guard.sh`** (commit `327ca4d`) — pre-blocks unattended-cycle writes to the common layer. Detection after the fact is impossible in the linter once `writer` is retired: file state alone cannot identify the author, so this has to be a gate, not a check.
+- **`.artifact/brain-0.2.0.html`** — the 0.2.0 design canon (1,853 lines), now tracked. It is the source of truth for the terminology migration and is quoted by ticket bodies; leaving it untracked meant the tickets cited a file that existed on one machine.
+
+### Changed
+- **Docs `status` vocabulary: `stub` → `created`** (commit `55634a0`). Live vaults migrated ahead of the linter — techtainment 38, beafter 23 — because flipping the linter first fails every existing vault at once.
+- **0.2.0 design canon: `type` key retired, agent line/byte ceilings reconciled, release-and-vault-application sections added** (commits `bd304b7`, `59c1898`). A schema key with no definition and no consumer is deleted, not documented — its only readers were its own output and its own linter check, which is a cycle rather than a consumer.
+
+### Fixed
+- **The design canon violated its own DoD in six places (commit `42e2156`, ticket KJP-75).** It warned that migration scripts must be `.brain-paths`-driven — and then wrote tree literals itself. Two of the six were **blocking gates**: `org-guard.sh`'s write-block and dreaming's path-refusal both named `org/` literally, so a vault whose `common_root` resolves to `personal` or `000_common` would have been **unguarded**. Now routed through `<common_root>`.
+  - 🔴 **The distinction that decides these: is this position producing the value, or consuming it?** `init` writing `common_root: org` into a fresh `.brain-paths` is a *default*, not a hardcode — it is the producer. A gate that compares a path against `org/` is a consumer, and a literal there is the defect. Two of the originally-flagged sites turned out to be producers and were left alone.
+  - Two prose literals are **deliberately left in place** (`onboard`'s `org/machines/`, the recall injection table's `org/**/_index.md`), and the warning paragraph now names them. A warning with no live example stops being read — and prose literals getting copied into code is how this defect propagates.
+- **`scribe` governance still said `knowledge`** where the canonical schema had already moved to `p_memory · neocortex`. Same fact in two places; one got updated.
+
 ## 0.1.7 — 2026-07-29
 
 ### Added
