@@ -6,7 +6,8 @@
 # Checks the vault manifest's `schema_version`, session-note frontmatter (required keys, status
 # vocabulary, retired keys) on the raw layer (`hippocampus/`), `summary:` on the wiki layer
 # (`p_memory/` + `neocortex/` + the common and tools roots), the wiki layer's folder indexes
-# (`_index.md` line form + dangling links), session-uid wikilinks on the
+# (`_index.md` line form, links that name a file that is not there, and the inverse — notes no
+# index names), session-uid wikilinks on the
 # team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; policy/adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
@@ -40,7 +41,11 @@ done
 OUT="$(mktemp -t brain-validate)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
 LIST="$(mktemp -t brain-validate-list)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
 TARGETS="$(mktemp -t brain-validate-targets)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
-trap 'rm -f "$OUT" "$LIST" "$TARGETS"' EXIT
+# The wiki note list outlives $LIST, which each later scan overwrites: the coverage check needs the
+# notes and the indexes in hand at the same time. NCOVER carries one integer back out of awk.
+NOTES="$(mktemp -t brain-validate-notes)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
+NCOVER="$(mktemp -t brain-validate-ncover)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
+trap 'rm -f "$OUT" "$LIST" "$TARGETS" "$NOTES" "$NCOVER"' EXIT
 
 # ----------------------------------------------------------- the manifest's schema version
 # 🔴 One level above every scan below. `.brain-paths` is what tells a consumer where the tree is;
@@ -192,6 +197,17 @@ if [ -n "$BRAIN_COMMON" ]; then
 fi
 sort -o "$LIST" "$LIST"
 n_wiki="$(wc -l < "$LIST" | tr -d ' ')"
+# Kept for the coverage check further down, which asks the inverse question about exactly these
+# files — copied out rather than re-derived, so the two scans cannot drift into different scopes.
+# 🔴 LC_ALL=C, not style: this list is one side of a *set* comparison, and in a collation locale
+# that gives a string no primary weight macOS sort treats such strings as EQUAL — `가.md 나.md
+# 다.md 라.md` deduplicates to ONE line (the KJP-74 hazard; the same reason the target-set sort
+# below pins the locale). Which locale decides it, measured 2026-08-05: `en_US.UTF-8` collapses
+# the four to 1, `ko_KR.UTF-8` keeps 4, `C` keeps 4 — so the bite depends on the caller
+# environment, and "it passed on my machine" is not evidence either way. There is no `-u` here so
+# nothing collapses today; pinning the locale makes the comparison independent of that environment
+# and forecloses the reintroduction.
+LC_ALL=C sort "$LIST" > "$NOTES"
 
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
@@ -324,6 +340,103 @@ while IFS= read -r f; do
     }
   ' "$f"
 done < "$LIST" >> "$OUT"
+
+# ------------------------------------------ index coverage (the scan above, read backwards)
+# 🔴 The same relation — index line ↔ note file — and the other direction of failure:
+#   · dangling  — an index names a file that is not there. recall believes in a note that does
+#                 not exist. Caught above.
+#   · uncovered — a note exists and no index names it. recall never learns it is there at all.
+# Both make recall lie, and the second is the quieter one by construction: the file is intact,
+# its frontmatter is complete, and every other check in this script passes it. Nothing anywhere
+# contradicts a note that is simply never mentioned. That is why it needs its own scan and why
+# "no findings" from the dangling check alone was never evidence of a sound index.
+# KJP-74 regenerated all 19 indexes of the real vault with an LLM worker against exactly one gate,
+# the dangling check; this closes the half that migration was never measured against.
+#
+# Scope is not restated here — it *is* the two lists already built: the wiki note list ($NOTES)
+# and the index list ($LIST) the dangling scan just consumed. Same roots, same exclusions
+# (`_index.md` · `index.md` · `0.*` · `dream-logs.md`), because it is the same data, not a second
+# copy of the rules. `hippocampus/` and `NNN_*/docs/` stay outside for the reasons above.
+#
+# 🔴 Detection only, and no regenerator is implied. An `_index.md` is updated by whoever creates
+# or moves the file, in the same commit (knowledge-convention.md); after-the-fact regeneration was
+# retired with the dreaming feature set (KJP-77). The message names the line to add and says who
+# adds it, and must never suggest that something else will.
+awk -v vault="$VAULT" -v idxlist="$LIST" -v notelist="$NOTES" -v countf="$NCOVER" '
+  # Vault-relative key for an absolute path. substr + string equality, never a regex built out of
+  # the vault path: that path may carry glob or regex metacharacters (`my[vault]`), and compiling
+  # it into a pattern is the same silent-collapse class the start-path discipline above avoids.
+  # A trailing slash on the argument leaves a leading `/` behind, so strip any run of them.
+  function relkey(p,   r) {
+    if (substr(p, 1, length(vault)) == vault) r = substr(p, length(vault) + 1)
+    else r = p
+    sub("^/+", "", r)
+    return r
+  }
+  # Every wikilink on one index line, resolved and recorded as covered. `line` is a copy, so
+  # consuming it here does not disturb the caller.
+  function record(line, d,   t, p) {
+    while (match(line, /\[\[[^]]+\]\]/)) {
+      t = substr(line, RSTART + 2, RLENGTH - 4)
+      line = substr(line, RSTART + RLENGTH)
+      # `|alias` and `#heading` are addressing, not identity — stripped before resolving,
+      # exactly as above.
+      p = index(t, "|"); if (p > 0) t = substr(t, 1, p - 1)
+      p = index(t, "#"); if (p > 0) t = substr(t, 1, p - 1)
+      sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t)
+      if (t == "") continue
+      # Two shapes, both measured in the real vault 2026-08-05 (483 bare stems, 8 paths): a bare
+      # stem addresses the folder the index sits in, a slash makes it vault-relative. The second
+      # is how a subtree index covers children that have no index of their own
+      # (`org/machines/_index.md` names `org/machines/clients/*/…`), so coverage may not be judged
+      # folder-locally — doing so would report those eight live notes as invisible.
+      if (index(t, "/") > 0) covered[t] = 1
+      else covered[d "/" t] = 1
+    }
+  }
+  # One index file, harvested into the covered set. An unreadable one contributes nothing and its
+  # folder then reads as uncovered; the loop above already reports the unreadable file itself, so
+  # the cause is on record rather than left to be inferred from the coverage findings.
+  function harvest(idx,   d, line) {
+    d = relkey(idx); sub(DIRPART, "", d)
+    while ((getline line < idx) > 0) {
+      sub(/\r$/, "", line)
+      # Only list lines, the same line class the dangling scan reads: canon says a TOC entry IS a
+      # list line (knowledge-convention.md), so a stem named in the intro prose is not an entry and
+      # buys the note nothing. Malformed entries still count as coverage — the line is already a
+      # finding above, and reporting it twice would say the note is missing when the real defect
+      # is its separator.
+      if (line ~ /^[ \t]*[-*+][ \t]/) record(line, d)
+    }
+    close(idx)
+  }
+  BEGIN {
+    # Dynamic regex strings, not /literals/: one-true-awk (macOS /usr/bin/awk) cannot parse a `/`
+    # inside a bracket class in a regex literal — `/[^/]*$/` is a syntax error there. Same
+    # discipline as the spelled-out digit runs in the scans above: the portable spelling is the
+    # one that fails loudly on the wrong awk instead of silently never matching.
+    DIRPART = "/[^/]*$"; BASEPART = "^.*/"
+    while ((getline idx < idxlist) > 0) harvest(idx)
+    close(idxlist)
+    # Set membership on awk subscripts: byte-exact string keys, no collation, no dedup pass — the
+    # KJP-74 hazard has no seat here, and the note list arrives byte-ordered for the same reason.
+    for (k in covered) entries++
+    printf "%d\n", (entries + 0) > countf
+    close(countf)
+    while ((getline f < notelist) > 0) {
+      k = relkey(f); sub(/\.md$/, "", k)
+      if (k in covered) continue
+      stem = k; sub(BASEPART, "", stem)
+      print f ":1: uncovered note: [[" stem "]] is named by no folder index (recall injects the folder indexes and nothing else — a note none of them names is invisible to every future session, the silent twin of a dangling link; add the line \"- [[" stem "]] — <summary>\" to the index that owns this folder)"
+    }
+    close(notelist)
+  }
+' >> "$OUT"
+# The evidence base, carried out of awk as one integer. Reported below because it is the only
+# number that separates "every note is indexed" from "the indexes were never parsed" — both of
+# which produce zero findings here.
+n_cover="$(tr -d ' \n' < "$NCOVER")"
+[ -n "$n_cover" ] || n_cover=0
 
 # ------------------------------------------- session wikilinks on the shared surface
 # Canon: git-convention.md §Share scope. The shared surface is what a teammate pulls;
@@ -584,6 +697,10 @@ done < "$LIST" >> "$OUT"
 # ------------------------------------------------------------------------ report
 # The scanned counts print on every run so a collapsed scan (0 files) is visibly
 # different from a clean vault — "OK" on its own cannot distinguish the two.
+# `entries` is the odd one out: not a file count but the number of distinct link targets the
+# folder indexes yielded, i.e. how much evidence the coverage check actually had. It is the only
+# number here that no other implies, and the only one that tells a vault whose notes are all
+# indexed from a run whose indexes were never parsed — both report zero coverage findings.
 #
 # ponytail: known limits, all judged not worth the weight for a real vault —
 #   · symlinked notes are skipped (`-type f`); use `find -L` if vaults ever use links.
@@ -591,7 +708,7 @@ done < "$LIST" >> "$OUT"
 # The label is `wiki`, not `knowledge`: that is the canon's name for the layer (vault-tree.md
 # §Layers) and the name this file's own header has used since the 0.2.0 pass. The count line was
 # the last place the retired word survived.
-scanned="$n_sessions sessions, $n_wiki wiki, $n_index indexes, $n_shared shared, $n_docs docs"
+scanned="$n_sessions sessions, $n_wiki wiki, $n_index indexes, $n_cover entries, $n_shared shared, $n_docs docs"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
   echo "validate.sh: OK — no issues ($scanned) $VAULT"
