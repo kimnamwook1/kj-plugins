@@ -4,7 +4,10 @@
 
 ## Handoff Format (worker → PM → scribe, maps to session Progress — Risks·Next·Ask feed To-Do-List / PM judgment)
 ```
-Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask   (+ optional: Docs draft)
+Done / Mistake / Learned / Outputs / Risks / Next / Ask   (+ optional: Docs draft)
+
+- 🔴 **`Fixed` 는 0.2.0 KERNEL 에서 제거됐다** (KJP-64). 워커가 자기 실수를 고친 사실은 `Mistake` 와 같은 사건의 뒷면이라, 항목을 나누면 한 사건이 두 곳에 쪼개져 적힌다. 에이전트 정의는 spawn 마다 100% 주입되므로 항목 하나가 곧 비용이다.
+- ⚠ **세션 노트 `## Progress` 의 `#### Fixed` 는 별개이고 살아 있다** — 그쪽은 에이전트 반환 포맷이 아니라 세션 기록 소절이다 (canon: `sessions-note-convention.md`).
 ```
 > Workers **never write to the vault directly** — vault writes are serialized through PM-delegated recording briefs (concurrent sessions would otherwise collide in the same files). Hand off, and a `scribe` worker records it via the PM (**`scribe` = a worker given a recording brief** — a label, not a resident agent). Keep `Learned` atomic — promotion quality is governed by capture quality (GIGO).
 > **`Docs draft` (optional section — KJP-37 role split)**: when the work affects a project document (architecture · API surface · deployment · schema, or one discovered mid-work), **the worker/coder authors the draft** (goal · structure · behavior — whoever did the work knows it) inside the Handoff. Roles: DoD designation = the PM's brief (as far as it can predict) · content = the worker · vault write = `scribe` (**copies the draft verbatim — authoring forbidden**) · commit = the PM. **A document that does not exist yet takes the same path** — the worker drafts it as a new document, the PM judges creation and location against [[doc-catalog]] (only on a catalog trigger — never habitually), and `scribe` creates the file. The PM forwards the draft into the scribe brief unedited — a PM rewrite reintroduces the guessing the split exists to remove.

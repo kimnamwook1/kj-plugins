@@ -23,5 +23,6 @@ ticket-system: huly   # identifier only — 워크스페이스 techtainment · �
 - `worker` — 일반 티켓/브리프 기본 프로필 (scribe 기록 브리프 포함).
 - `coder` — 구현 전용, worktree 격리.
 - `verifier` — 검증·리뷰·반증, 보고 전용.
+- `researcher` — 외부 근거 조사 전용, 보고 전용 (레포 안 검색은 내장 Explore).
 - 세션 스킬 = 동사 하나에 스킬 하나 — 새 세션은 `/brain:ss`(생성 전용), 파킹 세션 재개는 `/brain:sr`, 열린 세션 조회는 `/brain:sl`(읽기 전용), 파킹은 `/brain:sh`, 종료는 `/brain:sc`. **`ss` 는 재개 후보를 스캔하지도 고지하지도 않는다** — 재개하려면 `sr` 을 친다.
 <!-- brain:end -->

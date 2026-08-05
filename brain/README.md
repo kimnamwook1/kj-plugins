@@ -56,7 +56,7 @@ hard work (folding duplicates together, linking, re-tiering) is deferred to a pe
                                ▼                      │
                       ┌────────────────────────────────────────────┐
                       │       Workers (subagents, 3 profiles)      │
-                      │        worker  ·  coder  ·  verifier       │
+                      │ worker · coder · verifier · researcher     │
                       └────────────────────────────────────────────┘
 ```
 
@@ -294,13 +294,14 @@ silently demoted every policy note to the descriptive tier.
 
 ## Worker profiles
 
-Three profiles in `agents/`, differing only in isolation and permissions:
+Four profiles in `agents/`, differing only in isolation and permissions:
 
 | Profile | Enforcement | Use for |
 |---|---|---|
 | `worker` | default toolset | any brief — the default profile; scribe (recording) briefs run on it too |
 | `coder` | `isolation: worktree` | implementation briefs — TDD, official-docs-first, in an isolated git worktree |
 | `verifier` | `disallowedTools: Write, Edit, NotebookEdit` | verification/review/disproof briefs — report-only, reproduction + evidence |
+| `researcher` | `disallowedTools: Write, Edit, NotebookEdit` | external-evidence research only — searches outside the repo (in-repo search is `Explore`). Scope gate first, primary sources, disproof duty, citation = URL + access date + version |
 
 - **Ticket loop**: non-trivial tickets run plan → code (`coder`) → verify (`verifier`); small
   changes go direct on a single `worker`.
@@ -325,7 +326,7 @@ Three profiles in `agents/`, differing only in isolation and permissions:
 - **Personas are briefs, not agents.** Labels like `scribe` name a *kind of brief*, not a
   resident agent. Every worker is scoped by the brief it receives: Goal, constraints, context
   pointers, DoD.
-- **Handoff format (fixed)**: `Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask`
+- **Handoff format (fixed)**: `Done / Mistake / Learned / Outputs / Risks / Next / Ask` (+ optional `Docs draft`). `Fixed` was removed in the 0.2.0 KERNEL — it is the flip side of `Mistake`, and one item is a per-spawn cost. The session note's `#### Fixed` under `## Progress` is a different thing and stays.
   (+ optional `Docs draft` — a worker-authored document draft; the scribe copies it verbatim,
   never authors). Workers never write to the vault directly — deliverables travel by Handoff,
   and the PM delegates recording to a scribe brief.

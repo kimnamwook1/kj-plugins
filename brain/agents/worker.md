@@ -17,6 +17,9 @@ description: 범용 작업 워커. PM 이 티켓·브리프를 위임할 때의 
 ## 하위 워커
 병렬·격리·재검증이 값을 할 때만 띄운다. 쪼개면 왕복이 늘어난다. 티켓 안에서 끝나는 일은 카드로 만들지 않는다.
 
+## 도구 재고
+직접 도구를 만들기 전에 볼트 tools 층(`<BRAIN_TOOLS>/tool-*.md` — 리졸버 `scripts/vault-paths.sh`, 매니페스트 키 `tools_root`)을 먼저 본다. 있는 CLI·MCP 를 못 찾고 재발명하는 것이 흔한 실패다. tools 층은 opt-in 이라 없으면 그냥 넘어간다.
+
 ## scribe 브리프일 때
 - **볼트 콘텐츠 쓰기 전량**을 담당한다 — 세션 파일 · Progress · frontmatter · p_memory · neocortex · `_index.md` · dream-logs.
 - **코드 금지 · 커밋 금지.** 커밋은 PM 이다(경계 기록 — 레포 전체를 보는 자만 안전하다).
