@@ -262,6 +262,28 @@ assert_no_match "retired uid is not a required key"          'missing frontmatte
 assert_no_match "retired writer is not a required key"       'missing frontmatter key: writer'
 assert_no_match "retired created is not a required key"      'missing frontmatter key: created'
 
+# retired keys, raw layer — a key that is present and no longer meant to be. One assert per key,
+# so dropping any one of them from the check's target list kills a specific assert.
+assert_match   "raw: retired uid is caught"                  'RETIRED-20260718-120016.md:7: retired key "uid"'
+assert_match   "raw: retired created is caught"              'RETIRED-20260718-120016.md:8: retired key "created"'
+assert_match   "raw: retired writer is caught"               'RETIRED-20260718-120016.md:9: retired key "writer"'
+
+# retired keys, wiki layer — the ten 0.1.x keys. `title` carries the rename instruction, the
+# other nine the deletion instruction, so both message shapes are pinned.
+assert_match   "wiki: retired uid is caught"                 'retired-keys.md:3: retired key "uid"'
+assert_match   "wiki: retired title says renamed to summary" 'retired-keys.md:4: retired key "title" (renamed — the one-line summary: is its replacement)'
+assert_match   "wiki: retired type is caught"                'retired-keys.md:5: retired key "type"'
+assert_match   "wiki: retired tags is caught"                'retired-keys.md:6: retired key "tags"'
+assert_match   "wiki: retired dri is caught"                 'retired-keys.md:7: retired key "dri"'
+assert_match   "wiki: retired species is caught"             'retired-keys.md:8: retired key "species"'
+assert_match   "wiki: retired source_sessions is caught"     'retired-keys.md:9: retired key "source_sessions"'
+assert_match   "wiki: retired source_items is caught"        'retired-keys.md:10: retired key "source_items"'
+assert_match   "wiki: retired recalled is caught"            'retired-keys.md:11: retired key "recalled"'
+assert_match   "wiki: retired useful is caught"              'retired-keys.md:12: retired key "useful"'
+# The note has a summary, so the summary rule cannot be what is speaking above — without this
+# the ten asserts could pass on a note that was simply broken in a different way.
+assert_no_match "wiki: a summarised note is not asked for a summary" 'retired-keys.md:1: missing frontmatter key: summary'
+
 # wiki scope — one positive per directory pins the scope
 assert_match   "project p_memory dir is scanned"             'p_memory/no-summary.md:1: missing frontmatter key: summary'
 assert_match   "common facts/ is scanned"                    'facts/facts-no-summary.md:1: missing frontmatter key: summary'

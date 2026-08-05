@@ -171,14 +171,35 @@ n_knowledge="$(wc -l < "$LIST" | tr -d ' ')"
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
   awk -v file="$f" '
+    BEGIN {
+      # 🔴 The migration safety net. These ten are the 0.1.x wiki vocabulary; a 0.2.0 note carries
+      # four (summary · updated · related · aliases, plus `projects` on neocortex). Sweeping the
+      # keys out of hundreds of notes is a bulk edit, and the only thing that catches the files
+      # the sweep missed is this check — a missing key is loud, a *stale* key is silent.
+      # `title` is a rename (its replacement is `summary`), the other nine are retired outright,
+      # so the two carry different instructions.
+      # 🔴 Holding the retired strings in code is what makes the check work. A sweep that tries to
+      # reach "zero retired terms in scripts/" deletes the detector along with the term.
+      n = split("uid title type tags dri species source_sessions source_items recalled useful", ret, " ")
+    }
     { sub(/\r$/, "") }
     NR == 1 && $0 == "---" { fm = 1; next }
-    fm && $0 == "---" { exit }
+    fm && $0 == "---" { exit }   # awk runs END after exit, so the checks below still report
     # `summary:` inherits the seat `title:` held. It is not a rename of a label but of a role:
     # recall injects `_index.md` only, and every line there is `- [[stem]] — <summary>`, so a
     # note without one is invisible to every future session rather than merely untitled.
     fm && /^summary:[ \t]*[^ \t]/ { ok = 1 }
-    END { if (!ok) print file ":1: missing frontmatter key: summary" }
+    fm && match($0, /^[A-Za-z_][A-Za-z0-9_]*:/) { at[substr($0, 1, RLENGTH - 1)] = NR }
+    END {
+      if (!ok) print file ":1: missing frontmatter key: summary"
+      for (i = 1; i <= n; i++) {
+        if (!(ret[i] in at)) continue
+        if (ret[i] == "title")
+          print file ":" at["title"] ": retired key \"title\" (renamed — the one-line summary: is its replacement)"
+        else
+          print file ":" at[ret[i]] ": retired key \"" ret[i] "\" (0.2.0 wiki frontmatter = summary|updated|related|aliases — delete the key)"
+      }
+    }
   ' "$f"
 done < "$LIST" >> "$OUT"
 
