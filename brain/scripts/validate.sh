@@ -3,8 +3,9 @@
 #
 #   validate.sh <vault-root> [--strict]
 #
-# Checks session-note frontmatter (required keys, uid format, uid/filename match,
-# status vocabulary), knowledge-note `title:`, session-uid wikilinks on the
+# Checks session-note frontmatter (required keys, status vocabulary, retired keys) on the raw
+# layer (`hippocampus/`), `summary:` on the wiki layer (`p_memory/` + `neocortex/` + the common
+# and tools roots), session-uid wikilinks on the
 # team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; policy/adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
@@ -64,13 +65,13 @@ AWK_PRELUDE='
 # would flag the spec itself forever and make --strict unusable.
 # ponytail: if this exclusion list grows past the TOC pair + the placeholder, that is the signal
 # to promote it to a convention (a `meta:` flag or a naming rule) instead of extending the chain.
-find "$VAULT/sessions" -maxdepth 1 -type f -name '*.md' \
+find "$VAULT/hippocampus" -maxdepth 1 -type f -name '*.md' \
   ! -name 'index.md' ! -name '_index.md' ! -name 'sample-session.md' 2>/dev/null | sort > "$LIST"
 n_sessions="$(wc -l < "$LIST" | tr -d ' ')"
 
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
-  awk -v file="$f" -v base="$(basename "$f" .md)" "$AWK_PRELUDE"'
+  awk -v file="$f" "$AWK_PRELUDE"'
     { sub(/\r$/, "") }
     NR == 1 && $0 == "---" { fm = 1; next }
     fm && $0 == "---" { fm = 0; fmend = 1; next }
@@ -85,26 +86,28 @@ while IFS= read -r f; do
     END {
       if (!fmend) { print file ":1: no YAML frontmatter"; exit }
 
-      n = split("uid project created updated status writer", req, " ")
+      # 0.2.0 raw-layer schema: 5 keys, none of them identity or authorship. `uid` retired
+      # (the filename carries identity), `writer` retired (git carries authorship), `created`
+      # retired (the first Progress entry dates the session).
+      n = split("status project updated related_ticket cc_session_ids", req, " ")
       for (i = 1; i <= n; i++)
         if (!(req[i] in seen)) print file ":1: missing frontmatter key: " req[i]
 
-      if ("uid" in seen) {
-        u = val["uid"]
-        # dreaming reports are cross-project batches: uid = YYYYMMDD-HHMMSS, no PREFIX by canon
-        # (dreaming/SKILL.md §Report format). Same shape-only + filename-match discipline.
-        if (val["session_type"] == "dreaming") {
-          if (u !~ /^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/)
-            print file ":" ln["uid"] ": dreaming uid is not YYYYMMDD-HHMMSS: " u
-          else if (u != base)
-            print file ":" ln["uid"] ": uid \"" u "\" does not match filename \"" base "\""
-        }
-        # ponytail: shape-only check — TST-20261345-996699 (month 13, day 45) passes.
-        # Calendar validation in awk costs more than the class of typo it would catch.
-        else if (u !~ /^[A-Z][A-Z0-9]*-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/)
-          print file ":" ln["uid"] ": uid is not <PREFIX>-YYYYMMDD-HHMMSS: " u
-        else if (u != base)
-          print file ":" ln["uid"] ": uid \"" u "\" does not match filename \"" base "\""
+      # Retired 0.1.x keys. Same shape as the `cancel` message below: "missing key" cannot say
+      # anything about a key that is *present and no longer meant to be*, and a vault that never
+      # dropped them would otherwise pass in silence. Each message carries its own migration
+      # instruction, because "retired" alone would not say where the information went.
+      # The `session_type: dreaming` branch died here with `uid`: dreaming no longer writes a
+      # session at all — its log is a single accumulating file on the wiki layer.
+      nr = split("uid created writer", ret, " ")
+      for (i = 1; i <= nr; i++) {
+        if (!(ret[i] in seen)) continue
+        if (ret[i] == "uid")
+          print file ":" ln["uid"] ": retired key \"uid\" (the filename is the identity now — delete the key)"
+        else if (ret[i] == "created")
+          print file ":" ln["created"] ": retired key \"created\" (the first Progress entry dates the session — delete the key)"
+        else
+          print file ":" ln["writer"] ": retired key \"writer\" (git carries authorship — delete the key)"
       }
 
       if ("status" in seen) {
@@ -124,39 +127,36 @@ while IFS= read -r f; do
   ' "$f"
 done < "$LIST" >> "$OUT"
 
-# -------------------------------------------------------------- knowledge notes
+# ------------------------------------------------------------------- wiki notes
 # Collect the scan roots as directories, then hand them to find as start paths.
 # Indexed arrays are bash 3.2-safe (only *associative* arrays are 4.0+).
 KDIRS=()
 while IFS= read -r d; do
-  [ -d "$d/knowledge" ] && KDIRS[${#KDIRS[@]}]="$d/knowledge"
+  [ -d "$d/p_memory" ] && KDIRS[${#KDIRS[@]}]="$d/p_memory"
 done < <(brain_projects)
+# Vault-wide knowledge. Root-fixed like the session layer, so no manifest key resolves it
+# (vault-paths.sh manifests only the axes that move between vaults) — a restructured vault
+# moves its common and projects roots and still keeps `neocortex/` here. It is the wiki layer's
+# second half: `p_memory` is what one project knows, `neocortex` is what the vault knows.
+[ -d "$VAULT/neocortex" ] && KDIRS[${#KDIRS[@]}]="$VAULT/neocortex"
 # The tools root (`999_tools/` by default) = machine-global tool inventory (vault-tree.md
-# §The tools root). recall scans it as a [C] source at the facts tier (recall.md source 2), and *this*
-# scan is the recall mirror — so it is a scan root here too. It does not arrive via brain_projects:
-# that helper excludes the reserved 9xx band outright, and a 9xx folder has no knowledge/ subfolder
+# §The tools root). recall scans it, and *this* scan is the recall mirror — so it is a scan root
+# here too. It does not arrive via brain_projects: that helper excludes the reserved 9xx band
+# outright, and a 9xx folder has no p_memory/ subfolder
 # anyway (measured). The root resolves through vault-paths (`tools_root` key / BRAIN_TOOLS_REL);
 # empty = the folder is absent, a legal state (machine-global, git-untracked), skipped silently —
 # unlike the common root, whose absence is loud.
 [ -n "$BRAIN_TOOLS" ] && KDIRS[${#KDIRS[@]}]="$BRAIN_TOOLS"
-# The candidates pool (`<vault>/candidates/`) — promotion candidates awaiting the gate
-# (vault-tree.md §Tree axes). Root-fixed, so no manifest key resolves it (same class as
-# sessions/ — vault-paths.sh manifests only the axes that move between vaults). recall excludes
-# the pool BY DESIGN (unvalidated candidates must not prime sessions — recall.md), so this root
-# is a deliberate divergence from the recall mirror: a parked note is one file move from the
-# common layer, and a broken one would otherwise surface only at promotion time. Same lint,
-# same meta exclusions, same -maxdepth 1 (the pool is flat — promotion is a move, not a tree).
-# Absence is legal (a vault that never parked a candidate) and silent. The shared-surface scan
-# below does not take this root — scope extends on decision, not by drift.
-[ -d "$VAULT/candidates" ] && KDIRS[${#KDIRS[@]}]="$VAULT/candidates"
 
 : > "$LIST"
 # An empty array expanded under `set -u` is an unbound-variable error in bash 3.2 — guard it.
 if [ ${#KDIRS[@]} -gt 0 ]; then
-  # Project knowledge/ stays -maxdepth 1: its subfolders are deliberately out of scope.
-  # Meta-file exclusion (`index.md` + `0.*`) mirrors skills/_session-shared/recall.md:11-14.
+  # Project p_memory/ stays -maxdepth 1: its subfolders are deliberately out of scope.
+  # `dream-logs.md` is dreaming's run log, not a note — it lives in neocortex/ by canon and its
+  # frontmatter is one key (`updated`), so scanning it would report a phantom missing summary on
+  # every real vault. Excluded by name here, the same way the folder TOCs and reject logs are.
   find "${KDIRS[@]}" -maxdepth 1 -type f -name '*.md' \
-    ! -name 'index.md' ! -name '_index.md' ! -name '0.*' 2>/dev/null >> "$LIST"
+    ! -name 'index.md' ! -name '_index.md' ! -name '0.*' ! -name 'dream-logs.md' 2>/dev/null >> "$LIST"
 fi
 # The common layer recurses instead. Its sub-axes are not the same shape in every vault — flat
 # `{facts,patterns,policies}/` in one, `patterns/` plus `_company/<folder>/` in another — so
@@ -171,44 +171,72 @@ n_knowledge="$(wc -l < "$LIST" | tr -d ' ')"
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
   awk -v file="$f" '
+    BEGIN {
+      # 🔴 The migration safety net. These ten are the 0.1.x wiki vocabulary; a 0.2.0 note carries
+      # four (summary · updated · related · aliases, plus `projects` on neocortex). Sweeping the
+      # keys out of hundreds of notes is a bulk edit, and the only thing that catches the files
+      # the sweep missed is this check — a missing key is loud, a *stale* key is silent.
+      # `title` is a rename (its replacement is `summary`), the other nine are retired outright,
+      # so the two carry different instructions.
+      # 🔴 Holding the retired strings in code is what makes the check work. A sweep that tries to
+      # reach "zero retired terms in scripts/" deletes the detector along with the term.
+      n = split("uid title type tags dri species source_sessions source_items recalled useful", ret, " ")
+    }
     { sub(/\r$/, "") }
     NR == 1 && $0 == "---" { fm = 1; next }
-    fm && $0 == "---" { exit }
-    fm && /^title:[ \t]*[^ \t]/ { ok = 1 }
-    END { if (!ok) print file ":1: missing frontmatter key: title" }
+    fm && $0 == "---" { exit }   # awk runs END after exit, so the checks below still report
+    # `summary:` inherits the seat `title:` held. It is not a rename of a label but of a role:
+    # recall injects `_index.md` only, and every line there is `- [[stem]] — <summary>`, so a
+    # note without one is invisible to every future session rather than merely untitled.
+    fm && /^summary:[ \t]*[^ \t]/ { ok = 1 }
+    fm && match($0, /^[A-Za-z_][A-Za-z0-9_]*:/) { at[substr($0, 1, RLENGTH - 1)] = NR }
+    END {
+      if (!ok) print file ":1: missing frontmatter key: summary"
+      for (i = 1; i <= n; i++) {
+        if (!(ret[i] in at)) continue
+        if (ret[i] == "title")
+          print file ":" at["title"] ": retired key \"title\" (renamed — the one-line summary: is its replacement)"
+        else
+          print file ":" at[ret[i]] ": retired key \"" ret[i] "\" (0.2.0 wiki frontmatter = summary|updated|related|aliases — delete the key)"
+      }
+    }
   ' "$f"
 done < "$LIST" >> "$OUT"
 
 # ------------------------------------------- session wikilinks on the shared surface
-# Canon: git-convention.md §Share scope + knowledge-convention.md:14
-# (`source_sessions`). The shared surface is what a teammate pulls; `sessions/` sits
-# outside it and a team vault gitignores it, so a `[[<uid>]]` written on the shared
-# surface dangles in any vault that lacks that session. Shared notes cite a session as
-# plain uid text — frontmatter and body alike.
+# Canon: git-convention.md §Share scope. The shared surface is what a teammate pulls;
+# `hippocampus/` sits outside it and is git-untracked outright in 0.2.0, so a `[[<uid>]]`
+# written on the shared surface dangles in any vault that lacks that session. Shared notes
+# cite a session as plain uid text — frontmatter and body alike.
 #
-# Scope = the shared surface itself: NNN_*/docs/**, NNN_*/knowledge/**, and the whole common
-# layer (whichever folder `.brain-paths` names — `000_common/` by default).
-# 🔴 `sessions/` is deliberately NOT scanned — a session's own wikilinks are its record,
+# Scope = the shared surface itself: NNN_*/docs/**, NNN_*/p_memory/**, and the whole common
+# layer (whichever folder `.brain-paths` names).
+# 🔴 `hippocampus/` is deliberately NOT scanned — a session's own wikilinks are its record,
 # and the file is never pulled by anyone else.
 #
-# Two deliberate divergences from the knowledge-title scan above, both because the unit
+# Two deliberate divergences from the wiki summary scan above, both because the unit
 # differs (that scan checks per-note schema and mirrors what *recall* reads; this one
 # checks a tree a teammate *pulls*): it recurses (no -maxdepth), and it excludes no
 # meta files — a dangling link in `index.md` or `0.rejected.md` breaks for a teammate
 # exactly like one in a note. See knowledge note "validate 스코프는 recall 스코프의
 # 미러가 원칙" — divergence by decision, recorded, not drift.
 #
-# 🔴 `999_tools/` is NOT scanned here, and that is not a mirror divergence — this scan was never the
-# recall mirror (the knowledge-title scan above is). Its axis is *share scope*, and `999_tools/` is
+# 🔴 The tools root is NOT scanned here, and that is not a mirror divergence — this scan was never
+# the recall mirror (the wiki summary scan above is). Its axis is *share scope*, and the tools root is
 # gitignored machine-local content, so it is outside the shared surface by definition: no teammate
 # ever pulls it, so no link in it can dangle for one. It needs no exclusion either — it has neither
-# docs/ nor knowledge/, so the sweep below never picks it up (measured).
+# docs/ nor p_memory/, so the sweep below never picks it up (measured).
+#
+# 🔴 `neocortex/` is not scanned here either, and that one is scope left as it was rather than
+# scope reasoned about: step 6 of the 0.2.0 linter migration renamed this scan, it did not extend
+# it. neocortex/ *is* git-tracked and shared, so this is the gap to revisit when the dangling-link
+# check (`_index.md` line format) lands — extend on decision, not by drift.
 SDIRS=()
 while IFS= read -r d; do
   # brain_projects already drops the common root (it matches NNN_ when it sits at the vault
-  # root), so its docs/ and knowledge/ are not scanned twice — it is added whole below.
+  # root), so its docs/ and p_memory/ are not scanned twice — it is added whole below.
   [ -d "$d/docs" ] && SDIRS[${#SDIRS[@]}]="$d/docs"
-  [ -d "$d/knowledge" ] && SDIRS[${#SDIRS[@]}]="$d/knowledge"
+  [ -d "$d/p_memory" ] && SDIRS[${#SDIRS[@]}]="$d/p_memory"
 done < <(brain_projects)
 [ -n "$BRAIN_COMMON" ] && SDIRS[${#SDIRS[@]}]="$BRAIN_COMMON"
 
@@ -229,10 +257,11 @@ while IFS= read -r f; do
       # error — it would silently never match. Same discipline as the uid checks above.
       D8 = "[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
       D6 = "[0-9][0-9][0-9][0-9][0-9][0-9]"
-      # <PREFIX>-YYYYMMDD-HHMMSS; PREFIX optional because dreaming reports carry none
-      # (dreaming/SKILL.md §Report format).
+      # <PREFIX>-YYYYMMDD-HHMMSS, PREFIX optional — the 0.1.x session-uid shape. 0.2.0 session
+      # filenames are `<pp>_YYYYMMDD_<slug>`, so this pattern now catches legacy links during
+      # migration rather than links a fresh vault could produce.
       UID = "([A-Z][A-Z0-9]*-)?" D8 "-" D6
-      # Covers [[uid]] · [[sessions/uid]] (any path prefix) · [[uid|alias]] ·
+      # Covers [[uid]] · [[hippocampus/uid]] (any path prefix) · [[uid|alias]] ·
       # [[uid#heading]] · ![[uid]] (the leading ! is simply outside the match).
       # `[^]|#]` is POSIX-correct: a `]` right after `^` is a literal.
       # ponytail: no fenced-code-block awareness. A vault doc quoting a violation as an
@@ -258,7 +287,7 @@ done < "$LIST" >> "$OUT"
 # sessions-note-convention.md. Findings vs warns — deliberately asymmetric:
 #   FINDINGS (schema violations — --strict blocks on them):
 #   · `session:` key anywhere in docs frontmatter. Upgraded from the old "no session
-#     wikilink" rule: team vaults gitignore sessions/, so even a *plain uid* is a
+#     wikilink" rule: hippocampus/ is git-untracked, so even a *plain uid* is a
 #     reference no teammate can resolve. Team provenance = history `ticket`; the
 #     session uid rides the boundary commit message (git-convention.md).
 #   · `status:` absent, or a value outside created|draft|approved|deprecated — the only
@@ -282,8 +311,8 @@ done < "$LIST" >> "$OUT"
 # (KJP-58), which reads the §Value Axes table as its SSOT. Semantic duplication (a norm
 # restated in prose) remains with dreaming/PM review; this line exists so the split reads
 # as a decision, not an oversight.
-# Scope = NNN_*/docs/** recursive (the docs trees only — knowledge `source_sessions` is a
-# separate, legal axis and its dirs are not scanned). index/_index are folder meta
+# Scope = NNN_*/docs/** recursive (the docs trees only — the wiki layer has its own scan and
+# its dirs are not scanned here). index/_index are folder meta
 # (`next_id`, TOC titles), so they skip the unknown-key warn and the body-document rules
 # (status·id·mirror·updated) but not the session check. Feature-tier policies
 # (`docs/feature/<F>/policy/`) are NOT under the id rule yet — deliberate scope, extend on
@@ -347,7 +376,7 @@ while IFS= read -r f; do
       # Matches the key in every YAML shape: top-level `session:`, nested-map
       # `    session:`, inline-map `{ ..., session: ... }`, and the quoted spelling of
       # each (`"session":` — verifier bypass 2026-07-29). The leading class keeps
-      # `source_sessions:` (underscore before) and `sessions:` (no quote/colon right
+      # `cc_session_ids:` (underscore before) and `sessions:` (no quote/colon right
       # after "session") out of the match.
       if ($0 ~ SESSKEY) {
         print file ":" NR ": session key in docs frontmatter (banned — team provenance = history ticket:, the session uid goes in the boundary commit message)"
@@ -426,8 +455,6 @@ done < "$LIST" >> "$OUT"
 # ponytail: known limits, all judged not worth the weight for a real vault —
 #   · symlinked notes are skipped (`-type f`); use `find -L` if vaults ever use links.
 #   · filenames containing newlines break the line-based file list and counts.
-#   · `awk -v base=...` interprets backslash escapes, so a filename with a backslash
-#     reaches awk mangled (the uid/filename comparison may misreport).
 scanned="$n_sessions sessions, $n_knowledge knowledge, $n_shared shared, $n_docs docs"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
