@@ -86,7 +86,8 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
     tool-plugin.md                   #   plugin inventory
   hippocampus/                       # sessions · not git-tracked · not a recall target
     _index.md
-    <uid>.md                         # session = one file (episodic). uid = PROJECT_PREFIX-YYYYMMDD-HHMMSS
+    <PREFIX>_YYYYMMDD_<slug>.md      # session = one file (episodic). Same day + same slug forbidden.
+                                     #   Pre-0.2.0 files keep PROJECT_PREFIX-YYYYMMDD-HHMMSS.md — never renamed.
     hippocampus.base
     assets/                          # (optional) shared raw images & video
 ```

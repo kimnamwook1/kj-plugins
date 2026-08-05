@@ -4,7 +4,9 @@
 
 ## Frontmatter — 5 keys, all required
 
-The **filename is the session's identifier** (`PROJECT_PREFIX-YYYYMMDD-HHMMSS.md`); there is no id key in the frontmatter. Uniqueness is guaranteed by the second-resolution timestamp.
+The **filename is the session's identifier** (`PROJECT_PREFIX_YYYYMMDD_<slug>.md`); there is no id key in the frontmatter. `<slug>` is a short kebab-case reduction of the session Goal. Uniqueness is a **creation-time check** — same day + same slug is forbidden, and `ss` asks the user for a distinguishing slug rather than suffixing silently.
+
+- **Pre-0.2.0 sessions keep the retired `PROJECT_PREFIX-YYYYMMDD-HHMMSS.md` shape and are never renamed.** Measured 2026-08-05: 9 groups / 23 files share a project+day, and 3 of those groups are indistinguishable by any field, so a rename cannot preserve identity. Both shapes coexist in `hippocampus/`; every consumer reads the frontmatter, not the filename.
 
 - `status` — `active` | `parked` | `done` — **hard rule: these 3 values are all there is. No extensions**
   - `active` — in progress. Written by `ss` at creation and restored by `sr` on resume.

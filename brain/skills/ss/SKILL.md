@@ -69,10 +69,13 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 
    **(a) PM — filename mint + field collection (read-only):**
    - **PREFIX** — Read the project prefix recorded in the project hub `<PROJDIR>/_index.md` (or the legacy `<PROJDIR>/index.md`, where that is the hub). If missing, confirm with the user and include writing it into the hub in the (b) brief.
-   - **filename = `<PREFIX>-YYYYMMDD-HHMMSS.md`** (canon: sessions-note-convention). There is no `uid:` key — the filename *is* the identifier, and the second-resolution timestamp is what makes it unique:
+   - **filename = `<PREFIX>_YYYYMMDD_<slug>.md`** (canon: sessions-note-convention). There is no `uid:` key — the filename *is* the identifier. `<slug>` is a short kebab-case reduction of the session Goal (≤5 words, ASCII-safe); `<PREFIX>` carries global wikilink uniqueness.
+   - 🔴 **Same day + same slug is forbidden** — uniqueness is a **creation-time check**, not a timestamp guarantee. If the path already exists, do not silently suffix it: report the collision and ask the user for a distinguishing slug.
    ```bash
-   name="<PREFIX>-$(date +%Y%m%d-%H%M%S)"
+   name="<PREFIX>_$(date +%Y%m%d)_<slug>"
+   [ -e "$VAULT/hippocampus/$name.md" ] && echo "COLLISION: $name.md — ask the user for a different slug" || echo "OK"
    ```
+   - Sessions created before 0.2.0 use the retired `<PREFIX>-YYYYMMDD-HHMMSS.md` shape. **They are not renamed** — same-day collisions make 3 groups of them indistinguishable (measured 2026-08-05: 9 groups / 23 files). Both shapes coexist in `hippocampus/`; `sr`/`sl` read the frontmatter, not the filename.
    - Collect the current CC session id **if obtainable** (otherwise leave the list empty).
 
    **(b) Delegate to `scribe`** — "Write `<VAULT>/hippocampus/<name>.md` **exactly per the schema below** (a single file, not a folder)". Pass the settled values in the brief (project·updated·related_ticket·cc_session_ids·Goal text). Schema/frontmatter canon = `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md`:
@@ -115,4 +118,4 @@ Creates a session in the vault as a **single file**. A session is a self-contain
 - **The session file is created with `Write`, never `obsidian create`** — canon: `${CLAUDE_SKILL_DIR}/../_session-shared/vault-io.md` (§1 write rule · §2 why `create` is banned · §3 which CLI this is). **The party doing that write is the `scribe` worker** — the PM never writes vault **content** directly (governance canon: memory-control-convention §Governance).
 - **Write only under the `vault-root` in `CLAUDE.local.md`** — any other path or other vault is off-limits.
 - **The `status` vocabulary is exactly:** `active` / `parked` / `done` (3 values). **`ss` only ever writes `active`** — `parked` is `sh`'s, `done` is `sc`'s. Other states (abandoned·pending-verification·blocked) go in the Progress entry or as open `## To-Do-List` items, not in status.
-- **Session = a single file** — `hippocampus/<PREFIX>-YYYYMMDD-HHMMSS.md`. Not a folder.
+- **Session = a single file** — `hippocampus/<PREFIX>_YYYYMMDD_<slug>.md`. Not a folder.
