@@ -4,7 +4,7 @@ The folder TOC is **`_index.md`** — it must act as a pointer index, a table of
 
 ## Layers
 
-Fast, lossy capture; periodic consolidation. Capture that is expensive does not happen at all, so the hard work — dedup, re-tiering, staleness — is deferred to a batch.
+Fast, lossy capture; periodic consolidation. Capture that is expensive does not happen at all, so the hard work — dedup, re-tiering — is deferred to a batch. 🔴 **Staleness is not on that list**: dreaming's three operations are refine · link · promotion ②, none of which judges staleness, and the criterion for it is still undecided. Naming three things when one of them does not exist is how a doc starts lying (KJP-81).
 
 | Layer | Location | Note |
 |---|---|---|

@@ -1068,6 +1068,9 @@ description: 범용 작업 워커. PM 이 티켓·브리프를 위임할 때의 
 ## 하위 워커
 병렬·격리·재검증이 값을 할 때만 띄운다. 쪼개면 왕복이 늘어난다. 티켓 안에서 끝나는 일은 카드로 만들지 않는다.
 
+## 도구 재고
+직접 도구를 만들기 전에 볼트 tools 층(`&lt;BRAIN_TOOLS&gt;/tool-*.md` — 리졸버 `scripts/vault-paths.sh`, 매니페스트 키 `tools_root`)을 먼저 본다. 있는 CLI·MCP 를 못 찾고 재발명하는 것이 흔한 실패다. tools 층은 opt-in 이라 없으면 그냥 넘어간다.
+
 ## scribe 브리프일 때
 - **볼트 콘텐츠 쓰기 전량**을 담당한다 — 세션 파일 · Progress · frontmatter · p_memory · neocortex · `_index.md` · dream-logs.
 - **코드 금지 · 커밋 금지.** 커밋은 PM 이다(경계 기록 — 레포 전체를 보는 자만 안전하다).
@@ -1434,7 +1437,7 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
   <p><b>소유권 경계</b>: 플러그인은 <b>규칙</b>을, 볼트는 <b>콘텐츠</b>를 소유한다. 한 플러그인이 모든 볼트를 섬기고, 볼트의 인덱스·문서는 규칙을 가리키되 재서술하지 않는다.</p>
 
   <h3>층</h3>
-  <p>빠르고 손실 있는 포착, 주기적 통합. 포착이 무거우면 아예 일어나지 않는다. dedup·재계층화·staleness 같은 어려운 일은 배치로 미룬다.</p>
+  <p>빠르고 손실 있는 포착, 주기적 통합. 포착이 무거우면 아예 일어나지 않는다. dedup·재계층화 같은 어려운 일은 배치로 미룬다. <b>staleness 는 여기 없다</b> — dreaming 3연산(정제·링크·승격②)에 판정이 없고, <code>neocortex</code> stale 기준은 §미정에 남아 있다. 셋을 나열하면 하나가 거짓이 된다.</p>
   <div class="tree"><pre>
 <span class="b">raw</span>     <span class="f">hippocampus/</span>              <span class="c">세션. git 밖. recall 대상 아님</span>
 <span class="b">wiki</span>    <span class="f">&lt;project&gt;/p_memory/</span>       <span class="c">프로젝트 지식</span>
