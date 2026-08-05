@@ -111,7 +111,11 @@ printf -- '---\nsummary:\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memor
 # _index scan (it is the only thing recall injects). Lines 1-4 are heading/prose/blank: not TOC
 # entries, so they must stay quiet. Line 5 is the canonical form. 6 dangles. 7 uses a hyphen where
 # canon writes an em dash. 8 has no summary after the dash. 9 is a bullet with no wikilink at all.
-# Line numbers are load-bearing for the asserts below.
+# Line numbers are load-bearing for the asserts below, so new entries only ever append.
+# Lines 14-17 exist for the coverage rule's sake, not their own: every wiki note in this folder is
+# listed here so that the note keeps failing exactly one rule (the discipline stated at the top of
+# this file). Without them the coverage rule would speak about fixtures built for other rules, and
+# the filename-anchored quiet asserts below would stop meaning what they say.
 cat > "$V/013_selftest/p_memory/_index.md" <<'EOF'
 # p_memory — 목차
 
@@ -126,6 +130,10 @@ Intro prose is not a TOC entry.
 - [[나]] — non-ASCII stem, exists
 - [[다]] — non-ASCII stem, exists
 - [[라]] — non-ASCII stem, exists
+- [[no-summary]] — indexed, so only the summary rule can speak about it
+- [[empty-summary]] — indexed, so only the summary rule can speak about it
+- [[wl-pmem]] — indexed, so only the wikilink rule can speak about it
+- [[retired-keys]] — indexed, so only the retired-key rule can speak about it
 EOF
 # 🔴 Locale regression (KJP-74). Under a UTF-8 collation locale macOS `sort -u` treats these four
 # stems as EQUAL and keeps one — measured 2026-08-05: `가 나 다 라` deduplicates to a single line,
@@ -135,6 +143,14 @@ EOF
 for _k in 가 나 다 라; do
   printf -- '---\nsummary: non-ASCII stem fixture\n---\n' > "$V/013_selftest/p_memory/$_k.md"
 done
+# 🔴 Index coverage (KJP-82) — the dangling rule read backwards. Both notes are complete and
+# summarised and sit in a scanned folder, so every other rule is silent about them: only the
+# coverage rule can speak, which is what makes the two asserts unambiguous.
+# `마` is the non-ASCII half. The four stems above are indexed and must stay quiet, and a quiet
+# assert cannot by itself tell "compared and found covered" from "never compared at all" — this
+# one fires, so the non-ASCII comparison is pinned in both directions.
+printf -- '---\nsummary: a summarised note that no index names\n---\n' > "$V/013_selftest/p_memory/orphan.md"
+printf -- '---\nsummary: non-ASCII stem that no index names\n---\n'    > "$V/013_selftest/p_memory/마.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/0.rejected.md"    # excluded (meta)
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/nested/deep-no-summary.md"  # out of scope
 # Retired 0.1.x wiki keys, all ten in one note. `summary:` is present, so only the retired-key
@@ -149,20 +165,32 @@ printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/policies/policies-no-s
 # the common layer recursively. Positive fixture: reverting that drops it from scope and
 # kills the assert below, while the deeper project nested/ note stays out of scope regardless.
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/facts/machines/machine-no-summary.md"
+# Coverage positive in the common layer, one folder deep: its sibling above is covered by a
+# vault-relative line in facts/_index.md and this one by nothing, so the pair proves the subtree
+# resolution actually ran rather than silently marking the whole folder covered.
+printf -- '---\nsummary: a nested note that no index names\n---\n' > "$V/$COMMON/facts/machines/machine-orphan.md"
 # Named misc-*, not tool-*: since KJP-44 a `tool-*.md` under facts/ would contradict the canon
 # (tool inventories live in the tools root). This fixture only has to be a summarised facts note.
 printf -- '---\nsummary: a summarised fact\n---\n' > "$V/$COMMON/facts/misc-x.md"
 # The common layer's own TOC. The _index scan reaches it only because that layer is walked
 # recursively (facts/ is depth 1 under the common root) — dropping the recursion kills this assert.
-printf -- '- [[misc-x]] — a summarised fact\n- [[facts-ghost]] — points at a file that is not there\n' \
-  > "$V/$COMMON/facts/_index.md"
+# Line 5 is the vault-relative entry shape, the way a subtree index covers notes in a child folder
+# that has no index of its own (measured in the real vault 2026-08-05: `org/machines/_index.md`
+# names `org/machines/clients/*/…` and nothing else covers those eight notes).
+printf -- '- [[misc-x]] — a summarised fact\n- [[facts-ghost]] — points at a file that is not there\n- [[facts-no-summary]] — indexed, so only the summary rule can speak about it\n- [[wl-common]] — indexed, so only the wikilink rule can speak about it\n- [[%s/facts/machines/machine-no-summary]] — vault-relative form, covering a child folder\n' \
+  "$COMMON" > "$V/$COMMON/facts/_index.md"
+# The common root's own TOC. `patterns/` and `policies/` hold notes but no index of their own, so
+# they are covered from here by the vault-relative form — the second real-vault shape, and the
+# reason coverage may not be judged folder-locally.
+printf -- '- [[wl-dreaming]] — indexed, so only the wikilink rule can speak about it\n- [[%s/patterns/patterns-no-summary]] — vault-relative form, child folder with no index of its own\n- [[%s/policies/policies-no-summary]] — vault-relative form, child folder with no index of its own\n' \
+  "$COMMON" "$COMMON" > "$V/$COMMON/_index.md"
 
 # neocortex/ — vault-wide knowledge, root-fixed (no manifest key) and IN the wiki lint scope
 # alongside p_memory (canon: the wiki layer is p_memory + neocortex). The no-summary fixture is
 # what proves the root is scanned at all; dropping the root kills it.
 printf -- '---\nupdated: 2026-07-18\n---\n'           > "$V/neocortex/NEO-no-summary.md"
 printf -- '---\nsummary: vault-wide knowledge\n---\n' > "$V/neocortex/NEO-good.md"
-printf -- '- [[NEO-good]] — vault-wide knowledge\n- [[NEO-ghost]] — points at a file that is not there\n' \
+printf -- '- [[NEO-good]] — vault-wide knowledge\n- [[NEO-ghost]] — points at a file that is not there\n- [[NEO-no-summary]] — indexed, so only the summary rule can speak about it\n- [[wl-neo]] — indexed, so only the wikilink rule can speak about it\n' \
   > "$V/neocortex/_index.md"   # excluded from the note scan (meta) · IS the _index scan's input
 # dream-logs.md is dreaming's run log, not a note: single-file accumulation whose frontmatter is
 # one key (`updated`). It must be excluded, or every real vault reports a phantom missing summary.
@@ -178,7 +206,7 @@ printf -- '---\nupdated: 2026-07-18T10:00:00\n---\n\n- [2026-07-18]-ran a cycle\
 # p_memory/ subfolder, which this folder deliberately does not have.
 printf -- '---\nupdated: 2026-07-18\n---\n'      > "$V/999_tools/tools-no-summary.md"
 printf -- '---\nsummary: MCP inventory\n---\n'   > "$V/999_tools/tool-mcp.md"
-printf -- '- [[tool-mcp]] — MCP inventory\n- [[tool-ghost]] — points at a file that is not there\n' \
+printf -- '- [[tool-mcp]] — MCP inventory\n- [[tool-ghost]] — points at a file that is not there\n- [[tools-no-summary]] — indexed, so only the summary rule can speak about it\n- [[wl-tools]] — indexed, so only the coverage rule stays quiet about it\n' \
   > "$V/999_tools/_index.md"  # excluded from the note scan (meta) — same rule as p_memory/
 printf -- '---\nsummary: tool note citing a session\n---\n[[KJP-20260718-120011]]\n' \
   > "$V/999_tools/wl-tools.md"
@@ -371,6 +399,38 @@ assert_no_match "index: a resolving link is not dangling (neocortex)" 'dangling 
 assert_no_match "index: hippocampus/ TOCs are outside the scan"  'ghost-session'
 assert_no_match "index: docs/ TOCs are outside the scan"         'ghost-doc'
 
+# Index coverage (KJP-82) — the same relation read backwards. A dangling link makes recall believe
+# in a note that is not there; an uncovered note makes recall never learn that a real one exists.
+# The second is the quieter failure: the file is intact and every other rule passes.
+assert_match   "coverage: an unindexed p_memory note is caught"  'p_memory/orphan.md:1: uncovered note: \[\[orphan\]\]'
+assert_match   "coverage: an unindexed non-ASCII stem is caught" 'p_memory/마.md:1: uncovered note: \[\[마\]\]'
+assert_match   "coverage: the common layer is in coverage scope" 'facts/machines/machine-orphan.md:1: uncovered note: \[\[machine-orphan\]\]'
+# The quiet half, one assert per resolution shape. Each is paired with a positive above — the
+# bare-stem shape with orphan.md, the vault-relative shape with machine-orphan.md in the very same
+# folder — so silence here cannot be the silence of a scan that never ran.
+assert_no_match "coverage: a bare-stem line covers its own folder"       'p_memory/good.md:1: uncovered note'
+assert_no_match "coverage: a vault-relative line covers a child folder"  'machine-no-summary.md:1: uncovered note'
+assert_no_match "coverage: a child folder with no index is covered from above" 'patterns-no-summary.md:1: uncovered note'
+assert_no_match "coverage: the common root's own note is covered"        'wl-dreaming.md:1: uncovered note'
+# 🔴 Locale regression, coverage side (the KJP-74 class). The four stems are indexed and must be
+# recognised as covered; one assert per stem, so a partial collapse of the covered set still fails.
+# 마 above is the paired positive that keeps these four from being vacuous.
+assert_no_match "coverage: indexed non-ASCII stem 가 is covered"  '가.md:1: uncovered note'
+assert_no_match "coverage: indexed non-ASCII stem 나 is covered"  '나.md:1: uncovered note'
+assert_no_match "coverage: indexed non-ASCII stem 다 is covered"  '다.md:1: uncovered note'
+assert_no_match "coverage: indexed non-ASCII stem 라 is covered"  '라.md:1: uncovered note'
+# Exclusions — the same set the note scan uses, since coverage asks its question about exactly the
+# files that scan collects. Each excluded file below is genuinely named by no index, so widening
+# the note set would make it fire.
+assert_no_match "coverage: an index is not a note"               '_index.md:1: uncovered note'
+assert_no_match "coverage: 0.* meta files are not notes"         '0.rejected.md:1: uncovered note'
+assert_no_match "coverage: dream-logs.md is not a note"          'dream-logs.md:1: uncovered note'
+assert_no_match "coverage: nested p_memory stays out of scope"   'deep-no-summary.md:1: uncovered note'
+# Scope boundaries, the same two trees the dangling scan excludes. Both hold unindexed files
+# (every hippocampus/ session, every docs/ document), so silence can only mean the boundary held.
+assert_no_match "coverage: hippocampus/ is outside the coverage scan" 'hippocampus/.*uncovered note'
+assert_no_match "coverage: docs/ is outside the coverage scan"        'docs/.*uncovered note'
+
 # session-uid wikilinks on the shared surface — one positive per scan root
 assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:4: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
 assert_match   "docs/: hippocampus/-prefixed link is caught" 'docs/wl-path.md:4: .*\[\[hippocampus/KJP-20260718-120001\]\]'
@@ -454,16 +514,25 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # numbers are asserted (not just "some count"), recomputed by hand for the 0.2.0 fixture set:
 #   12 sessions — CLEAN · BAD-1 · BAD-2 · PARKED-12 · BAD-13 · BAD-5 · BAD-6 · QUOTED-7 ·
 #     QUOTED-8 · CRLF-9 · RETIRED-16 · WL-14 (index/_index/sample excluded; nested out of scope)
-#   22 wiki — 9 p_memory (good + no-summary + empty-summary + wl-pmem + retired-keys + the four
-#     non-ASCII stems 가/나/다/라 (locale regression, KJP-74); _index/0.*/nested excluded)
-#     + 7 common (3 facts + 1 machines + 1 pattern + 1 policy +
-#     1 common-root note; facts/_index excluded) + 3 neocortex (NEO-no-summary + NEO-good +
+#   25 wiki — 11 p_memory (good + no-summary + empty-summary + wl-pmem + retired-keys + orphan
+#     + the four non-ASCII stems 가/나/다/라 (locale regression, KJP-74) + 마 (its coverage twin);
+#     _index/0.*/nested excluded)
+#     + 8 common (3 facts + 2 machines + 1 pattern + 1 policy +
+#     1 common-root note; the two _index files excluded) + 3 neocortex (NEO-no-summary + NEO-good +
 #     wl-neo; _index/dream-logs excluded) + 3 tools (_index.md excluded)
-#   4 indexes — the folder TOCs the note scan just excluded, counted by the scan that owns them:
-#     p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index
-#   47 shared — 21 docs-tree files (20 under 013 + the 014_mirror API_SPEC; no exclusions on
-#     this surface) + 13 p_memory (recursive here, so _index/0.*/nested all count; includes the
-#     four non-ASCII stems) + 8 common + 5 neocortex (whole folder, meta files included)
+#   5 indexes — the folder TOCs the note scan just excluded, counted by the scan that owns them:
+#     p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index + org/_index
+#   26 entries — distinct link targets harvested from those 5 TOCs, the coverage rule's evidence
+#     base. 🔴 It is the one number no other count implies, and the one that separates "every note
+#     is indexed" from "the indexes were never parsed": both read as zero findings. 10 from
+#     p_memory/_index (good · ghost-note · 가/나/다/라 · no-summary · empty-summary · wl-pmem ·
+#     retired-keys — the three repeat [[good]] lines and the link-less bullet add nothing, it is a
+#     set) + 4 neocortex + 4 tools + 5 org/facts (4 stems + 1 vault-relative) + 3 org/_index
+#     (1 stem + 2 vault-relative)
+#   51 shared — 21 docs-tree files (20 under 013 + the 014_mirror API_SPEC; no exclusions on
+#     this surface) + 15 p_memory (recursive here, so _index/0.*/nested all count; includes the
+#     four non-ASCII stems, 마 and orphan) + 10 common (the two _index files count here) +
+#     5 neocortex (whole folder, meta files included)
 #   21 docs — the same docs-tree files counted again by the docs frontmatter scan
 #     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index — index/_index counted
 #     here: meta files skip rules, not the scan)
@@ -484,7 +553,7 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # verbatim because it records what was measured then, not what this fixture set counts now:
 # every other count was byte-identical before and after (19 sessions, 102 knowledge, 321 shared,
 # 24 issues).
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 22 wiki, 4 indexes, 47 shared, 21 docs)'
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 25 wiki, 5 indexes, 26 entries, 51 shared, 21 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -501,7 +570,7 @@ printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]]\n' \
   > "$W/013_wl/docs/only.md"
 REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
 assert_exit  "wikilink-only vault exits 0 in default mode" 0 "$rc"
-assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 indexes, 1 shared, 1 docs)'
+assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 indexes, 0 entries, 1 shared, 1 docs)'
 /bin/bash "$VALIDATE" "$W" --strict > /dev/null 2>&1
 assert_exit  "a wikilink finding alone fails --strict" 1 $?
 rm -rf "$W"
@@ -548,7 +617,7 @@ assert_match    "other scans survive the tools override"        'facts/facts-no-
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/hippocampus"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
-assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 indexes, 0 shared, 0 docs)'
+assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 indexes, 0 entries, 0 shared, 0 docs)'
 # No `.brain-paths` here either: the schema_version rule must stay silent on a vault that never
 # declared a manifest, because every key then resolves to its documented default — a legal vault.
 assert_no_match "empty vault: an absent manifest is legal and silent" 'schema_version'
@@ -613,7 +682,7 @@ assert_match    "restructured: the moved common layer's TOC is scanned" '_compan
 assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-summary.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 indexes, 6 shared, 1 docs)'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 indexes, 1 entries, 6 shared, 1 docs)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
 printf -- 'schema_version: 2\ncommon_root: nope\n' > "$R/.brain-paths"
@@ -639,7 +708,7 @@ assert_no_match "org vault: _index-only folder is not asked for a summary" 'empt
 assert_match    "org vault: the _index-only folder's TOC is still scanned" 'empty-axis/_index.md:1: dangling _index link: \[\[x\]\]'
 assert_no_match "org vault: absent tools root is silent (legal state)"  '999_tools'
 assert_no_match "org vault: no missing-root warning at all"             'not found'
-assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 indexes, 2 shared, 0 docs)'
+assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 indexes, 1 entries, 2 shared, 0 docs)'
 rm -rf "$R2"
 
 # usage errors exit 2 (documented separately from the findings exit codes)
