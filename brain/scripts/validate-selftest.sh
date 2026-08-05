@@ -122,7 +122,19 @@ Intro prose is not a TOC entry.
 - [[good]] - hyphen where canon writes an em dash
 - [[good]] —
 - a bullet carrying no wikilink
+- [[가]] — non-ASCII stem, exists
+- [[나]] — non-ASCII stem, exists
+- [[다]] — non-ASCII stem, exists
+- [[라]] — non-ASCII stem, exists
 EOF
+# 🔴 Locale regression (KJP-74). Under a UTF-8 collation locale macOS `sort -u` treats these four
+# stems as EQUAL and keeps one — measured 2026-08-05: `가 나 다 라` deduplicates to a single line,
+# so three live notes vanish from the target set and their index lines are reported as dangling.
+# The four files below exist; the assert is that none of them is ever called dangling. Without
+# `LC_ALL=C` on the target-set sort (validate.sh) this fails with three findings.
+for _k in 가 나 다 라; do
+  printf -- '---\nsummary: non-ASCII stem fixture\n---\n' > "$V/013_selftest/p_memory/$_k.md"
+done
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/0.rejected.md"    # excluded (meta)
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/nested/deep-no-summary.md"  # out of scope
 # Retired 0.1.x wiki keys, all ten in one note. `summary:` is present, so only the retired-key
@@ -347,6 +359,11 @@ assert_match   "index: a bullet carrying no wikilink"            'p_memory/_inde
 assert_no_match "index: the canonical entry line is quiet"       'p_memory/_index.md:5'
 assert_no_match "index: heading/prose/blank lines are not entries" 'p_memory/_index.md:[1-4]:'
 assert_no_match "index: a link that resolves is never dangling"  'dangling _index link: \[\[good\]\]'
+# 🔴 Locale regression guard (KJP-74) — one assert per stem, so a partial collapse still fails.
+assert_no_match "index: non-ASCII stem 가 resolves"              'dangling _index link: \[\[가\]\]'
+assert_no_match "index: non-ASCII stem 나 resolves"              'dangling _index link: \[\[나\]\]'
+assert_no_match "index: non-ASCII stem 다 resolves"              'dangling _index link: \[\[다\]\]'
+assert_no_match "index: non-ASCII stem 라 resolves"              'dangling _index link: \[\[라\]\]'
 assert_no_match "index: a resolving link is not dangling (neocortex)" 'dangling _index link: \[\[NEO-good\]\]'
 # scope boundaries. Each is pinned by a fixture that WOULD fire if the scope moved: hippocampus/
 # is the raw layer (never a recall target) and docs/ TOCs are not memory-note indexes — both
@@ -437,15 +454,16 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # numbers are asserted (not just "some count"), recomputed by hand for the 0.2.0 fixture set:
 #   12 sessions — CLEAN · BAD-1 · BAD-2 · PARKED-12 · BAD-13 · BAD-5 · BAD-6 · QUOTED-7 ·
 #     QUOTED-8 · CRLF-9 · RETIRED-16 · WL-14 (index/_index/sample excluded; nested out of scope)
-#   18 wiki — 5 p_memory (good + no-summary + empty-summary + wl-pmem + retired-keys;
-#     _index/0.*/nested excluded) + 7 common (3 facts + 1 machines + 1 pattern + 1 policy +
+#   22 wiki — 9 p_memory (good + no-summary + empty-summary + wl-pmem + retired-keys + the four
+#     non-ASCII stems 가/나/다/라 (locale regression, KJP-74); _index/0.*/nested excluded)
+#     + 7 common (3 facts + 1 machines + 1 pattern + 1 policy +
 #     1 common-root note; facts/_index excluded) + 3 neocortex (NEO-no-summary + NEO-good +
 #     wl-neo; _index/dream-logs excluded) + 3 tools (_index.md excluded)
 #   4 indexes — the folder TOCs the note scan just excluded, counted by the scan that owns them:
 #     p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index
-#   43 shared — 21 docs-tree files (20 under 013 + the 014_mirror API_SPEC; no exclusions on
-#     this surface) + 9 p_memory (recursive here, so _index/0.*/nested all count) + 8 common
-#     + 5 neocortex (whole folder, meta files included)
+#   47 shared — 21 docs-tree files (20 under 013 + the 014_mirror API_SPEC; no exclusions on
+#     this surface) + 13 p_memory (recursive here, so _index/0.*/nested all count; includes the
+#     four non-ASCII stems) + 8 common + 5 neocortex (whole folder, meta files included)
 #   21 docs — the same docs-tree files counted again by the docs frontmatter scan
 #     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index — index/_index counted
 #     here: meta files skip rules, not the scan)
@@ -466,7 +484,7 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # verbatim because it records what was measured then, not what this fixture set counts now:
 # every other count was byte-identical before and after (19 sessions, 102 knowledge, 321 shared,
 # 24 issues).
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 18 wiki, 4 indexes, 43 shared, 21 docs)'
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 22 wiki, 4 indexes, 47 shared, 21 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?

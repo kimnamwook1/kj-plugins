@@ -284,7 +284,14 @@ if [ "$n_index" -gt 0 ]; then
     rel="${p#"$VAULT"}"; rel="${rel#/}"
     base="${p##*/}"
     printf '%s\n%s\n' "${rel%.md}" "${base%.md}"
-  done | sort -u > "$TARGETS"
+  # 🔴 LC_ALL=C is load-bearing, not style. Under a UTF-8 collation locale macOS `sort -u`
+  # treats strings with no primary collation weight as EQUAL and drops all but one — measured
+  # 2026-08-05 (KJP-74): a list of `가.md 나.md 다.md 라.md` deduplicates to ONE line, and the
+  # real vault's 74-file p_memory collapsed to 73 targets, reporting a live note as a dangling
+  # `_index` link. The failure is silent, it only bites on non-ASCII names, and it makes a
+  # must-be-zero gate unpassable. Byte ordering is what a target *set* needs anyway — this is
+  # set membership, not human-facing sort order.
+  done | LC_ALL=C sort -u > "$TARGETS"
 fi
 
 while IFS= read -r f; do
