@@ -1,5 +1,5 @@
 {
-  "description": "Keeps ~/.claude/brain-docs pointed at this plugin's docs, so CLAUDE.local.md Router paths survive version bumps and repo moves.",
+  "description": "SessionStart: keeps ~/.claude/brain-docs pointed at this plugin's docs, so CLAUDE.local.md Router paths survive version bumps and repo moves, and reports KERNEL drift in this plugin's own agent definitions. PostToolUse: reports KERNEL drift in whichever agents/ directory was just edited. Both drift checks are silent on pass — see hooks/kernel-check-hook.sh for why these two events and not CI or pre-commit.",
   "hooks": {
     "SessionStart": [
       {
@@ -8,6 +8,23 @@
             "type": "command",
             "command": "ln -sfn \"${CLAUDE_PLUGIN_ROOT}/docs\" \"$HOME/.claude/brain-docs\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/kernel-check-hook.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/kernel-check-hook.sh\"",
+            "timeout": 10
           }
         ]
       }
