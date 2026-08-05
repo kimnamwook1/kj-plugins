@@ -19,7 +19,8 @@ Three observations drive the design:
 2. **Knowledge that exists but isn't retrieved doesn't exist.** Capture without recall is a
    write-only archive. brain treats retrieval as a first-class problem: notes are written
    trigger-first (when does this apply?), and a recall step primes every new session with the
-   knowledge and past mistakes relevant to the work at hand.
+   indexes of the memory accumulated around this work — so the agent knows what exists and
+   opens only what it needs.
 3. **Personas are dead.** Giving agents characters ("you are a meticulous senior engineer…")
    does not survive contact with real work. What actually survives is **context isolation,
    runtime permissions, and the brief.** So brain ships three worker *profiles* differing only
@@ -27,8 +28,8 @@ Three observations drive the design:
 
 Beneath these sits one operating principle: **fast-lossy capture + periodic consolidation.**
 Real-time writing is kept cheap and imperfect — if capture is heavy, it stops happening. The
-hard work (dedup, re-layering, staleness) is deferred to a periodic batch job (Dreaming),
-exactly as the brain defers consolidation to sleep.
+hard work (folding duplicates together, linking, re-tiering) is deferred to a periodic batch job
+(Dreaming), exactly as the brain defers consolidation to sleep.
 
 ## Architecture
 
@@ -36,14 +37,14 @@ exactly as the brain defers consolidation to sleep.
                  ┌────────────────────────────────────────────────┐
                  │           Vault (Obsidian-compatible)          │
                  │                                                │
-                 │  000_common/          NNN_<project>/           │
-                 │    facts/ patterns/     knowledge/  docs/      │
-                 │    policies/                                   │
-                 │  999_tools/           ← machine-global, ignored│
-                 │  sessions/<uid>.md    ← episodic capture       │
+                 │  <common_root>/       <projects_root>/NNN_<p>/ │
+                 │    fact record          p_memory/  docs/       │
+                 │  neocortex/           ← vault-wide knowledge   │
+                 │  <tools_root>/        ← machine-global, ignored│
+                 │  hippocampus/*.md     ← episodic capture       │
                  └───────▲───────────────────────────┬────────────┘
                          │ writes                    │ recall at session start
-                         │ (scribe briefs only)      │ (grep priming, trigger-first)
+                         │ (scribe briefs only)      │ (folder indexes, whole)
                          │                           ▼
   ┌──────────────┐    ┌────────────────────────────────────────────┐
   │ CLAUDE.local │───▶│              PM (main session)             │
@@ -59,16 +60,16 @@ exactly as the brain defers consolidation to sleep.
                       └────────────────────────────────────────────┘
 ```
 
-The vault box shows the **default layout** — each axis root (common · projects · tools) is a
-per-vault fact, declared in `<vault>/.brain-paths` and resolved by `scripts/vault-paths.sh`
-(see *The vault* below).
+Three roots in that box are **per-vault facts** — common · projects · tools — declared in
+`<vault>/.brain-paths` and resolved by `scripts/vault-paths.sh`; `neocortex/` and `hippocampus/`
+are root-fixed and take no manifest key (see *The vault* below).
 
 Two layers, deliberately separated:
 
 | Layer | What it does | Mechanism |
 |---|---|---|
 | **Write** (accumulate, organize) | session capture → knowledge promotion → human-readable docs | the vault + PM/scribe governance |
-| **Read** (retrieve, recall) | query accumulated memory at low token cost | recall step (grep priming, trigger-first) + router pointers in `CLAUDE.local.md` |
+| **Read** (retrieve, recall) | query accumulated memory at low token cost | recall step (the folder indexes, injected whole) + router pointers in `CLAUDE.local.md` |
 
 The vault is always the system of record; read-side indexing can additionally be delegated to an
 external read-only index, but nothing on the read side ever owns content.
@@ -78,12 +79,12 @@ Brain-to-harness mapping (the design-consistency anchor):
 | Brain | This harness |
 |---|---|
 | Working memory | LLM context / the live session |
-| **Hippocampus** — fast, lossy episodic encoding | session notes + `## Progress` (Done/Mistake/Fixed/Learned/Outputs) |
+| **Hippocampus** — fast, lossy episodic encoding | `hippocampus/` session notes + `## Progress` (Done/Mistake/Fixed/Learned/Outputs) |
 | **Sleep consolidation** — replay, pruning, episodic→semantic | **Dreaming skill** (periodic batch) |
-| **Neocortex** — semantic long-term memory | `knowledge/` (per project) + the common layer (patterns/facts — `000_common/` by default) |
+| **Neocortex** — semantic long-term memory | `p_memory/` (per project) + `neocortex/` (vault-wide) + the common layer (the fact record) |
 | **Cue-based recall** | recall step at session start + router pointers (trigger-first) |
-| **Synaptic pruning** (forgetting) | Dreaming staleness flags |
-| Episodic vs semantic separation | sessions (episodic) vs knowledge (semantic); promotion = the episodic→semantic conversion |
+| **Synaptic pruning** (forgetting) | Dreaming folds duplicates together and proposes deletions (never applies them) |
+| Episodic vs semantic separation | the raw layer (`hippocampus/`) vs the wiki layer; promotion = the episodic→semantic conversion. 🔴 **The two never point at each other** — nothing is written back into a session |
 
 ## Install & Quickstart
 
@@ -101,11 +102,12 @@ Brain-to-harness mapping (the design-consistency anchor):
 # 3. Content setup (once per project)
 /brain:onboard   # 5-question interview (ticket system · goal · stack · regulation · deploy
                  # target) — fills stub docs to draft for answered questions only — plus a
-                 # measured environment check → tools-root inventories + facts/machines/
+                 # measured environment check → tools-root inventories + the common layer's
+                 # machines/ notes
 
 # 4. Daily loop — one verb, one skill
-/brain:ss        # start a NEW tracked session — recall injects relevant knowledge and past
-                 # Mistakes into the session Context. Never resumes, never scans for parked
+/brain:ss        # start a NEW tracked session — recall injects the relevant folder indexes
+                 # into the session's `## Recall`. Never resumes, never scans for parked
                  # sessions, never even mentions them
 /brain:sr        # resume a parked session — the only path back into one; status parked → active,
                  # re-presents goal, latest progress and recall priming (screen-only)
@@ -115,8 +117,9 @@ Brain-to-harness mapping (the design-consistency anchor):
 /brain:sc        # complete a session — closing entry, status → done, promotions finalized
 
 # 5. Periodically
-/brain:dreaming  # batch consolidation — dedup proposals, staleness flags, second-stage
-                 # promotion (common layer · candidates/ pool), structure audits, recall-layer refresh
+/brain:dreaming  # batch consolidation — refine (fold duplicates, facts unchanged), link
+                 # (`related`, never a shortcut across two hops), promotion ② (p_memory →
+                 # neocortex). Sessions are neither read nor written
 ```
 
 ## Schema check (`scripts/validate.sh`)
@@ -135,41 +138,85 @@ Exit codes: `0` clean or warn-only · `1` findings under `--strict` · `2` usage
 (missing/unknown argument, root not a directory, `mktemp` failure). `2` is a *broken run*,
 not a clean one — CI should treat it as failure in both modes.
 
-What it checks — **sessions** (`sessions/*.md`, top level only; the folder TOC —
-`_index.md`, legacy `index.md` — and the
-`sample-session.md` schema placeholder excluded, since none is a session): the six required
-frontmatter keys (`uid` `project` `created` `updated` `status` `writer` — `updated` carries a
-full `YYYY-MM-DDTHH:MM:SS` local datetime; date-only = legacy-legal, format canon
-`docs/sessions-note-convention.md`), `uid` matching
-`<PREFIX>-YYYYMMDD-HHMMSS` **and** the filename, and `status` being exactly one of
-`active|parked|done` (a document status such as `draft` leaking into a session note is called
-out specifically, as is the retired `cancel` — whose message carries the migration instruction:
-an abandoned session is `done` + an `abandoned` tag). **Knowledge notes** — the top level of each project folder's `knowledge/`, of the
-common layer's `{facts,patterns,policies}/`, and of the tools root — all roots resolved through
-the vault's `.brain-paths` manifest (`scripts/vault-paths.sh`; the tree under *The vault* below
-shows the defaults): `title:` present. Subdirectories
-are not scanned, matching the flat scan in
-`skills/_session-shared/recall.md`, which also supplies the `_index.md`/`index.md` + `0.*` meta exclusion —
-with one surgical exception, the common layer's `facts/machines/`, added as an explicit scan root
-(one note per machine, which recall reads). This scan is the recall mirror, so it tracks recall's
-roots exactly; the tools root is here because recall scans it as a `[C]` source.
+It runs **four scans**, in this order.
 
-**Session-uid wikilinks on the shared surface** — every `*.md` under each project folder's
-`docs/` and `knowledge/` and the common layer (roots per `.brain-paths`; recursive, no
-meta-file exclusion): a `[[…]]` whose
-target is a session uid is a finding. Canon is `docs/git-convention.md` §Share scope —
-`sessions/` sits outside the team-shared surface and a team vault gitignores it, so the link
-dangles in a teammate's vault; a shared note cites a session as **plain uid text**. Catches
-`[[uid]]`, `[[sessions/uid]]`, `[[uid|alias]]`, `[[uid#heading]]`, `![[uid]]`, for both the
-`<PREFIX>-YYYYMMDD-HHMMSS` form and the PREFIX-less dreaming-report form. 🔴 **`sessions/`
-itself is not scanned** — a session's own wikilinks are its record, and neither is the tools
-root (`999_tools/` by default), which is gitignored and therefore not shared surface at all. Wikilinks between vault
-*documents* (`[[<PREFIX>-ADR-0000N]]`, `[[<ID>]]`) are untouched; only session targets are
-banned.
+**① Sessions** — the raw layer, `hippocampus/*.md`, top level only (the folder TOC —
+`_index.md`, legacy `index.md` — and the `sample-session.md` schema placeholder excluded, since
+none is a session). **Five required frontmatter keys**: `status` · `project` · `updated` ·
+`related_ticket` · `cc_session_ids` (`updated` carries a full `YYYY-MM-DDTHH:MM:SS` local
+datetime; date-only = legacy-legal, format canon `docs/sessions-note-convention.md`). `status`
+must be exactly one of `active|parked|done` — a document status such as `draft` leaking into a
+session note is called out specifically, as is the retired `cancel`, whose message carries the
+migration instruction (an abandoned session is `done` + an `abandoned` tag).
 
-Every run prints the scanned file counts (`OK — no issues (22 sessions, 271 knowledge, 640
-shared)`) so a collapsed scan is visibly different from a clean vault — "OK" alone cannot
-distinguish the two.
+🔴 **There is no identity key, and therefore no identity check.** The filename *is* the
+session's identifier, so `uid` · `created` · `writer` are **retired keys** and each is reported
+with its own migration instruction. That check exists because "missing key" can say nothing
+about a key that is *present and no longer meant to be* — a vault that never dropped them would
+otherwise pass in silence.
+
+**Session filenames — two shapes coexist, on purpose.** New sessions are
+`<PREFIX>_YYYYMMDD_<slug>.md`, made unique by a **creation-time** check: same day + same slug is
+refused, and `ss` asks for a distinguishing slug rather than suffixing silently. Pre-0.2.0
+sessions keep the retired `<PREFIX>-YYYYMMDD-HHMMSS.md` shape and are **never renamed** —
+measured 2026-08-05, 9 groups / 23 files share a project+day and 3 of those groups are
+indistinguishable by any field, so a rename cannot preserve identity. The validator therefore
+checks **no filename shape at all**; every consumer reads the frontmatter instead. Canon:
+`docs/sessions-note-convention.md`.
+
+**② Wiki notes** — `summary:` present and non-empty, plus **ten retired keys** detected by name
+(`uid` `title` `type` `tags` `dri` `species` `source_sessions` `source_items` `recalled`
+`useful`). `title:` is a *rename* — `summary:` inherits its seat, because recall injects
+`_index.md` and nothing else, and every line there is `- [[stem]] — <summary>`; a note without
+one is invisible to every future session rather than merely untitled. The other nine are retired
+outright: 0.2.0 wiki frontmatter is `summary` · `updated` · `related` · `aliases`, plus
+`projects` on `neocortex/`. Scan roots, all resolved through the vault's `.brain-paths` manifest
+(`scripts/vault-paths.sh`): each project folder's `p_memory/`, `neocortex/`, and the tools root —
+**top level only**, subdirectories deliberately out of scope — plus the common layer, which
+**recurses** instead, because its sub-axes are not the same shape in every vault and enumerating
+them here would put the tree back into the script. The common layer's exclusions (meta files,
+`_templates/`, archives, dreaming logs) live in `brain_find_notes`, the sole copy.
+
+**③ Session-uid wikilinks on the shared surface** — every `*.md` under each project folder's
+`docs/` and `p_memory/` and the whole common layer (roots per `.brain-paths`; recursive, and
+**no** meta-file exclusion — a dangling link in `index.md` breaks for a teammate exactly like
+one in a note). A `[[…]]` whose target is a session uid is a finding. Canon is
+`docs/git-convention.md` §Share scope — `hippocampus/` is git-untracked in 0.2.0, so the link
+dangles in any vault that lacks that session; a shared note cites a session as **plain uid
+text**. Catches `[[uid]]`, `[[hippocampus/uid]]` (any path prefix), `[[uid|alias]]`,
+`[[uid#heading]]`, `![[uid]]`.
+
+> ⚠ **The shape it looks for is the legacy `<PREFIX>-YYYYMMDD-HHMMSS` one (PREFIX optional), and
+> that is deliberate, not a stale pattern.** 0.2.0 filenames are `<PREFIX>_YYYYMMDD_<slug>`, so
+> this scan now catches *migration-era* links rather than links a fresh vault could produce.
+
+🔴 Not scanned here: `hippocampus/` itself (a session's own wikilinks are its record, and no one
+else ever pulls the file); the tools root (gitignored machine-local content — outside the shared
+surface by definition, so this is not a scope divergence); and `neocortex/`, which **is**
+tracked and shared — that one is a known gap, scope left as the 0.2.0 migration found it rather
+than reasoned about, flagged in the script to revisit when the dangling-link check lands.
+Wikilinks between vault *documents* (`[[<PREFIX>-ADR-0000N]]`, `[[<ID>]]`) are untouched; only
+session targets are banned.
+
+**④ Docs frontmatter (v2)** — `NNN_*/docs/**`, recursive. Findings (blocked by `--strict`): a
+`session:` key anywhere in the frontmatter, in any YAML shape and quoted or not — `hippocampus/`
+is git-untracked, so even a plain uid is a reference no teammate can resolve, and team provenance
+rides the history `ticket:` instead; `status:` absent or outside
+`created|draft|approved|deprecated` (meta files exempt — they are folder TOCs, not body
+documents); the v1 history subkeys `date:`/`by:`, which hid inside `- { … }` entries where the
+top-level key regex could not see them; `docs/policy/`·`docs/adr/` body files without `id:` and
+their folder index without `next_id:`; `API_SPEC.md` without `source:` + `readonly: true`.
+**Warns** (stderr only, never a finding, never a `--strict` failure): unknown top-level keys, and
+an `updated:` that is not a full datetime. The retired docs status `stub` gets its own migration
+message — a pre-created empty document is `created`.
+
+Every run prints **all four** scanned file counts, so a collapsed scan is visibly different from a
+clean vault — "OK" alone cannot distinguish the two. Measured on the selftest fixture vault:
+
+```
+validate.sh: 52 issue(s) (12 sessions, 17 knowledge, 35 shared, 20 docs) <root>
+```
+
 Unreadable files are reported as findings rather than skipped, so `--strict` cannot pass a file
 it never read. Output is `file:line: message`, so editors and terminals can jump straight to it.
 
@@ -177,65 +224,73 @@ it never read. Output is `file:line: message`, so editors and terminals can jump
 asserts the rules fire — run it after touching the validator. Its assert set is mutation-tested:
 each scope boundary is pinned by a *positive* fixture, because a lone "no finding here" assert
 cannot distinguish "scanned and clean" from "never scanned". Known limits are recorded as
-`ponytail:` comments in the validator (duplicate keys are last-wins, the uid check is shape-only,
-symlinks are skipped) — they are accepted, not unnoticed.
+`ponytail:` comments in the validator (duplicate keys are last-wins, the wikilink scan has no
+fenced-code-block awareness, symlinks are skipped) — they are accepted, not unnoticed.
 
 ## The vault
 
-Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — the summary below is the
-**default layout**, what the axes resolve to with no `.brain-paths` manifest:
+Canonical tree, paths, and naming rules live in `docs/vault-tree.md` — the summary below shows
+the **shape**, with each movable axis written as the manifest key that resolves it:
 
 ```
 <vault-root>/
-  000_common/            # cross-project knowledge (folders below = default example — topics
-                         # are free; only a *policies* directory segment is structural: norms)
-    facts/               #   environment facts incl. machines/ (measured, not remembered)
-    patterns/            #   distilled cross-project lessons (promoted by Dreaming)
-    policies/            #   org-wide norms (mandatory; wins document conflicts)
-    dream-log.md         #   incremental baseline for the next Dreaming run
-  candidates/            # cross-project promotion pool — pre-gate; excluded from recall
-  NNN_<project>/         # one folder per project (NNN = 001–899 project band, slug = identity)
-    _index.md            #   project hub — pointer index + project PREFIX
-    knowledge/           #   project-scoped reusable knowledge (semantic, atomic notes)
-    docs/                #   official docs — tech-design/ · adr/ · research/ · business/
+  .brain-paths           # the axis manifest — init's first vault write (schema_version + roots)
+  <common_root>/         # the fact record — kept current by measurement, not by promotion.
+                         # Topics are free; only a *policies* directory segment is structural
+                         # (the normative axis). The unattended cycle may not write here
+    machines/            #   one note per machine, filename = lowercase hostname
+    policies/            #   binding norms — highest precedence in document conflicts
+  neocortex/             # vault-wide knowledge — root-fixed, recall target
+    NEO-<slug>.md        #   no numbers; the filename is the identity, old names go to aliases:
+    dream-logs.md        #   dreaming's run log — one file, appended to
+  <projects_root>/
+    NNN_<project>/       # one folder per project (NNN = 001–899 project band, slug = identity)
+      _index.md          #   project hub — pointer index + project PREFIX
+      p_memory/          #   project knowledge (semantic, atomic notes) — recall target
+        <pp>_<slug>.md
+      docs/              #   official docs — tech-design/ · adr/ · research/ · business/
                          #   policy/ · feature/<F>/ (FRD · TDC — diagrams live in its
                          #   §Diagrams — · feature policies)
-  999_tools/             # machine-global tool inventory — opt-in (onboard step 6) ·
+  <tools_root>/          # machine-global tool inventory — opt-in (onboard step 6) ·
                          # git-untracked, 9xx = reserved band
     tool-{mcp,skill,cli,plugin}.md
-  sessions/
-    <uid>.md             # one file per session (episodic); uid = PREFIX-YYYYMMDD-HHMMSS
+  hippocampus/           # sessions (raw, episodic) — git-untracked, never a recall target
+    <PREFIX>_YYYYMMDD_<slug>.md   # one file per session; same day + same slug is refused
+    <PREFIX>-YYYYMMDD-HHMMSS.md   # pre-0.2.0 shape — kept as-is, never renamed
 ```
 
-Where the axes actually live is a per-vault fact, not canon: `<vault>/.brain-paths` (plain
-`key: value` lines — `common_root` · `projects_root` · `tools_root`) re-points the common,
+Where three of those axes actually live is a per-vault fact, not canon: `<vault>/.brain-paths`
+(plain `key: value` lines — `common_root` · `projects_root` · `tools_root`) re-points the common,
 projects, and tools roots, and `scripts/vault-paths.sh` is the single resolver every scanner
-sources. A vault that never restructured needs no manifest and gets the defaults above; a
-restructured one declares, e.g., `common_root: org` + `projects_root: projects`. Keys, defaults,
-and resolver functions live in the script's header — the sole copy.
+sources. A vault that never restructured needs no manifest; a restructured one declares, e.g.,
+`common_root: org` + `projects_root: projects`. **Keys, defaults, and resolver functions live in
+that script's header — the sole copy, which is why no default path literal appears in this
+file.** `neocortex/` and `hippocampus/` are **root-fixed** and carry no manifest key: a
+restructured vault moves its common and projects roots and still keeps both exactly here.
 
-The common layer (`000_common/` by default) is *vault* scope ("common to every project here");
-the tools root (`999_tools/` by default) is *machine* scope ("true of this box, whatever vault
-you opened"). Keeping tool inventories on the vault axis gave
-N vaults N diverging copies of one truth — measured 2026-07-25, the same `tool-mcp.md` was 31KB in
-one vault and 3KB in another. `machines/` stays under `facts/`: machine *configuration* is a vault
-fact (which boxes this vault's work runs on), machine *tool surface* is not. The tools root is
-**opt-in** — created only by `/brain:onboard` step 6 on machines that want inventories; absence
-is legal and scanners skip it silently.
+The common layer is *vault* scope ("common to every project here"); the tools root is *machine*
+scope ("true of this box, whatever vault you opened"). Keeping tool inventories on the vault axis
+gave N vaults N diverging copies of one truth — measured 2026-07-25, the same `tool-mcp.md` was
+31KB in one vault and 3KB in another. `machines/` stays in the common layer for the mirror-image
+reason: machine *configuration* is a vault fact (which boxes this vault's work runs on), machine
+*tool surface* is not. The tools root is **opt-in** — created only by `/brain:onboard` step 6 on
+machines that want inventories; absence is legal and scanners skip it silently, the deliberate
+opposite of a missing common root, which is loud.
 
 The `9xx` band is reserved for vault infrastructure and is **never** allocated to a project — the
 `[0-9]*_*` glob matches it, so anything computing the next project number must exclude it or the
 next project becomes `1000_`.
 
-The three *conceptual* axes of the common layer — on disk only a `*policies*` directory segment
-is structural (norms); every other folder is a free topic folder, and the names below are the
-default example (canon: `docs/vault-tree.md`):
+Inside the common layer, exactly one thing is structural (canon: `docs/vault-tree.md`):
 
-| Axis | Answers | Nature |
+| Kind | How it is identified | Nature |
 |---|---|---|
-| `facts/` | what is true here | environment facts — measured, dated (`verified:`) |
-| `patterns/` | what works | reusable techniques distilled across projects |
-| `policies/` | what is mandatory | norms with teeth — highest precedence in document conflicts |
+| **Norms** | any note whose path holds a **directory segment containing `policies`** — glob `*/*policies*/*` | mandatory; highest precedence in document conflicts |
+| **Everything else** | every other folder — free-form topic folders, named however the vault likes | descriptive facts — measured, dated (`verified:`) |
+
+Segment-*contains*, not exact-name: measured 2026-07-27, a restructured vault split `policies/`
+into `org_policies/{compliance,secret_management,service_operation}/`, and an exact-match glob
+silently demoted every policy note to the descriptive tier.
 
 ## Worker profiles
 
@@ -277,18 +332,19 @@ Three profiles in `agents/`, differing only in isolation and permissions:
 
 ## Conventions (docs/)
 
-Eight convention documents define the system; each fact has exactly one home:
+Nine convention documents define the system; each fact has exactly one home:
 
 | Document | Defines |
 |---|---|
-| `docs/vault-tree.md` | the canonical vault tree, paths, and naming rules |
-| `docs/sessions-note-convention.md` | session note schema — file-per-session, frontmatter, the 3-value `status` |
-| `docs/knowledge-convention.md` | the atomic, trigger-first knowledge note format |
-| `docs/knowledge-escalate-convention.md` | the 3-stage promotion topology (episodic → semantic) |
+| `docs/vault-tree.md` | the canonical vault tree, paths, layers, write permission, and naming rules |
+| `docs/sessions-note-convention.md` | session note schema — filename = identity, the 5 frontmatter keys, the 3-value `status` |
+| `docs/knowledge-convention.md` | the atomic, trigger-first memory note format (`p_memory` · `neocortex`) |
+| `docs/knowledge-escalate-convention.md` | the 2-stage promotion topology (episodic → semantic), judged by content |
 | `docs/memory-control-convention.md` | Handoff format, recall, Dreaming, and scribe governance |
-| `docs/git-convention.md` | git = SOT, commit-only lifecycle, push only on explicit request, PR path measured off the remote |
-| `docs/project-docs-convention.md` | doc frontmatter standard, stub rules, policy system, ID minting, conflict precedence |
+| `docs/git-convention.md` | type vocabulary, surface notation, branch/worktree naming, share scope, PR path measured off the remote |
+| `docs/project-docs-convention.md` | doc frontmatter standard, pre-creation rules, policy system, ID minting, conflict precedence |
 | `docs/doc-catalog.md` | which document to create when — grade, trigger, owner label |
+| `docs/doc-templates.md` | body templates — only the two kinds that have one (`DESIGN` · `MILESTONE`) |
 
 ### Ownership boundary — plugin vs vault
 
@@ -325,39 +381,43 @@ what the pointer rule above closes.
 When the same fact is restated in several documents, changing one desynchronizes the rest —
 the number-one failure mode of documentation systems. Rule: each fact below is **defined in
 exactly one canonical place**; every other document points at it ("canonical: X") instead of
-restating it. The Dreaming drift-lint periodically scans for restatements and contradictions
-against this map.
+restating it.
 
-**Scope: this map binds vault scaffolds too** — `_index.md` files (and legacy `index.md`) and any other generated vault
-text are documents for drift-lint purposes. Every canonical home below is a plugin doc, and per
-the ownership boundary no vault path can become one; a vault file restating a value in this
-table is a finding, not a convenience.
+🔴 **This map is enforced by review, not by a scanner — do not expect a job to catch a violation
+for you.** Exactly one slice of it is machine-checked: `scripts/value-axis-drift.sh` (report-only)
+reads `docs/project-docs-convention.md` §Value Axes as its SSOT and flags pricing/tier *literals*
+living outside their home. Everything else — a norm restated in prose, a threshold copied into a
+second document — is caught by the declaration above plus PM mediation. `dreaming` is **not** an
+enforcement path here: it reads and writes the memory layers only, never `docs/`.
+
+**Scope: this map binds vault scaffolds too** — `_index.md` files (and legacy `index.md`) and any
+other generated vault text count as documents for this rule. Every canonical home below is a
+plugin doc, and per the ownership boundary no vault path can become one; a vault file restating a
+value in this table is a finding, not a convenience.
 
 | Fact | Canonical (defined only here) | Pointers only (no restating) |
 |---|---|---|
-| Session schema (file-per-session · frontmatter · 3-value status) | `docs/sessions-note-convention.md` | root index · `skills/ss`·`sr` · dreaming |
-| Vault tree, paths, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
+| Session schema (filename = identity · the 5 frontmatter keys · 3-value status · retired keys) | `docs/sessions-note-convention.md` | vault-tree · `skills/ss`·`sr`·`sl` · validate |
+| Vault tree, paths, layers, naming rules | `docs/vault-tree.md` | doc-catalog · `/brain:init` |
 | Tree axis roots (`common_root` · `projects_root` · `tools_root` — keys · defaults · resolver) | `scripts/vault-paths.sh` (values: each vault's `.brain-paths`) | vault-tree · validate · recall · `skills/ss`·`sr` |
+| Write permission — the unattended cycle may never write the common root (refused twice) | `docs/vault-tree.md` §Write permission | `hooks/org-guard.sh` · knowledge-promotion · knowledge-escalate-convention · dreaming |
 | External ticket system = canonical work queue | PM role statement (`CLAUDE.md`, written by `/brain:init`) | sessions-note-convention |
-| Promotion two-gate judgment (score sum ≥ 3 + verdict enum `promote/already_known/not_durable/unsupported` · reject-log) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sh`·`sc` · dreaming |
-| Human sign-off gate for `common/policies/` (agents draft, the user signs) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sh`·`sc` · dreaming |
-| Third-time test (reject-log recurrence → rule) | `skills/dreaming/SKILL.md` §3 | knowledge-promotion |
-| Feedback counters (`recalled:`/`useful:` · once-per-session marker · no auto-delete) | `docs/knowledge-convention.md` §Feedback counters | recall · `skills/ss`·`sh`·`sc` · dreaming (`sr` re-presents recall but bumps nothing) |
-| Session-Mistake recurrence scan (similarity test · cap · suppression keys) | `skills/dreaming/SKILL.md` §3 | knowledge-convention (`source_items` fallback) |
-| dream-log format (run heading · project field · cumulative read) | `skills/dreaming/SKILL.md` §7 | root index · vault-tree |
-| Recall (grep priming · source_location · related 1-hop) | `skills/_session-shared/recall.md` | `skills/ss`·`sr` · memory-control-convention |
+| Promotion ① procedure (what gets promoted · 🔴 **no score, no weight, no threshold** · sameness judged by content) | `skills/_session-shared/knowledge-promotion.md` | knowledge-escalate-convention · `skills/sc` (`sh` parks and does **not** promote) |
+| Promotion topology (2 stages · ① `sc` · ② `dreaming` · what does not ride the ladder) | `docs/knowledge-escalate-convention.md` | knowledge-promotion · `skills/sc` · dreaming |
+| dream-log (one appended file at `neocortex/dream-logs.md` · no IDs · one frontmatter key) | `skills/dreaming/SKILL.md` §dream-log | vault-tree · active-sessions |
+| Recall — what is scanned and what is not (`_index.md` only · no ranking · **no cap on how much is injected**, a separate matter from that file's own size limit · no candidate selection) | `skills/_session-shared/recall.md` | `skills/ss`·`sr` · memory-control-convention |
 | Open-session scan + summary extract (`status: active\|parked` × `project` · `\|\| :` loop terminator) | `skills/_session-shared/active-sessions.md` | `skills/sl`·`sr` |
 | Vault I/O boundary (writes = `Write`/`Edit` only · `obsidian create` banned for the silent `X 1.md` fork · CLI reads·link diagnostics allowed, `unresolved`/`orphans`/`deadends` canonical) | `skills/_session-shared/vault-io.md` | `skills/ss`·`sr`·`sc` · knowledge-promotion · dreaming |
 | git = SOT · commit-only lifecycle | `docs/git-convention.md` | `skills/ss`·`sh`·`sc` · decision history (WHY only) |
 | PR/MR path (gate measured off the remote · draft by coder · ready by PM · topic-branch push carve-out) | `docs/git-convention.md` §Pull / merge requests | `agents/coder.md` §Last action · doc-catalog (§Delivery records the measured values) |
 | Agent branch naming (`<type>/<PREFIX>-<number>-<title-slug>` · type from the shared vocabulary) | `agents/coder.md` §First action | `docs/git-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |
 | Type vocabulary + surface notation + branch/worktree naming | `docs/git-convention.md` (promoted into the harness 2026-07-28 — a distributed plugin cannot depend on a user's personal `at` skill; that skill and any vault mirror now point here) | `agents/coder.md` · `docs/git-convention.md` · doc-catalog point, none copy |
-| Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · dreaming |
+| Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · active-sessions |
 | Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |
-| Stub pre-creation and stub rules | `docs/project-docs-convention.md` | doc-catalog · `/brain:init` |
-| Policy system (identification · IDs · promotion) | `docs/project-docs-convention.md` | doc-catalog · dreaming |
-| ID minting (`<PREFIX>-<TYPE>-0000N` · next_id) | `docs/project-docs-convention.md` | PM role statement · dreaming |
-| API_SPEC mirror rule (sole exception to "repo = code only") | `docs/project-docs-convention.md` | doc-catalog · dreaming |
+| Pre-creation rules (the 6 pre-created documents, written as `status: created`) | `docs/project-docs-convention.md` §stub Pre-creation Rules | doc-catalog · `/brain:init` |
+| Policy system (identification · IDs · promotion) | `docs/project-docs-convention.md` | doc-catalog |
+| ID minting (`<PREFIX>-<TYPE>-0000N` · next_id · issued by the PM in advance) | `docs/project-docs-convention.md` §ID Issuance | PM role statement · validate (**presence only** — duplicate/gap detection has no owner, stated as a known gap) |
+| API_SPEC mirror rule (sole exception to "repo = code only") | `docs/project-docs-convention.md` | doc-catalog (generated and re-synced by a **PM-delegated sync worker** — 🔴 never `dreaming`, which cannot write `docs/` at all) |
 | Document conflict precedence | `docs/project-docs-convention.md` | PM role statement · all workers |
 | Doc selection by kind (grade · trigger · owner) | `docs/doc-catalog.md` | `/brain:init` · PM role statement |
 
@@ -369,8 +429,10 @@ table is a finding, not a convenience.
   trigger), not with what they conclude.
 - **Small docs.** Large documents don't get read — by humans or by agents with token budgets.
   Split by concern, keep each unit loadable.
-- **stub = no information.** A `status: stub` document must never be cited as evidence — an
-  empty heading means "not written yet", not "there is none". Filling it flips it to `draft`.
+- **A pre-created document is not evidence.** A `status: created` document must never be cited
+  as one — an empty heading means "not written yet", not "there is none". Filling it flips it to
+  `draft`. (`stub` was this status until 2026-08-02; the validator reports a surviving one with
+  its own migration message.)
 - **Measurements over memory.** Environment facts come from commands (`command -v`, live
   checks), carry a `verified:` date, and are never asserted from recollection.
 - **Fail-visible over fail-silent.** Rejected knowledge promotions go to a reject-log instead
