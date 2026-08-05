@@ -85,7 +85,10 @@ while IFS= read -r f; do
     END {
       if (!fmend) { print file ":1: no YAML frontmatter"; exit }
 
-      n = split("uid project created updated status writer", req, " ")
+      # 0.2.0 raw-layer schema: 5 keys, none of them identity or authorship. `uid` retired
+      # (the filename carries identity), `writer` retired (git carries authorship), `created`
+      # retired (the first Progress entry dates the session).
+      n = split("status project updated related_ticket cc_session_ids", req, " ")
       for (i = 1; i <= n; i++)
         if (!(req[i] in seen)) print file ":1: missing frontmatter key: " req[i]
 
