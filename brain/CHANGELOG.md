@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.2.0 — Unreleased
+
+### Added
+- **`agents/researcher.md` — 네 번째 프로필 (KJP-64).** 레포 **밖** 근거 조사 전용(레포 안 검색은 `Explore` 의 몫). `Write`·`Edit`·`NotebookEdit` 차단. 신설 근거는 실측된 실패다 — DESIGN 이 외부 리서치 0건으로 r16 사인오프까지 통과했고, 사용자 지적으로 뒤늦게 첫 조사를 돌리자 값 축이 전복됐다. 🔴 **리서처가 없어서가 아니라 필요하다는 걸 아무도 떠올리지 않아서 난 실패다** — 그래서 프로필 목록 자체가 PM 의 체크리스트다. First action = 스코프 게이트(범위를 한 줄로 적어 PM 확인 후 착수, 확인 전 본조사 금지) · 출처 우선순위 1차 원본 → 벤더 문서 → 커뮤니티, 블로그 단독 인용 금지 · 반증 의무(주장마다 뒤집는 자료 1건, 없으면 `반증 자료 없음` 명시) · 인용 = URL + 접근일 + 그 문서의 버전/날짜.
+- **`docs/security-audit.md` (KJP-64)** — `verifier` 가 보안 브리프에서 읽는 본문. 원료는 `cso` 스킬의 Phase 0–13 이며, 하네스로 옮기며 gstack 전용 기계(설정 CLI·학습 저장소·리포트 저장·텔레메트리·수정 로드맵 질문)를 걷어내고 report-only 경계를 절차로 재확인했다. **본문이 `verifier.md` 에 들어갈 수 없는 이유는 상한이다** — 에이전트 정의는 spawn 마다 100% 주입되므로 정의는 가리키고 본문은 문서에 둔다.
+- **`## KERNEL-BEGIN` … `## KERNEL-END` 블록이 네 정의 전부에 랜딩 (KJP-64).** 0.1.8 이 알려진 결함으로 기록한 `missing KERNEL block` 3건이 닫혔다. `scripts/kernel-check.sh` → `OK — 4 agents, KERNEL identical (6 lines)`, exit 0.
+
+### Changed
+- 🔴 **`Docs draft` 는 KERNEL 에 들어가지 않는다.** `verifier` 는 report-only 라 문서 초안을 산출하지 않으므로 **넷에 전부 참인 규칙이 아니다.** 넷에 전부 참인 것만 넣는다 — **바이트 일치보다 정확성이 이긴다**(일치는 그 결과로 자동 성립한다). 실측: 절을 실제로 지는 파일은 **`worker`·`coder` 둘**이다. 전서는 report-only 인 `verifier` 만 예외로 보아 "넷 중 셋"이라 적었으나(전서 §KERNEL), **전서의 `researcher` 초안 자체에 절이 없다** — 22줄 상한이 이미 꽉 차 있다. `researcher` 가 절을 져야 하는지는 미결이며, 상한을 올리지 않고는 넣을 수 없다.
+- **KERNEL 의 Handoff 고정형에서 `Fixed` 가 빠졌다** — `Done / Mistake / Learned / Outputs / Risks / Next / Ask` 7항목. 종전 세 정의는 `Fixed` 를 포함한 8항목이었다.
+
+### Removed
+- **`agents/coder.md` 85줄 → 69줄, 결정 이력을 이 문서로 이관 (KJP-64).** 에이전트 정의는 **규칙만** 담는다 — 이력은 spawn 마다 재주입될 이유가 없다. 삭제된 이력의 전문은 아래 §결정 이력에 보존한다.
+
+### 결정 이력 — `agents/coder.md` 에서 이관 (KJP-45 · KJP-46, 원문 보존)
+
+**베이스 확인이 First action 인 이유 (KJP-45, 실측 2026-07-26)**
+- **워커의 베이스는 로컬 통합 브랜치가 아니라 `origin/<branch>` 다.** 하네스가 워크트리 브랜치를 `branch: Created from origin/main` 으로 자른다 — `git reflog show <your-branch> | tail -1` 로 직접 읽어 확인할 수 있다.
+- **그래서 stale base 는 사고가 아니라 기본값이다.** 이 canon 은 사용자가 말할 때만 push 하므로(`docs/git-convention.md`), `origin/` 이 멈춰 있는 동안 로컬 `main` 만 전진한다. 실측: **연속된 코더 5명(KJP-40 · 43 · 48 · 39 · 45)이 전부 `41b11ae` 에서 출발했고 그동안 `main` 은 5커밋 앞서 있었다.**
+- **stale base 는 여기서 실패하지 않는다 — 머지에서 깨진 fast-forward 로 실패하고, PM 이 손으로 푼다** (KJP-43, 2026-07-25).
+- 처리 규칙: 뒤처짐 + 로컬 커밋 없음 → `git reset --hard main`, 묻지 않는다. 뒤처짐 + 로컬 커밋 있음 → **멈추고 보고**(그 커밋이 산출물이다). 어느 쪽이든 찾은 베이스를 보고한다.
+
+**브랜치 자가 명명이 필요한 이유**
+- 하네스는 워크트리와 그 브랜치를 `agent-<hash>` / `worktree-agent-<hash>` 로 명명하고, **`Agent` 도구에는 이름 파라미터가 없어 설정으로 바꿀 수 없다.** 그래서 우리 쪽에서 우회한다 — 워커가 스스로 읽을 수 있는 이름을 만든다.
+- 하네스의 `worktree-agent-<hash>` 브랜치는 **베이스를 가리킨 채 빈 상태로 남는다. 감수하는 비용이다** — 건드리지 말고 PM 이 정리에서 쓸어낸다(`docs/git-convention.md` §워크트리 통합 순서).
+
+**브랜치에 타입 접두어를 얹은 결정 — KJP-46 을 뒤집음 (사용자 결정 2026-07-26)**
+- **하나의 어휘, 네 개의 표면.** 티켓 · 커밋 · PR 제목 · 브랜치가 같은 언어로 읽히므로 `git branch` 만으로 *이게 무슨 종류의 변경인가* 에 답할 수 있다 — 트래커로 왕복하지 않고.
+- **이는 KJP-46 의 반전이다.** KJP-46 은 세 가지 근거로 타입 접두어를 배제했었다. 이름 안에 `<PREFIX>-<number>` 를 유지하는 것이 그중 둘에 직접 답한다 — **정체성이 사라지지 않고**(PM 이 *어느 티켓이 이 브랜치를 냈는가* 를 이름에서 읽는다, 이것이 병렬 워크트리 요구사항이었다), **사본이 드리프트하지 않는다**(어휘를 어디에도 다시 적지 않고 가리키기만 한다).
+- 🔴 **살아남은 하나의 근거 — 마찰점이 될 것이므로 기록한다.** 타입은 가변인데 **브랜치는 PR 이 열린 뒤 이름을 바꿀 수 없는 유일한 표면**이다. 티켓은 재분류되고, 커밋은 amend 되고, PR 제목은 편집되지만, 리뷰 중인 push 된 브랜치는 고정이다. **재분류가 잦은 것으로 드러나면 여기가 아플 지점이고, 이 항목이 읽기 시작할 곳이다.** 워커가 독자 판단으로 이탈할 근거는 아니다 — 형식을 따르고 마찰은 PM 에게 보고한다.
+- **`<type>` 어휘 정본 = `docs/git-convention.md`** (2026-07-28 하네스로 승격 — 배포되는 플러그인은 사용자 개인 스킬에 의존할 수 없다. `at` 스킬과 볼트 미러가 이 문서를 가리킨다). 어휘를 다른 곳에 다시 적지 않는다 — 가리킨다.
+- **레포의 사람 브랜치 접두어는 워커의 소관이 아니다.** 프로젝트 `RUNBOOK §Delivery` 가 그 레포의 사람들이 실제로 무엇을 쓰는지 실측으로 기록한다(`feature/*` 류 포함). 그건 그들 것이고, 에이전트 브랜치는 어느 레포에서든 위 형식을 쓴다. 둘의 충돌은 **해결할 분쟁이 아니라 보고할 실측**이다.
+
+**PR 표기 (사용자 결정 2026-07-28)** — 제목 `<type>(<PREFIX>-<number>): 요약`. 티켓 ID 가 scope 슬롯에 들어간다. 브랜치에 얹은 타입을 쓰되, 작업이 처음 판단과 다른 타입으로 드러났으면 **제목에서 바로잡는다 — 브랜치는 push 된 채로 둔다.**
+
 ## 0.1.8 — 2026-08-05
 
 **Release cut for drift, not for features.** The installed copy had fallen 6 commits behind `main`, and `plugin.json` read `0.1.7` on both sides — so the version string could not detect it. Measured against the `0.1.7` cache: **29 differing entries**, including a canon file that no longer exists in the repo and two new files the install had never seen. Since the Router symlinks `~/.claude/brain-docs` at the *installed* docs, every skill run was reading stale canon while the repo held the current one.
