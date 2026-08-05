@@ -11,7 +11,7 @@ Done / Mistake / Fixed / Learned / Outputs / Risks / Next / Ask   (+ optional: D
 
 ## Recall — cue-based
 - **CLAUDE.local.md Router pointers** (per project): a **thin router / hot-cache** auto-loaded every session. (Machine-local absolute paths — lives in `CLAUDE.local.md`, never the committed `CLAUDE.md`.)
-  - Rules: **pointers only, no content** (token savings). **Auto-maintained** (Dreaming/`scribe`). No hand-curation (it rots).
+  - Rules: **pointers only, no content** (token savings). **Regenerated between the markers by `/brain:init`** — 🔴 not by `dreaming` (it writes only the 3 vault layers) and not by `scribe` (vault content only; `CLAUDE.local.md` is outside the vault). No hand-curation (it rots).
 - **★ recall step**: at session start, inject the folder indexes — **canon: `skills/_session-shared/recall.md`** (what is scanned and what is not is defined only there). **`_index.md` whole, note bodies never**; no ranking, no cap, no candidate selection. Two callers, two dispositions:
   - **`ss` (new session)** — recall is **written into `## Recall`** (`scribe` delegation).
   - **`sr` (resume)** — recall is **re-presented on screen only, never written**. Skipping it would leave a resumed session with zero priming, so it is required, not optional.
