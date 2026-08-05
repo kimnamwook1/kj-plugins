@@ -1517,14 +1517,16 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
   <p>🔴 <b><code>Docs draft</code> 는 KERNEL 이 아니다</b> — <code>verifier</code> 는 report-only 라 문서 초안을 산출하지 않는다. 넷 중 셋에만 참인 규칙이다. <b>바이트 일치보다 정확성이 이긴다</b>: 넷에 전부 참인 것만 넣으면 일치는 자동으로 성립한다. 감시는 <code>scripts/kernel-check.sh</code> — <code>validate.sh</code> 는 <code>&lt;vault-root&gt;</code> 만 받으므로 플러그인 레포를 못 본다.</p>
 
   <h3>줄 수 상한 — 합의가 아니라 덧셈</h3>
+  <p class="sub">🔴 <b>세는 자가 <code>wc -l</code> 이 아니다.</b> <b>빈 줄 · H1 제목 · 코드펜스 표시줄(<code>```</code>) 셋을 빼고</b> 센다 — 펜스 <b>안</b>의 명령줄은 내용이므로 <b>센다</b>. 이 자로 재면 <code>coder</code> <b>50</b> · <code>verifier</code> <b>22</b> · <code>researcher</code> <b>22</b> 로 <b>셋 다 상한에 정확히 붙는다</b>(실측 2026-08-05 · KJP-81). 세 파일 동시 적중은 우연이 아니다 — 셈법이 명문화되지 않았을 뿐이었다. <code>wc -l</code> 로 재면 각각 69 · 28 · 28 이 나와 <b>상한을 넘긴 것처럼 보인다</b>.</p>
   <div class="tblwrap"><table>
     <tr><th>파일</th><th>현행</th><th>상한</th><th>바이트</th><th>구성 (덧셈)</th></tr>
     <tr><td><b>worker.md</b></td><td>25줄 / 2,543 B</td><td><b>40</b></td><td>3,600 B</td><td>frontmatter 4 + KERNEL 8 + scribe 절 10 + 하위워커 2 + Docs draft 5</td></tr>
-    <tr><td><b>coder.md</b></td><td><span class="red">85 / 9,413</span></td><td><b>50</b></td><td>5,000 B</td><td>frontmatter 5 + KERNEL 8 + First 8 + Branch 4 + <b>코드품질 4 + 테스트 3 + 로그 3</b> + Last 8 + Outputs 5 = 48</td></tr>
+    <tr><td><b>coder.md</b></td><td><span class="red">85 / 9,413</span></td><td><b>50</b></td><td>5,200 B</td><td>frontmatter 5 + KERNEL 8 + First 8 + Branch 4 + <b>코드품질 4 + 테스트 3 + 로그 3</b> + Last 8 + Outputs 5 = 48</td></tr>
     <tr><td><b>verifier.md</b></td><td>17 / 1,135</td><td><b>22</b></td><td>2,000 B</td><td>frontmatter 5 + KERNEL 8 + <b>QA 2 + 보안 3</b> + 규칙 3 = 21. <b>보안 본문은 문서 포인터</b></td></tr>
     <tr><td><b>researcher.md</b> <span class="badge b-todo">신설</span></td><td>—</td><td><b>22</b></td><td>2,000 B</td><td>frontmatter 5 + KERNEL 8 + 스코프 게이트 2 + 규율 4 + Handoff 2 = 21</td></tr>
   </table></div>
   <p><code>coder.md</code> 의 삭제분 37줄 = <b>브랜치 어휘 재서술</b>(→ <code>docs/git-convention.md</code> 포인터)과 <b>결정 이력</b>(KJP-46 반전 경위 → ADR). 상한은 이 넷이 <b>spawn 마다 100% 주입</b>되고 PM 이 한 턴에 워커 5개를 띄우면 5배로 들기 때문이다. 양식은 «폴더 트리 및 양식» 탭 §하네스 파일.</p>
+  <p class="sub">🔴 <b><code>coder.md</code> 바이트 상한 5,000 → 5,200 B</b>(KJP-81). 초안 실측이 <b>5,012 B</b> 라 <b>canon 이 제 상한을 12 B 어기고 있었다</b> — 랜딩 워커가 늘린 게 아니라 전서 초안 자체가 그랬다. 12 B(<b>0.24%</b>)를 맞추자고 규율 문장을 깎지 않는다. 구속력 있는 자는 <b>줄 수</b>이고(위 셈법으로 50줄에 정확히 붙어 있다), 바이트는 <b>기계가 강제하지 않는 보조 지표</b>다 — <code>brain/scripts/</code>·<code>brain/hooks/</code> 어디에도 파일 크기 검사가 없다(<code>kernel-check.sh</code> 가 재는 것은 KERNEL 블록의 바이트 <b>일치</b>이지 파일 크기가 아니다). 5,200 은 여유 <b>188 B</b> — 상한을 죽이지 않을 만큼만 올린 값이다.</p>
   <div class="tblwrap"><table>
     <tr><th>프로필</th><th>격리·권한</th><th>핵심 규율</th></tr>
     <tr><td><b>worker</b></td><td>기본</td><td>브리프(Goal·제약·포인터·DoD)가 스코프 전부 — 모호하면 추측 말고 Ask 반송 · 사실은 볼트→실측→Ask · 주장엔 증거(파일·줄·출력) · 문서 충돌은 중재 말고 보고 · <b>Handoff 고정형</b>: Done/Mistake/Learned/Outputs/Risks/Next/Ask (+Docs draft — 문서를 무효화한 작업은 워커 본인이 초안·scribe는 복사만) · 볼트 직접 쓰기 금지</td></tr>
@@ -1533,13 +1535,8 @@ kj-plugins 주입 범위        8파일 / 122줄 / 20,481 B ≈ 5k 토큰
     <tr><td><b>researcher</b> <span class="badge b-todo">신설</span></td><td>Write·Edit·NotebookEdit 금지</td><td>외부 근거 조사 전용 — 레포 <b>밖</b>을 뒤진다(레포 안 검색은 <code>Explore</code>) · 코드를 바꾸지 않는다 · <b>First action = 스코프 게이트</b>: 조사 범위를 한 줄로 적어 PM 에게 확인받고 시작, <b>확인 전 본조사 금지</b> · 출처 우선순위 1차 원본(스펙·소스·공식 문서) → 벤더 문서 → 커뮤니티, <b>블로그 단독 인용 금지</b> · <b>반증 의무</b> — 주장마다 뒤집는 자료 최소 1건, 없으면 <code>반증 자료 없음</code> 명시 · 인용 = URL + 접근일 + 그 문서의 버전/날짜, 못 채우면 <code>근거 없음 — 추정</code> · 도구 <code>context7</code>·Exa/Tavily·WebFetch · <b>Outputs</b> = 출처표(주장 / 근거 URL / 반증 / 신뢰도)</td></tr>
   </table></div>
   <h3>scribe 거버넌스</h3>
-  <ul>
-    <li>볼트 콘텐츠 쓰기 <b>전량</b> 담당 (세션 파일·Progress·frontmatter·p_memory·neocortex·TOC·docs history)</li>
-    <li><b>코드 금지 · 커밋 금지</b> — 커밋은 PM(경계 기록, 레포 전체를 삼키므로 전체를 보는 자만 안전)</li>
-    <li><b>축어 필사자</b> — 워커 Handoff의 Learned·Outputs를 글자 그대로. 요약·압축은 사용자 보고 채널에만</li>
-    <li><b>워커→scribe 직행 금지</b> — 중첩을 보는 건 PM뿐. 두 scribe가 같은 파일을 조용히 덮는 것의 유일한 방어 = 단일 scribe + PM 중재</li>
-    <li>쓰기 도구는 <b>Edit(기존)·Write(신규)만</b> — Edit의 old_string이 CAS라 동시 세션 충돌 시 소리 내며 실패. <code>obsidian create</code> 금지(이름 충돌 시 조용히 <code>X 1.md</code> 포크)</li>
-  </ul>
+  <p>🔴 <b>정본은 <code>agents/worker.md</code> 초안 §scribe 브리프일 때</b> — «폴더 트리 및 양식» 탭 §하네스 파일. 책임 목록 · <b>코드 금지 · 커밋 금지</b> · 축어 필사 · 워커→scribe 직행 금지 · 쓰기 도구 · 쓸 수 있는 경로는 <b>거기 한 곳에만</b> 쓴다. 여기 재서술했더니 <b>실제로 썩었다</b> — <span class="red">실측 KJP-81</span>: 살아 있는 <code>dream-logs</code> 가 빠졌고(트리 §neocortex · 양식 탭 · <code>init</code> 4단계에 전부 살아 있다), <code>_index.md</code> 가 <code>TOC</code> 라는 딴 이름으로 불렸고, 전서 어디에도 없는 <code>docs history</code> 가 자라 있었다. 초안이 이기는 이유는 하나 — <b>그쪽이 실제로 배포되는 파일이고 이쪽은 그걸 설명하는 산문이다.</b> «원리» 탭 §설계 원칙 「정본 1곳 + 포인터」가 말한 그대로다.</p>
+  <p><b>초안에 없고 여기에만 있던 것 1건</b>(그래서 남긴다) — <code>obsidian create</code> 금지: 이름이 충돌하면 조용히 <code>X 1.md</code> 로 포크한다. 초안이 쓰기 도구를 <code>Edit</code>(기존)·<code>Write</code>(신규)로 못 박고 「소리 내며 실패한다」고 쓴 것의 짝이다 — 조용한 포크가 바로 그 반대다.</p>
 </section>
 
 <!-- ═══ 기억 ═══ -->
