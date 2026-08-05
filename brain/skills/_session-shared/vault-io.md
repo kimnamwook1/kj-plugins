@@ -22,7 +22,7 @@
 
 - 🔴 **`unresolved` · `orphans` · `deadends` are the canonical verdict on link integrity.** They run Obsidian's own link resolver, which is the same one that decides whether a link works in the app. Nothing else in this harness gets a vote.
   - `unresolved` — broken wikilinks. `verbose` adds the **source file**, so a broken link can be traced to the note holding it.
-  - `orphans` — notes with no incoming links (the isolation check `skills/dreaming/SKILL.md` §1 needs).
+  - `orphans` — notes with no incoming links (the input `skills/dreaming/SKILL.md` §The three operations · **Link** runs on; that section names `unresolved`·`orphans`·`deadends` as the canonical verdict).
   - `deadends` — notes with no outgoing links.
   - `total` on any of the three returns just the count.
 - 🔴 **Never count links with a regex — it over-counts, and not by a little.** A naive `\[\[[^]]+\]\]` sweep matches TOML array-of-tables inside fenced code blocks and `\|`-escaped wikilinks in table cells. Reproduced 2026-07-27 on this vault: `[[tool.uv.index]]`, `[[tool.mypy.overrides]]`, and `[[synology-nas/software\|software]]` all match, none is a broken link. A regex cannot resolve a link, so it cannot answer whether one is broken.
