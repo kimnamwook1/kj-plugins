@@ -10,10 +10,22 @@
 # Here it is declared once, in the vault itself, and read from one place.
 #
 # Manifest: `<vault>/.brain-paths`, `key: value` per line, `#` comments allowed.
+#   schema_version: which schema the values below are in  (expected `2`; no default — see below)
 #   common_root:   path relative to the vault root   (default `000_common`)
 #   projects_root: path relative to the vault root   (default `.` — project folders at the root)
 #   tools_root:    path relative to the vault root   (default `999_tools` — machine-global tool inventory)
 # Absent file or absent key = the default, so a vault that never restructured needs no manifest.
+#
+# 🔴 Why the `000_common` literals in this file are not drift, and why they may not be copied.
+# vault-tree.md §Tree axes names this header as the *sole* home of the keys and their defaults —
+# "never restate the defaults elsewhere". So a literal here is one of exactly two things: the
+# documentation of a default (the table above), or its single production site (`_bp_get`'s second
+# argument below). Neither is a consumer reading the tree; both are the value's origin, and a
+# default with no origin is not a default. The rule for everyone else is unchanged and absolute:
+# a *consumer* that writes `000_common` has hardcoded the tree and is the bug this file exists to
+# prevent. Prose that names the default as an example is fine; a gate or a scan path is not
+# (measured 2026-08-04 — `hooks/org-guard.sh` reads the manifest for exactly this reason: a vault
+# whose common root is `personal` would otherwise be undefended by a literal-matching guard).
 #
 # Portability: macOS stock bash 3.2 + POSIX find/sed/grep. No associative arrays, no mapfile,
 # no `find -printf`, no `grep -P`, no yaml parser.
@@ -30,6 +42,16 @@ _bp_get() {  # _bp_get <key> <default>
   fi
   if [ -n "$_bp_v" ]; then printf '%s' "$_bp_v"; else printf '%s' "$2"; fi
 }
+
+# Schema version of the manifest itself. Deliberately the one key with **no default**: every other
+# key falls back to the pre-restructure layout, which is what makes an absent manifest legal — but
+# a *version* that falls back cannot distinguish "declared as 2" from "never declared", and that
+# distinction is the only thing a consumer can use to know whether the fallbacks it is about to
+# apply are the right ones. Empty string = not declared; consumers decide what to do about it
+# (`validate.sh` reports it on a manifest that exists, and stays silent when there is no manifest).
+BRAIN_PATHS_FILE="$VAULT/.brain-paths"
+BRAIN_SCHEMA_VERSION="$(_bp_get schema_version '')"
+BRAIN_SCHEMA_VERSION_EXPECTED=2   # what `/brain:init` writes; bump here and nowhere else
 
 # Env wins over the manifest — a dry-run seam (test a layout without writing to the vault) and
 # an escape hatch for a one-off scan. Unset in normal use, so the manifest is the operative source.

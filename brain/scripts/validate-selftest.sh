@@ -40,7 +40,9 @@ mkdir -p "$V/hippocampus/nested" "$V/013_selftest/p_memory/nested" \
          "$V/$COMMON/facts" "$V/$COMMON/facts/machines" \
          "$V/$COMMON/patterns" "$V/$COMMON/policies" \
          "$V/999_tools" "$V/neocortex"
-printf -- 'common_root: %s\n' "$COMMON" > "$V/.brain-paths"
+# `schema_version` rides along because this vault models a *correct* 0.2.0 manifest — it is the
+# negative fixture for the schema_version check, and the positives live in their own vault below.
+printf -- 'schema_version: 2\ncommon_root: %s\n' "$COMMON" > "$V/.brain-paths"
 
 # 0.2.0 session frontmatter = 5 keys, none of them an identity or authorship field: the filename
 # carries identity (`uid` retired) and git carries authorship (`writer` retired).
@@ -64,11 +66,13 @@ printf -- '---\nstatus: active\n---\n' \
 printf -- '# just a body\n' > "$V/hippocampus/BAD-20260718-120006.md"   # no frontmatter
 # 0.2.0 `_index.md` carries no frontmatter at all, which is exactly what makes it a broken
 # *session* — silence can only mean the exclusion held, never that the fixture was clean.
-printf -- '- [[CLEAN-20260718-120000]] — a session\n' > "$V/hippocampus/_index.md"  # excluded (TOC, canonical form)
+# Its link dangles on purpose, so the file is broken for the _index scan too: hippocampus/ is the
+# raw layer and no recall target, so it is outside BOTH scans, and both silences are load-bearing.
+printf -- '- [[ghost-session]] — dangles, and is scanned by neither rule\n' > "$V/hippocampus/_index.md"  # excluded (TOC, canonical form)
 # index.md is the legacy spelling of the same folder-TOC rule (canon flip 2026-07-30:
 # _index.md canonical, index.md recognized as its equal) — kept as the legacy fixture that
 # pins both spellings.
-printf -- '- [[CLEAN-20260718-120000]] — a session\n' > "$V/hippocampus/index.md"   # excluded (TOC, legacy form)
+printf -- '- [[ghost-session]] — dangles, and is scanned by neither rule\n' > "$V/hippocampus/index.md"   # excluded (TOC, legacy form)
 
 # Quoted scalars must NOT be false positives (regression: `status: "active"` blocked --strict).
 session QUOTED-20260718-120007 '"active"'
@@ -99,7 +103,26 @@ printf -- '# no frontmatter\n' > "$V/hippocampus/nested/NESTED-20260718-120010.m
 # single directory from the scan scope kills a specific assert.
 printf -- '---\nsummary: a real one-liner\n---\n' > "$V/013_selftest/p_memory/good.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/no-summary.md"
-printf -- '- [[good]] — a real one-liner\n' > "$V/013_selftest/p_memory/_index.md"     # excluded (meta)
+# `summary:` present but empty is the same hole as absent — recall's whole search surface is that
+# one line, so a key with nothing after it buys the note nothing. Positive fixture for the
+# non-empty-value half of the rule; without it the check could degrade to a key-presence test.
+printf -- '---\nsummary:\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/empty-summary.md"
+# The folder TOC — excluded from the *note* scan (it is not a note), and the sole input of the
+# _index scan (it is the only thing recall injects). Lines 1-4 are heading/prose/blank: not TOC
+# entries, so they must stay quiet. Line 5 is the canonical form. 6 dangles. 7 uses a hyphen where
+# canon writes an em dash. 8 has no summary after the dash. 9 is a bullet with no wikilink at all.
+# Line numbers are load-bearing for the asserts below.
+cat > "$V/013_selftest/p_memory/_index.md" <<'EOF'
+# p_memory — 목차
+
+Intro prose is not a TOC entry.
+
+- [[good]] — a real one-liner
+- [[ghost-note]] — points at a file that is not there
+- [[good]] - hyphen where canon writes an em dash
+- [[good]] —
+- a bullet carrying no wikilink
+EOF
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/0.rejected.md"    # excluded (meta)
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/nested/deep-no-summary.md"  # out of scope
 # Retired 0.1.x wiki keys, all ten in one note. `summary:` is present, so only the retired-key
@@ -117,13 +140,18 @@ printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/facts/machines/machine
 # Named misc-*, not tool-*: since KJP-44 a `tool-*.md` under facts/ would contradict the canon
 # (tool inventories live in the tools root). This fixture only has to be a summarised facts note.
 printf -- '---\nsummary: a summarised fact\n---\n' > "$V/$COMMON/facts/misc-x.md"
+# The common layer's own TOC. The _index scan reaches it only because that layer is walked
+# recursively (facts/ is depth 1 under the common root) — dropping the recursion kills this assert.
+printf -- '- [[misc-x]] — a summarised fact\n- [[facts-ghost]] — points at a file that is not there\n' \
+  > "$V/$COMMON/facts/_index.md"
 
 # neocortex/ — vault-wide knowledge, root-fixed (no manifest key) and IN the wiki lint scope
 # alongside p_memory (canon: the wiki layer is p_memory + neocortex). The no-summary fixture is
 # what proves the root is scanned at all; dropping the root kills it.
 printf -- '---\nupdated: 2026-07-18\n---\n'           > "$V/neocortex/NEO-no-summary.md"
 printf -- '---\nsummary: vault-wide knowledge\n---\n' > "$V/neocortex/NEO-good.md"
-printf -- '- [[NEO-good]] — vault-wide knowledge\n' > "$V/neocortex/_index.md"   # excluded (meta)
+printf -- '- [[NEO-good]] — vault-wide knowledge\n- [[NEO-ghost]] — points at a file that is not there\n' \
+  > "$V/neocortex/_index.md"   # excluded from the note scan (meta) · IS the _index scan's input
 # dream-logs.md is dreaming's run log, not a note: single-file accumulation whose frontmatter is
 # one key (`updated`). It must be excluded, or every real vault reports a phantom missing summary.
 printf -- '---\nupdated: 2026-07-18T10:00:00\n---\n\n- [2026-07-18]-ran a cycle\n' > "$V/neocortex/dream-logs.md"
@@ -138,14 +166,16 @@ printf -- '---\nupdated: 2026-07-18T10:00:00\n---\n\n- [2026-07-18]-ran a cycle\
 # p_memory/ subfolder, which this folder deliberately does not have.
 printf -- '---\nupdated: 2026-07-18\n---\n'      > "$V/999_tools/tools-no-summary.md"
 printf -- '---\nsummary: MCP inventory\n---\n'   > "$V/999_tools/tool-mcp.md"
-printf -- '- [[tool-mcp]] — MCP inventory\n'     > "$V/999_tools/_index.md"  # excluded (meta) — same rule as p_memory/
+printf -- '- [[tool-mcp]] — MCP inventory\n- [[tool-ghost]] — points at a file that is not there\n' \
+  > "$V/999_tools/_index.md"  # excluded from the note scan (meta) — same rule as p_memory/
 printf -- '---\nsummary: tool note citing a session\n---\n[[KJP-20260718-120011]]\n' \
   > "$V/999_tools/wl-tools.md"
 
-# neocortex/ follows the same asymmetry for its own reason: it is the wiki lint's second root,
-# but step 6 renamed the shared-surface scan without extending it, so neocortex stays OFF that
-# scan. wl-neo.md pins that (scope extends on decision, not by drift); its quiet assert is not
-# vacuous because NEO-no-summary.md above proves the folder is scanned at all.
+# neocortex/ does NOT follow that split — it is git-tracked and pulled like any project folder, so
+# its axis is the shared surface and a session wikilink there dangles for a teammate exactly as one
+# in docs/ does. It sat outside the scan only because step 6 of the 0.2.0 migration renamed that
+# scan without extending it; KJP-65 is the decision that extends it (scope extends on decision, not
+# by drift). wl-neo.md is now a positive fixture: dropping the root from SDIRS kills this assert.
 printf -- '---\nsummary: neo note citing a session\n---\n[[KJP-20260718-120017]]\n' \
   > "$V/neocortex/wl-neo.md"
 
@@ -178,6 +208,13 @@ printf -- '---\nsummary: common root note\n---\ndream report [[20260719-005513]]
 #     project-docs-convention mandates — they must never be caught by the wikilink rule.
 printf -- '---\nstatus: draft\ncc_session_ids: [cc-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
   > "$V/013_selftest/docs/wl-plain.md"
+
+# The docs tree's own TOC — deliberately OUTSIDE the _index scan, whose scope is the wiki layer
+# (the `- [[stem]] — <summary>` line form is the memory-note canon, and a docs/ TOC legitimately
+# carries prose and `next_id:` instead). Its link dangles, so silence here can only mean the scope
+# boundary held; moving the docs trees into the _index scan makes it fire.
+printf -- '- [[ghost-doc]] — dangles, but docs/ TOCs are outside the _index scan\n' \
+  > "$V/013_selftest/docs/_index.md"
 
 # Docs frontmatter v2 (project-docs-convention §frontmatter Standard v2). The session key
 # is banned in docs frontmatter *as a key* — plain uid included — so both YAML shapes are
@@ -292,6 +329,30 @@ assert_match   "common patterns/ is scanned"                 'patterns/patterns-
 assert_match   "common policies/ is scanned"                 'policies/policies-no-summary.md:1: missing frontmatter key: summary'
 assert_match   "tools root is scanned (recall mirror)"       '999_tools/tools-no-summary.md:1: missing frontmatter key: summary'
 assert_match   "neocortex/ is scanned (wiki layer)"          'neocortex/NEO-no-summary.md:1: missing frontmatter key: summary'
+# An empty value is the same hole as an absent key — the summary line IS recall's search surface.
+assert_match   "wiki: an empty summary: value is still missing" 'empty-summary.md:1: missing frontmatter key: summary'
+
+# `_index.md` line format + dangling links. recall injects the folder indexes and nothing else,
+# so an index pointing at a file that is not there makes recall lie and no other check can see it.
+# One positive per scanned root, so dropping any root from the scope kills a specific assert.
+assert_match   "index: p_memory/_index dangling link is caught"  'p_memory/_index.md:6: dangling _index link: \[\[ghost-note\]\]'
+assert_match   "index: neocortex/_index is scanned"              'neocortex/_index.md:2: dangling _index link: \[\[NEO-ghost\]\]'
+assert_match   "index: tools root _index is scanned"             '999_tools/_index.md:2: dangling _index link: \[\[tool-ghost\]\]'
+assert_match   "index: common layer _index is scanned"           'facts/_index.md:2: dangling _index link: \[\[facts-ghost\]\]'
+# line-form violations — one assert per shape, so relaxing any part of the form kills a specific one
+assert_match   "index: hyphen where canon writes an em dash"     'p_memory/_index.md:7: malformed _index line'
+assert_match   "index: an entry with no summary text"            'p_memory/_index.md:8: malformed _index line'
+assert_match   "index: a bullet carrying no wikilink"            'p_memory/_index.md:9: malformed _index line'
+# the quiet half — a canonical entry, and the non-entry lines an index legitimately carries
+assert_no_match "index: the canonical entry line is quiet"       'p_memory/_index.md:5'
+assert_no_match "index: heading/prose/blank lines are not entries" 'p_memory/_index.md:[1-4]:'
+assert_no_match "index: a link that resolves is never dangling"  'dangling _index link: \[\[good\]\]'
+assert_no_match "index: a resolving link is not dangling (neocortex)" 'dangling _index link: \[\[NEO-good\]\]'
+# scope boundaries. Each is pinned by a fixture that WOULD fire if the scope moved: hippocampus/
+# is the raw layer (never a recall target) and docs/ TOCs are not memory-note indexes — both
+# fixtures carry a dangling link, so silence can only mean the boundary held.
+assert_no_match "index: hippocampus/ TOCs are outside the scan"  'ghost-session'
+assert_no_match "index: docs/ TOCs are outside the scan"         'ghost-doc'
 
 # session-uid wikilinks on the shared surface — one positive per scan root
 assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:4: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
@@ -301,6 +362,7 @@ assert_match   "p_memory/: heading form is caught"           'p_memory/wl-pmem.m
 assert_match   "wikilink scan recurses into nested/"         'p_memory/nested/wl-nested.md:4: .*\[\[KJP-20260718-120004\]\]'
 assert_match   "common layer: embed form (bang-link) caught" 'facts/wl-common.md:4: .*\[\[KJP-20260718-120005\]\]'
 assert_match   "common root + PREFIX-less uid"               'wl-dreaming.md:4: .*\[\[20260719-005513\]\]'
+assert_match   "neocortex/ is on the shared surface too"     'neocortex/wl-neo.md:4: .*\[\[KJP-20260718-120017\]\]'
 
 # docs frontmatter — session key = finding (both YAML shapes); unknown keys = stderr warn
 assert_match   "docs fm: inline-map session key is caught"   'fm-session.md:5: session key in docs frontmatter'
@@ -353,43 +415,50 @@ assert_no_match "hippocampus/index.md is excluded (legacy TOC)" 'hippocampus/ind
 assert_no_match "sample-session.md placeholder is excluded"  'sample-session.md'
 assert_no_match "nested session is out of scope"             'NESTED-20260718-120010'
 assert_no_match "nested p_memory note is out of scope"       'deep-no-summary.md'
-assert_no_match "p_memory _index.md is excluded"             'p_memory/_index.md'
+# Anchored to the note-scan message, not the filename: since the _index scan landed, a folder TOC
+# legitimately appears in the findings stream under its own rules. What must never happen is a TOC
+# being asked for a note's frontmatter.
+assert_no_match "p_memory _index.md is excluded from the note scan" 'p_memory/_index.md:1: missing frontmatter key: summary'
 assert_no_match "p_memory 0.* meta file is excluded"         '0.rejected.md'
 assert_no_match "summarised p_memory note produces no finding" 'p_memory/good.md'
 assert_no_match "common facts note with summary is quiet"    'misc-x.md'
 assert_no_match "tools note with summary is quiet"           'tool-mcp.md'
-assert_no_match "tools _index.md is excluded (meta rule)"    '999_tools/_index.md'
+assert_no_match "tools _index.md is excluded from the note scan" '999_tools/_index.md:1: missing frontmatter key: summary'
 # The load-bearing one for the scope split: the tools root is gitignored, so it is NOT the shared
 # surface and a session wikilink there is legal. Adding it to SDIRS makes this line fire.
 assert_no_match "tools root is outside the shared-surface scan" 'wl-tools.md'
 assert_no_match "neocortex note with summary is quiet"       'NEO-good.md'
-assert_no_match "neocortex _index.md is excluded (meta rule)" 'neocortex/_index.md'
+assert_no_match "neocortex _index.md is excluded from the note scan" 'neocortex/_index.md:1: missing frontmatter key: summary'
 # dream-logs.md is dreaming's run log, not a note — it has no summary and must never be asked
 # for one. Its exclusion is by name, so a real vault does not report a phantom finding.
 assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
-# Scope decision, same shape as the tools split: neocortex/ is the wiki lint only — step 6
-# renamed the shared-surface scan without extending it, so adding it to SDIRS makes this fire.
-assert_no_match "neocortex/ is outside the shared-surface scan" 'wl-neo.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
 # numbers are asserted (not just "some count"), recomputed by hand for the 0.2.0 fixture set:
 #   12 sessions — CLEAN · BAD-1 · BAD-2 · PARKED-12 · BAD-13 · BAD-5 · BAD-6 · QUOTED-7 ·
 #     QUOTED-8 · CRLF-9 · RETIRED-16 · WL-14 (index/_index/sample excluded; nested out of scope)
-#   17 knowledge — 4 p_memory (good + no-summary + wl-pmem + retired-keys; _index/0.*/nested
-#     excluded) + 7 common (3 facts + 1 machines + 1 pattern + 1 policy + 1 common-root note)
-#     + 3 neocortex (NEO-no-summary + NEO-good + wl-neo; _index/dream-logs excluded)
-#     + 3 tools (_index.md excluded)
-#   35 shared — 20 docs-tree files (19 under 013 + the 014_mirror API_SPEC; no exclusions on
-#     this surface) + 8 p_memory (recursive here, so _index/0.*/nested all count) + 7 common
-#   20 docs — the same docs-tree files counted again by the docs frontmatter scan
-#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 — index/_index counted here:
-#     meta files skip rules, not the scan)
+#   18 wiki — 5 p_memory (good + no-summary + empty-summary + wl-pmem + retired-keys;
+#     _index/0.*/nested excluded) + 7 common (3 facts + 1 machines + 1 pattern + 1 policy +
+#     1 common-root note; facts/_index excluded) + 3 neocortex (NEO-no-summary + NEO-good +
+#     wl-neo; _index/dream-logs excluded) + 3 tools (_index.md excluded)
+#   4 indexes — the folder TOCs the note scan just excluded, counted by the scan that owns them:
+#     p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index
+#   43 shared — 21 docs-tree files (20 under 013 + the 014_mirror API_SPEC; no exclusions on
+#     this surface) + 9 p_memory (recursive here, so _index/0.*/nested all count) + 8 common
+#     + 5 neocortex (whole folder, meta files included)
+#   21 docs — the same docs-tree files counted again by the docs frontmatter scan
+#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index — index/_index counted
+#     here: meta files skip rules, not the scan)
 # 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: the tools root
-# raises the knowledge count (recall mirror) and leaves the shared count untouched (gitignored,
+# raises the wiki count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
-# neocortex/ follows the same asymmetry for its own reason: it is the wiki lint's second root
-# (+3 knowledge), while the shared count not moving pins that it stayed off the shared-surface
-# scan — that scope extends on decision, not by drift.
+# neocortex/ used to be read as the same asymmetry, and KJP-65 ended that: it is git-tracked, so
+# it is on the shared surface and now raises BOTH counts. The tools root remains the only root
+# that is on one side and not the other, which is what makes the split a decision rather than a
+# habit — the two roots differ in git tracking, and nothing else.
+# The label is `wiki`, not `knowledge`: that is what the canon calls the layer (vault-tree.md
+# §Layers), and this script's own header has said `wiki` since the 0.2.0 pass. The count line is
+# the only place the retired word survived.
 # The common-root note (`wl-dreaming.md`) counts from the vault-paths change on: the common
 # layer is scanned recursively now, because its sub-axes are not the same shape in every vault.
 # The old scan named `{facts,patterns,policies}` and so silently skipped notes sitting at the
@@ -397,7 +466,7 @@ assert_no_match "neocortex/ is outside the shared-surface scan" 'wl-neo.md'
 # verbatim because it records what was measured then, not what this fixture set counts now:
 # every other count was byte-identical before and after (19 sessions, 102 knowledge, 321 shared,
 # 24 issues).
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 17 knowledge, 35 shared, 20 docs)'
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 18 wiki, 4 indexes, 43 shared, 21 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -405,13 +474,16 @@ assert_exit "--strict exits 1 when there are findings" 1 "$rc"
 
 # The vault above has many findings, so the assert just made cannot say *which* rule
 # blocked. This isolated vault has exactly one finding — a shared-surface wikilink —
-# so it pins that the new rule alone is enough to fail --strict.
+# so it pins that the new rule alone is enough to fail --strict. It carries no `.brain-paths`
+# at all, which doubles as the negative fixture for the schema_version rule: an absent manifest
+# is a legal vault (vault-tree.md §Tree axes — absent file or absent key = the default), so a
+# second finding appearing here would mean the rule started firing on legal vaults.
 W="$(mktemp -d -t brain-selftest-wl)"; mkdir -p "$W/hippocampus" "$W/013_wl/docs"
 printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]]\n' \
   > "$W/013_wl/docs/only.md"
 REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
 assert_exit  "wikilink-only vault exits 0 in default mode" 0 "$rc"
-assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 knowledge, 1 shared, 1 docs)'
+assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 indexes, 1 shared, 1 docs)'
 /bin/bash "$VALIDATE" "$W" --strict > /dev/null 2>&1
 assert_exit  "a wikilink finding alone fails --strict" 1 $?
 rm -rf "$W"
@@ -440,7 +512,7 @@ for suffix in "" "/" "//"; do
 done
 GP="$(mktemp -d -t brain-selftest-glob)"; G="$GP/my[vault]"
 mkdir -p "$G/$COMMON/facts" "$G/hippocampus"
-printf -- 'common_root: %s\n' "$COMMON" > "$G/.brain-paths"
+printf -- 'schema_version: 2\ncommon_root: %s\n' "$COMMON" > "$G/.brain-paths"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$G/$COMMON/facts/glob-no-summary.md"
 REPORT="$(/bin/bash "$VALIDATE" "$G")"
 assert_match "wiki scan survives glob metachars in vault path" 'glob-no-summary.md'
@@ -458,10 +530,31 @@ assert_match    "other scans survive the tools override"        'facts/facts-no-
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/hippocampus"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
-assert_match "empty vault reports a zero scan count" '(0 sessions, 0 knowledge, 0 shared, 0 docs)'
+assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 indexes, 0 shared, 0 docs)'
+# No `.brain-paths` here either: the schema_version rule must stay silent on a vault that never
+# declared a manifest, because every key then resolves to its documented default — a legal vault.
+assert_no_match "empty vault: an absent manifest is legal and silent" 'schema_version'
 /bin/bash "$VALIDATE" "$E" --strict > /dev/null 2>&1
 assert_exit  "empty vault exits 0 even under --strict" 0 $?
 rm -rf "$E"
+
+# `.brain-paths` schema_version. A manifest that declares the axes but not which schema they are
+# in is the silent-zero hazard vault-paths.sh exists for: a consumer reading it cannot tell a
+# 0.2.0 layout from a pre-restructure one, and falls back to the old defaults without a word.
+# Three states, three fixtures — absent key, unknown value, declared value — so neither half of
+# the rule can be dropped without killing a specific assert.
+H="$(mktemp -d -t brain-selftest-schema)"; mkdir -p "$H/hippocampus" "$H/$COMMON"
+printf -- 'common_root: %s\nprojects_root: .\n' "$COMMON" > "$H/.brain-paths"
+REPORT="$(/bin/bash "$VALIDATE" "$H" 2>/dev/null)"
+assert_match    "schema: a manifest without schema_version is caught" '.brain-paths:1: missing schema_version'
+printf -- 'schema_version: 99\ncommon_root: %s\n' "$COMMON" > "$H/.brain-paths"
+REPORT="$(/bin/bash "$VALIDATE" "$H" 2>/dev/null)"
+assert_match    "schema: an unknown schema_version is caught"         '.brain-paths:1: unknown schema_version "99"'
+printf -- 'schema_version: 2\ncommon_root: %s\n' "$COMMON" > "$H/.brain-paths"
+REPORT="$(/bin/bash "$VALIDATE" "$H" 2>/dev/null)"; rc=$?
+assert_no_match "schema: the declared version passes"                 'schema_version'
+assert_exit     "schema: a correctly versioned manifest exits 0" 0 "$rc"
+rm -rf "$H"
 
 # restructured vault: `.brain-paths` moves the two tree axes, and every scan must follow.
 # This is the layout that used to return a silent zero — the whole reason vault-paths.sh exists.
@@ -469,10 +562,10 @@ R="$(mktemp -d -t brain-selftest-restructured)"
 mkdir -p "$R/hippocampus" "$R/_primary/patterns" "$R/_primary/_company/machines" \
          "$R/projects/013_restructured/p_memory" "$R/projects/013_restructured/docs" \
          "$R/999_Archive" "$R/_templates/machines" "$R/gear" "$R/neocortex"
-printf -- 'common_root: _primary\nprojects_root: projects\ntools_root: gear\n' > "$R/.brain-paths"
+printf -- 'schema_version: 2\ncommon_root: _primary\nprojects_root: projects\ntools_root: gear\n' > "$R/.brain-paths"
 # tools_root moves the tools layer like the other two axes — a no-summary note under gear/
 # pins that the manifest key is followed (the default tools root is pinned by the main vault).
-# gear/ raises only the knowledge count: the tools layer is never on the shared surface.
+# gear/ raises only the wiki count: the tools layer is never on the shared surface.
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/gear/rs-tools-no-summary.md"
 # neocortex/ stays at the vault root even when every manifest axis moves — root-fixed by
 # design, no neocortex_root key (vault-paths.sh manifests only the axes that move between
@@ -480,7 +573,9 @@ printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/gear/rs-tools-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/neocortex/rs-neo-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/_primary/patterns/rs-pattern-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/_primary/_company/machines/rs-nested-no-summary.md"
-printf -- '- [[x]] — toc\n'                 > "$R/_primary/_company/_index.md"        # excluded (meta)
+# Excluded from the note scan (meta) and IN the _index scan — its link dangles on purpose, so the
+# restructured common layer's TOCs are pinned as reachable through the manifest too.
+printf -- '- [[x]] — toc\n'                 > "$R/_primary/_company/_index.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/projects/013_restructured/p_memory/rs-know-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/999_Archive/rs-archived-no-summary.md"   # excluded (retired)
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/_templates/machines/hardware.md"         # excluded (skeleton)
@@ -495,14 +590,15 @@ assert_match    "restructured: projects/ NNN_* p_memory is scanned"     'rs-know
 assert_match    "restructured: docs frontmatter scan follows the manifest" 'rs-fm-session.md:4: session key in docs frontmatter'
 assert_match    "restructured: manifest tools_root is followed"         'rs-tools-no-summary.md:1: missing frontmatter key: summary'
 assert_match    "restructured: root-fixed neocortex is scanned"         'rs-neo-no-summary.md:1: missing frontmatter key: summary'
-assert_no_match "restructured: _index.md is excluded (meta rule)"       '_index.md'
+assert_no_match "restructured: _index.md is excluded from the note scan" '_index.md:1: missing frontmatter key: summary'
+assert_match    "restructured: the moved common layer's TOC is scanned" '_company/_index.md:1: dangling _index link: \[\[x\]\]'
 assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-summary.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 knowledge, 5 shared, 1 docs)'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 indexes, 6 shared, 1 docs)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
-printf -- 'common_root: nope\n' > "$R/.brain-paths"
+printf -- 'schema_version: 2\ncommon_root: nope\n' > "$R/.brain-paths"
 REPORT="$(/bin/bash "$VALIDATE" "$R" 2>&1)"
 assert_match    "missing common root warns on stderr"                   'common root not found'
 rm -rf "$R"
@@ -513,16 +609,19 @@ rm -rf "$R"
 # not collapse any other scan.
 R2="$(mktemp -d -t brain-selftest-org)"
 mkdir -p "$R2/hippocampus" "$R2/$COMMON/patterns" "$R2/$COMMON/empty-axis"
-printf -- 'common_root: %s\n' "$COMMON" > "$R2/.brain-paths"
+printf -- 'schema_version: 2\ncommon_root: %s\n' "$COMMON" > "$R2/.brain-paths"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$R2/$COMMON/patterns/org-no-summary.md"
-printf -- '- [[x]] — axis toc\n'            > "$R2/$COMMON/empty-axis/_index.md"     # excluded (meta)
+printf -- '- [[x]] — axis toc\n'            > "$R2/$COMMON/empty-axis/_index.md"     # excluded (note scan)
 REPORT="$(/bin/bash "$VALIDATE" "$R2" 2>&1)"; rc=$?
 assert_exit     "org vault: exits 0" 0 "$rc"
 assert_match    "org vault: common root under org/ is scanned"          'org-no-summary.md:1: missing frontmatter key: summary'
-assert_no_match "org vault: _index-only folder stays quiet"             'empty-axis'
+# A folder holding nothing but a TOC produces no *note* finding — but the TOC itself is still an
+# index, and its link dangles, so the two rules speak to the same file for different reasons.
+assert_no_match "org vault: _index-only folder is not asked for a summary" 'empty-axis/_index.md:1: missing frontmatter key: summary'
+assert_match    "org vault: the _index-only folder's TOC is still scanned" 'empty-axis/_index.md:1: dangling _index link: \[\[x\]\]'
 assert_no_match "org vault: absent tools root is silent (legal state)"  '999_tools'
 assert_no_match "org vault: no missing-root warning at all"             'not found'
-assert_match    "org vault: counts"                                     '(0 sessions, 1 knowledge, 2 shared, 0 docs)'
+assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 indexes, 2 shared, 0 docs)'
 rm -rf "$R2"
 
 # usage errors exit 2 (documented separately from the findings exit codes)
