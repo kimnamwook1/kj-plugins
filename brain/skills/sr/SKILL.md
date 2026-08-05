@@ -25,7 +25,7 @@ Adopts an existing parked session as the current work session. **Never creates a
    . "${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh"
    PROJDIR=$(brain_project_dir "<project>")
    ```
-   If it comes back empty, continue anyway but say so — recall's project-knowledge scan will be empty.
+   If it comes back empty, continue anyway but say so — recall's project index scan will be empty.
 
 ## Steps
 
@@ -35,7 +35,7 @@ Adopts an existing parked session as the current work session. **Never creates a
 
 2. **Present the candidates and ask** — extract each with **§2 of the shared document (`awk`) — never `Read` a session file whole.** Render per **§3**, which carries the required `[parked]`/`[active]` state marker and fixes the ordering (`updated:` descending) so a number means the same session here as it did in `sl`:
    > `<project>` has N open sessions:
-   > 1. [parked] `<goal one-liner>` (`<uid>`, updated `<updated>`) — <newest Progress one-liner>
+   > 1. [parked] `<goal one-liner>` (`<filename>`, updated `<updated>`) — <newest Progress one-liner>
    >
    > Which do you want to resume? (number, or `ss` to start a new session instead)
 
@@ -48,23 +48,22 @@ Adopts an existing parked session as the current work session. **Never creates a
 3. **Adopt the chosen session** — it becomes the current work session. No new file. Summarize its `## Goal` + **latest Progress entry** + `## To-Do-List` **from the step-2 `awk` extract — do not Read the file again** — and announce "resuming from here".
    - **PM (read)** — collect the current CC session id **if obtainable** (if the harness exposes no value, treat it as absent).
    - **Delegate the frontmatter update to `scribe`** — writing brief:
-     - Target: the adopted `<VAULT>/sessions/<uid>.md`.
+     - Target: the adopted `<VAULT>/hippocampus/<session-file>.md`.
      - **Set `status:` to `active`** — the resume transition `parked` → `active` (KJP-48). Replace **only the `status:` line inside the frontmatter block** (the body Progress also contains the string `status:`). If the session was already `active`, the value is unchanged — write it idempotently rather than branching.
      - Prepend the current CC session id **to the top of** the `cc_session_ids:` list (entries formatted `- <id>`). **If there is no id, do not touch this field.** (Preserves CC session history that vanishes on every resume.)
      - Update `updated:` to the current local datetime (`YYYY-MM-DDTHH:MM:SS` — canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md` §updated).
      - All other fields and the entire body unchanged — **`sr` adds no Progress entry**; the next `sh`/`sc` writes that.
      - **Return requirement**: the recorded path + the final `status` value.
 
-4. **★ Recall injection — required, screen-output only.** The **PM directly performs** `${CLAUDE_SKILL_DIR}/../_session-shared/recall.md` via Read (a read). **First `export GOAL="<the adopted session's ## Goal>"`** so the ranker's `${GOAL:?}` guard (recall.md:18) is satisfied (`VAULT`·`PROJDIR`·`<project>` are already set from the section above). Present the accumulated memory relevant to the session goal **alongside the resume summary** — this project's knowledge · common facts/patterns/policies · cross-project notes · past Mistakes · 1-hop related — live priming.
-   - **Do not overwrite the session note's `## Context`. No vault write, no `scribe` delegation for this step.**
+4. **★ Recall injection — required, screen-output only.** The **PM directly performs** `${CLAUDE_SKILL_DIR}/../_session-shared/recall.md` via Read (a read); `VAULT` and `<project>` are already set from the section above. Present the folder indexes **alongside the resume summary** — live priming. **Report the file count and total bytes**, 0 included.
+   - **Do not overwrite the session note's `## Recall`. No vault write, no `scribe` delegation for this step.**
    - **Skip recall and priming at resumption is zero** — that is the entire reason this step exists.
-   - Screen-only also means it extends neither the session's injected-notes record (the creation-time `## Context` recall block written by `ss`) nor any `recalled:`/`useful:` counter — feedback counters count injection **once per session** (`${CLAUDE_SKILL_DIR}/../../docs/knowledge-convention.md` §Feedback counters).
 
-5. **Report** — the adopted session path (`<VAULT>/sessions/<uid>.md`) · project · vault · one line on the recall gist if anything was surfaced.
+5. **Report** — the adopted session path (`<VAULT>/hippocampus/<session-file>.md`) · project · vault · the recall file count and byte total.
 
 ## Hard rules
 
-- **Resume only. Never create a session file here** — no uid minting, no `Write` of `sessions/<uid>.md`. If the user turns out to want a new session, hand off to `ss`.
+- **Resume only. Never create a session file here** — no filename minting, no `Write` into `hippocampus/`. If the user turns out to want a new session, hand off to `ss`.
 - **`active` is the only status this skill writes.** Resuming restores `parked` → `active` (KJP-48) — that transition is the point of the skill, since a resumed session is running again and `sh` must have something to flip back. **Never write `done`** — closure is `sc`'s job alone, and `cancel` no longer exists.
 - **Read sessions with the shared `awk` extract, never whole** — a 90 KB session file read in full is the failure mode this skill was split out to avoid.
 - **The `parked` → `active` frontmatter update is an `Edit`, never a CLI write** — canon: `${CLAUDE_SKILL_DIR}/../_session-shared/vault-io.md` §1 (why `Edit` and not `Write` is the whole point there; this file is the concurrent-session case it protects). Performed by `scribe` — the PM never writes vault **content** directly (canon: memory-control-convention §Governance).
