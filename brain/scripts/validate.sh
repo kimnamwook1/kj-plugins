@@ -3,8 +3,9 @@
 #
 #   validate.sh <vault-root> [--strict]
 #
-# Checks session-note frontmatter (required keys, uid format, uid/filename match,
-# status vocabulary), knowledge-note `title:`, session-uid wikilinks on the
+# Checks session-note frontmatter (required keys, status vocabulary, retired keys) on the raw
+# layer (`hippocampus/`), `summary:` on the wiki layer (`p_memory/` + `neocortex/` + the common
+# and tools roots), session-uid wikilinks on the
 # team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; policy/adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
@@ -64,7 +65,7 @@ AWK_PRELUDE='
 # would flag the spec itself forever and make --strict unusable.
 # ponytail: if this exclusion list grows past the TOC pair + the placeholder, that is the signal
 # to promote it to a convention (a `meta:` flag or a naming rule) instead of extending the chain.
-find "$VAULT/sessions" -maxdepth 1 -type f -name '*.md' \
+find "$VAULT/hippocampus" -maxdepth 1 -type f -name '*.md' \
   ! -name 'index.md' ! -name '_index.md' ! -name 'sample-session.md' 2>/dev/null | sort > "$LIST"
 n_sessions="$(wc -l < "$LIST" | tr -d ' ')"
 
@@ -182,35 +183,39 @@ while IFS= read -r f; do
 done < "$LIST" >> "$OUT"
 
 # ------------------------------------------- session wikilinks on the shared surface
-# Canon: git-convention.md §Share scope + knowledge-convention.md:14
-# (`source_sessions`). The shared surface is what a teammate pulls; `sessions/` sits
-# outside it and a team vault gitignores it, so a `[[<uid>]]` written on the shared
-# surface dangles in any vault that lacks that session. Shared notes cite a session as
-# plain uid text — frontmatter and body alike.
+# Canon: git-convention.md §Share scope. The shared surface is what a teammate pulls;
+# `hippocampus/` sits outside it and is git-untracked outright in 0.2.0, so a `[[<uid>]]`
+# written on the shared surface dangles in any vault that lacks that session. Shared notes
+# cite a session as plain uid text — frontmatter and body alike.
 #
-# Scope = the shared surface itself: NNN_*/docs/**, NNN_*/knowledge/**, and the whole common
-# layer (whichever folder `.brain-paths` names — `000_common/` by default).
-# 🔴 `sessions/` is deliberately NOT scanned — a session's own wikilinks are its record,
+# Scope = the shared surface itself: NNN_*/docs/**, NNN_*/p_memory/**, and the whole common
+# layer (whichever folder `.brain-paths` names).
+# 🔴 `hippocampus/` is deliberately NOT scanned — a session's own wikilinks are its record,
 # and the file is never pulled by anyone else.
 #
-# Two deliberate divergences from the knowledge-title scan above, both because the unit
+# Two deliberate divergences from the wiki summary scan above, both because the unit
 # differs (that scan checks per-note schema and mirrors what *recall* reads; this one
 # checks a tree a teammate *pulls*): it recurses (no -maxdepth), and it excludes no
 # meta files — a dangling link in `index.md` or `0.rejected.md` breaks for a teammate
 # exactly like one in a note. See knowledge note "validate 스코프는 recall 스코프의
 # 미러가 원칙" — divergence by decision, recorded, not drift.
 #
-# 🔴 `999_tools/` is NOT scanned here, and that is not a mirror divergence — this scan was never the
-# recall mirror (the knowledge-title scan above is). Its axis is *share scope*, and `999_tools/` is
+# 🔴 The tools root is NOT scanned here, and that is not a mirror divergence — this scan was never
+# the recall mirror (the wiki summary scan above is). Its axis is *share scope*, and the tools root is
 # gitignored machine-local content, so it is outside the shared surface by definition: no teammate
 # ever pulls it, so no link in it can dangle for one. It needs no exclusion either — it has neither
-# docs/ nor knowledge/, so the sweep below never picks it up (measured).
+# docs/ nor p_memory/, so the sweep below never picks it up (measured).
+#
+# 🔴 `neocortex/` is not scanned here either, and that one is scope left as it was rather than
+# scope reasoned about: step 6 of the 0.2.0 linter migration renamed this scan, it did not extend
+# it. neocortex/ *is* git-tracked and shared, so this is the gap to revisit when the dangling-link
+# check (`_index.md` line format) lands — extend on decision, not by drift.
 SDIRS=()
 while IFS= read -r d; do
   # brain_projects already drops the common root (it matches NNN_ when it sits at the vault
-  # root), so its docs/ and knowledge/ are not scanned twice — it is added whole below.
+  # root), so its docs/ and p_memory/ are not scanned twice — it is added whole below.
   [ -d "$d/docs" ] && SDIRS[${#SDIRS[@]}]="$d/docs"
-  [ -d "$d/knowledge" ] && SDIRS[${#SDIRS[@]}]="$d/knowledge"
+  [ -d "$d/p_memory" ] && SDIRS[${#SDIRS[@]}]="$d/p_memory"
 done < <(brain_projects)
 [ -n "$BRAIN_COMMON" ] && SDIRS[${#SDIRS[@]}]="$BRAIN_COMMON"
 
@@ -231,10 +236,11 @@ while IFS= read -r f; do
       # error — it would silently never match. Same discipline as the uid checks above.
       D8 = "[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
       D6 = "[0-9][0-9][0-9][0-9][0-9][0-9]"
-      # <PREFIX>-YYYYMMDD-HHMMSS; PREFIX optional because dreaming reports carry none
-      # (dreaming/SKILL.md §Report format).
+      # <PREFIX>-YYYYMMDD-HHMMSS, PREFIX optional — the 0.1.x session-uid shape. 0.2.0 session
+      # filenames are `<pp>_YYYYMMDD_<slug>`, so this pattern now catches legacy links during
+      # migration rather than links a fresh vault could produce.
       UID = "([A-Z][A-Z0-9]*-)?" D8 "-" D6
-      # Covers [[uid]] · [[sessions/uid]] (any path prefix) · [[uid|alias]] ·
+      # Covers [[uid]] · [[hippocampus/uid]] (any path prefix) · [[uid|alias]] ·
       # [[uid#heading]] · ![[uid]] (the leading ! is simply outside the match).
       # `[^]|#]` is POSIX-correct: a `]` right after `^` is a literal.
       # ponytail: no fenced-code-block awareness. A vault doc quoting a violation as an
@@ -260,7 +266,7 @@ done < "$LIST" >> "$OUT"
 # sessions-note-convention.md. Findings vs warns — deliberately asymmetric:
 #   FINDINGS (schema violations — --strict blocks on them):
 #   · `session:` key anywhere in docs frontmatter. Upgraded from the old "no session
-#     wikilink" rule: team vaults gitignore sessions/, so even a *plain uid* is a
+#     wikilink" rule: hippocampus/ is git-untracked, so even a *plain uid* is a
 #     reference no teammate can resolve. Team provenance = history `ticket`; the
 #     session uid rides the boundary commit message (git-convention.md).
 #   · `status:` absent, or a value outside created|draft|approved|deprecated — the only
@@ -284,8 +290,8 @@ done < "$LIST" >> "$OUT"
 # (KJP-58), which reads the §Value Axes table as its SSOT. Semantic duplication (a norm
 # restated in prose) remains with dreaming/PM review; this line exists so the split reads
 # as a decision, not an oversight.
-# Scope = NNN_*/docs/** recursive (the docs trees only — knowledge `source_sessions` is a
-# separate, legal axis and its dirs are not scanned). index/_index are folder meta
+# Scope = NNN_*/docs/** recursive (the docs trees only — the wiki layer has its own scan and
+# its dirs are not scanned here). index/_index are folder meta
 # (`next_id`, TOC titles), so they skip the unknown-key warn and the body-document rules
 # (status·id·mirror·updated) but not the session check. Feature-tier policies
 # (`docs/feature/<F>/policy/`) are NOT under the id rule yet — deliberate scope, extend on
@@ -349,7 +355,7 @@ while IFS= read -r f; do
       # Matches the key in every YAML shape: top-level `session:`, nested-map
       # `    session:`, inline-map `{ ..., session: ... }`, and the quoted spelling of
       # each (`"session":` — verifier bypass 2026-07-29). The leading class keeps
-      # `source_sessions:` (underscore before) and `sessions:` (no quote/colon right
+      # `cc_session_ids:` (underscore before) and `sessions:` (no quote/colon right
       # after "session") out of the match.
       if ($0 ~ SESSKEY) {
         print file ":" NR ": session key in docs frontmatter (banned — team provenance = history ticket:, the session uid goes in the boundary commit message)"
