@@ -9,6 +9,8 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
 | Layer | Location | Note |
 |---|---|---|
 | **raw** | `hippocampus/` | sessions. Outside git. Not a recall target |
+
+🔴 **"Outside git" means the layer has no backup unless the machine has one.** Decided 2026-08-05 (KJP-80): the raw layer stays untracked in every vault — a vault-local exception is *not* the fix — and durability is an **OS-level backup concern** (Time Machine or equivalent), not a git one. This is written here because the previous exception lived only as a `.gitignore` comment, and a bulk migration overwrote it without anyone noticing. Two consequences worth stating plainly: a vault whose machine has no backup **is one disk away from losing every unpromoted Mistake and Learned** (measured on the reference machine that day: zero Time Machine destinations configured), and what survives a loss is exactly what promotion moved into `p_memory/` and `neocortex/` — which is the layer split doing its job, not a gap in it.
 | **wiki** | `<project>/p_memory/` | project knowledge |
 | | `neocortex/` | vault-wide knowledge |
 | | `<common_root>/` | fact record |
