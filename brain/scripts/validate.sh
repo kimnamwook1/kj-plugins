@@ -161,8 +161,12 @@ done < <(brain_projects)
 # second half: `p_memory` is what one project knows, `neocortex` is what the vault knows.
 [ -d "$VAULT/neocortex" ] && KDIRS[${#KDIRS[@]}]="$VAULT/neocortex"
 # The tools root (`999_tools/` by default) = machine-global tool inventory (vault-tree.md
-# §The tools root). recall scans it, and *this* scan is the recall mirror — so it is a scan root
-# here too. It does not arrive via brain_projects: that helper excludes the reserved 9xx band
+# §The tools root). It is a scan root here because it carries wiki-layer notes that must hold the
+# wiki schema — NOT because recall reads it. 🔴 Measured 2026-08-05 (KJP-65): recall 0.2.0 scans
+# exactly three places (skills/_session-shared/recall.md — PROJDIR, BRAIN_COMMON, neocortex/_index.md);
+# the tools root is not among them. The older "recall scans it, so this is the mirror" claim was false.
+# Scan reason and recall reason are different questions, and this root answers only the first.
+# It does not arrive via brain_projects: that helper excludes the reserved 9xx band
 # outright, and a 9xx folder has no p_memory/ subfolder
 # anyway (measured). The root resolves through vault-paths (`tools_root` key / BRAIN_TOOLS_REL);
 # empty = the folder is absent, a legal state (machine-global, git-untracked), skipped silently —
@@ -332,8 +336,7 @@ done < "$LIST" >> "$OUT"
 # exactly like one in a note. See knowledge note "validate 스코프는 recall 스코프의
 # 미러가 원칙" — divergence by decision, recorded, not drift.
 #
-# 🔴 The tools root is NOT scanned here, and that is not a mirror divergence — this scan was never
-# the recall mirror (the wiki summary scan above is). Its axis is *share scope*, and the tools root is
+# 🔴 The tools root is NOT scanned here. Its axis is *share scope*, and the tools root is
 # gitignored machine-local content, so it is outside the shared surface by definition: no teammate
 # ever pulls it, so no link in it can dangle for one. It needs no exclusion either — it has neither
 # docs/ nor p_memory/, so the sweep below never picks it up (measured).
@@ -342,7 +345,7 @@ done < "$LIST" >> "$OUT"
 # reason — step 6 of the 0.2.0 linter migration renamed this scan without extending it — and the
 # axis decides the question outright: neocortex/ is git-tracked and pulled like any project folder,
 # so a session wikilink there dangles for a teammate exactly as one in docs/ does. That leaves the
-# tools root as the only root inside the recall mirror and outside this scan, which is what keeps
+# tools root as the only root in the wiki-schema scan and outside this one, which is what keeps
 # the split a decision rather than a habit: the two roots differ in git tracking and nothing else.
 SDIRS=()
 while IFS= read -r d; do
