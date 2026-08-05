@@ -3,9 +3,10 @@
 #
 #   validate.sh <vault-root> [--strict]
 #
-# Checks session-note frontmatter (required keys, status vocabulary, retired keys) on the raw
-# layer (`hippocampus/`), `summary:` on the wiki layer (`p_memory/` + `neocortex/` + the common
-# and tools roots), session-uid wikilinks on the
+# Checks the vault manifest's `schema_version`, session-note frontmatter (required keys, status
+# vocabulary, retired keys) on the raw layer (`hippocampus/`), `summary:` on the wiki layer
+# (`p_memory/` + `neocortex/` + the common and tools roots), the wiki layer's folder indexes
+# (`_index.md` line form + dangling links), session-uid wikilinks on the
 # team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; policy/adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
@@ -38,7 +39,27 @@ done
 
 OUT="$(mktemp -t brain-validate)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
 LIST="$(mktemp -t brain-validate-list)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
-trap 'rm -f "$OUT" "$LIST"' EXIT
+TARGETS="$(mktemp -t brain-validate-targets)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
+trap 'rm -f "$OUT" "$LIST" "$TARGETS"' EXIT
+
+# ----------------------------------------------------------- the manifest's schema version
+# 🔴 One level above every scan below. `.brain-paths` is what tells a consumer where the tree is;
+# a manifest that declares the axes but not *which schema* they are in cannot be read safely,
+# because "absent key = the documented default" is only sound when the reader knows which
+# generation of defaults applies. Without the version the resolver falls back to the
+# pre-restructure layout and every scan returns zero — silently, and looking exactly like a clean
+# vault. That accident is the reason vault-paths.sh exists at all.
+# An absent manifest is a different case and stays silent: a vault that never restructured needs
+# none, and every key resolving to its default is then correct by construction
+# (vault-tree.md §Tree axes). The expected value lives in vault-paths.sh, the sole home of the
+# manifest's keys and their defaults — never a literal here.
+if [ -f "$BRAIN_PATHS_FILE" ]; then
+  if [ -z "$BRAIN_SCHEMA_VERSION" ]; then
+    echo "$BRAIN_PATHS_FILE:1: missing schema_version: (the manifest declares the tree axes but not which schema they are in — a reader cannot tell a current layout from a pre-restructure one, and falls back to the old defaults in silence; add \"schema_version: $BRAIN_SCHEMA_VERSION_EXPECTED\")" >> "$OUT"
+  elif [ "$BRAIN_SCHEMA_VERSION" != "$BRAIN_SCHEMA_VERSION_EXPECTED" ]; then
+    echo "$BRAIN_PATHS_FILE:1: unknown schema_version \"$BRAIN_SCHEMA_VERSION\" (this resolver understands $BRAIN_SCHEMA_VERSION_EXPECTED — the axis values below may not mean what it assumes)" >> "$OUT"
+  fi
+fi
 
 # The vault path is only ever passed to find as a *start path*, never spliced into a
 # -path/-name glob — so trailing slashes and glob metacharacters in the path (`my[vault]`)
@@ -166,7 +187,7 @@ if [ -n "$BRAIN_COMMON" ]; then
   brain_find_notes "$BRAIN_COMMON" >> "$LIST"
 fi
 sort -o "$LIST" "$LIST"
-n_knowledge="$(wc -l < "$LIST" | tr -d ' ')"
+n_wiki="$(wc -l < "$LIST" | tr -d ' ')"
 
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
@@ -203,6 +224,96 @@ while IFS= read -r f; do
   ' "$f"
 done < "$LIST" >> "$OUT"
 
+# ----------------------------------------------------- folder indexes (`_index.md`)
+# 🔴 The failure mode this whole layer is built on, and the only one no other check can reach.
+# recall injects the folder indexes and nothing else (`skills/_session-shared/recall.md`), so an
+# index line naming a file that is not there is not a broken link — it is a **false inventory**.
+# Every later session reads the list, believes the note exists, and nothing contradicts it. The
+# inverse is loud: a note with no summary is reported by the scan above. This one is silent.
+# Line form canon: knowledge-convention.md §summary — `- [[<filename stem>]] — <summary>`.
+#
+# Scope = the wiki layer's TOCs, i.e. the same roots as the note scan above, because that line
+# form is the memory-note canon. Two trees are deliberately outside it, each pinned by a
+# dangling-link fixture in the self-test so the boundary cannot rot into an accident:
+#   · `hippocampus/` — the raw layer, never a recall target (vault-tree.md §Layers)
+#   · `NNN_*/docs/`  — a docs TOC legitimately carries prose and `next_id:`, not memory-note lines
+#     (doc-catalog.md: the project hub is "one-line definition + PREFIX + TOC pointers")
+# Both spellings are indexes (`_index.md` canonical, `index.md` its legacy equal), the same pair
+# every other scan excludes as meta.
+#
+# 🔴 Detection only, and it presumes no regenerator. An `_index.md` is updated by whoever creates
+# or moves the file, in the same commit (knowledge-convention.md); after-the-fact regeneration was
+# retired with the dreaming feature set (KJP-77). This check never rewrites an index and no
+# message here may imply that something else will.
+: > "$LIST"
+if [ ${#KDIRS[@]} -gt 0 ]; then
+  find "${KDIRS[@]}" -maxdepth 1 -type f \( -name '_index.md' -o -name 'index.md' \) 2>/dev/null >> "$LIST"
+fi
+if [ -n "$BRAIN_COMMON" ]; then
+  # Recursive on the common layer, like the note scan, and carrying the same structural
+  # exclusions brain_find_notes owns: an index inside a template folder or an archive is the
+  # same class of non-content as a note there.
+  find "$BRAIN_COMMON" -type f \( -name '_index.md' -o -name 'index.md' \) \
+    ! -path '*/_templates/*' ! -path '*/999_Archive/*' ! -path '*/Archive/*' \
+    ! -path '*/_dreaming_logs/*' 2>/dev/null >> "$LIST"
+fi
+sort -o "$LIST" "$LIST"
+n_index="$(wc -l < "$LIST" | tr -d ' ')"
+
+: > "$TARGETS"
+if [ "$n_index" -gt 0 ]; then
+  # Every target the vault can resolve, in the two spellings a wikilink may use: the vault-relative
+  # path (`[[org/machines/clients/x/HARDWARE_SPEC]]`) and the bare filename stem (`[[NEO-foo]]`).
+  # Built once for the whole run — one tree walk instead of a stat per link.
+  # 🔴 `aliases:` is deliberately NOT harvested. A renamed note keeps its old basename there so
+  # existing links still open, but knowledge-convention.md requires the folder index to be updated
+  # in the *same commit* as the move — so an index line still naming the pre-rename stem is a
+  # finding by canon even though Obsidian would happily follow it. Resolving through aliases here
+  # would forgive exactly the drift this check exists to catch.
+  # ponytail: a partial path (`[[p_memory/good]]`) that is neither the full vault-relative path nor
+  # the bare stem is reported as dangling, though Obsidian would resolve it when unique. No
+  # instance exists in either measured vault; add suffix matching when one does.
+  find "$VAULT" -type f -name '*.md' ! -path '*/.git/*' 2>/dev/null | while IFS= read -r p; do
+    # Quoted pattern = literal: an unquoted "$VAULT" here would be read as a glob, and a vault
+    # path containing `[` would strip the wrong prefix (the same class of silent collapse the
+    # start-path discipline above avoids).
+    rel="${p#"$VAULT"}"; rel="${rel#/}"
+    base="${p##*/}"
+    printf '%s\n%s\n' "${rel%.md}" "${base%.md}"
+  done | sort -u > "$TARGETS"
+fi
+
+while IFS= read -r f; do
+  [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
+  awk -v file="$f" -v targets="$TARGETS" '
+    BEGIN {
+      while ((getline t < targets) > 0) T[t] = 1
+      close(targets)
+    }
+    { sub(/\r$/, "") }
+    # A TOC entry is a list line, and only a list line. Headings, the intro sentence that says what
+    # the folder is, and blank lines carry no obligation — an index is allowed to introduce itself.
+    # Any bullet, though, is claiming to be an entry, so `*` and `+` bullets are entries too and
+    # fail the form: recall reads the whole file, and a half-formed line costs a note its summary.
+    /^[ \t]*[-*+][ \t]/ {
+      if (!match($0, /^- \[\[[^]]+\]\] — [^ ]/))
+        print file ":" NR ": malformed _index line (canon: - [[<stem>]] — <summary>): " $0
+      s = $0
+      while (match(s, /\[\[[^]]+\]\]/)) {
+        t = substr(s, RSTART + 2, RLENGTH - 4)
+        s = substr(s, RSTART + RLENGTH)
+        # `|alias` and `#heading` are addressing, not identity — strip both before resolving.
+        p = index(t, "|"); if (p > 0) t = substr(t, 1, p - 1)
+        p = index(t, "#"); if (p > 0) t = substr(t, 1, p - 1)
+        sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t)
+        if (t == "") continue
+        if (!(t in T))
+          print file ":" NR ": dangling _index link: [[" t "]] (recall injects this index and nothing else — a line naming a file that is not there is a false inventory no other check can see)"
+      }
+    }
+  ' "$f"
+done < "$LIST" >> "$OUT"
+
 # ------------------------------------------- session wikilinks on the shared surface
 # Canon: git-convention.md §Share scope. The shared surface is what a teammate pulls;
 # `hippocampus/` sits outside it and is git-untracked outright in 0.2.0, so a `[[<uid>]]`
@@ -227,10 +338,12 @@ done < "$LIST" >> "$OUT"
 # ever pulls it, so no link in it can dangle for one. It needs no exclusion either — it has neither
 # docs/ nor p_memory/, so the sweep below never picks it up (measured).
 #
-# 🔴 `neocortex/` is not scanned here either, and that one is scope left as it was rather than
-# scope reasoned about: step 6 of the 0.2.0 linter migration renamed this scan, it did not extend
-# it. neocortex/ *is* git-tracked and shared, so this is the gap to revisit when the dangling-link
-# check (`_index.md` line format) lands — extend on decision, not by drift.
+# 🔴 `neocortex/` IS scanned here, as of KJP-65. It had been left out for a reason that was never a
+# reason — step 6 of the 0.2.0 linter migration renamed this scan without extending it — and the
+# axis decides the question outright: neocortex/ is git-tracked and pulled like any project folder,
+# so a session wikilink there dangles for a teammate exactly as one in docs/ does. That leaves the
+# tools root as the only root inside the recall mirror and outside this scan, which is what keeps
+# the split a decision rather than a habit: the two roots differ in git tracking and nothing else.
 SDIRS=()
 while IFS= read -r d; do
   # brain_projects already drops the common root (it matches NNN_ when it sits at the vault
@@ -239,6 +352,7 @@ while IFS= read -r d; do
   [ -d "$d/p_memory" ] && SDIRS[${#SDIRS[@]}]="$d/p_memory"
 done < <(brain_projects)
 [ -n "$BRAIN_COMMON" ] && SDIRS[${#SDIRS[@]}]="$BRAIN_COMMON"
+[ -d "$VAULT/neocortex" ] && SDIRS[${#SDIRS[@]}]="$VAULT/neocortex"
 
 # Empty array under `set -u` — same guard as KDIRS above.
 if [ ${#SDIRS[@]} -eq 0 ]; then
@@ -297,6 +411,11 @@ done < "$LIST" >> "$OUT"
 #     v1 vocabulary hid. v2 entry = { at, change, ticket } only.
 #   · `docs/policy/`·`docs/adr/`: body files without `id:` (multi-instance, PM-issued,
 #     immutable); their index/_index without `next_id:` (the issuance counter).
+#     ⚠️ Presence only. **Duplicate IDs and gaps in the sequence have no owner** — the audit that
+#     would have caught them was retired with the dreaming feature set (KJP-77), and
+#     project-docs-convention.md §ID Issuance records the hole as a known gap rather than a rule
+#     someone is following. Named here so the presence check is not mistaken for the whole
+#     contract; closing it is a separate card, not this one.
 #   · `docs/tech-design/API_SPEC.md` without `source:` + `readonly: true` (mirror contract).
 #   WARNS (stderr only, never a finding — --strict must not fail on them):
 #   · unknown top-level keys (protects docs imported from outside; migration off the v1
@@ -309,8 +428,12 @@ done < "$LIST" >> "$OUT"
 # token is a price" is semantics, not schema, so it stays out of this linter — but the
 # price/tier *literal* half now has its own report-only detector, `value-axis-drift.sh`
 # (KJP-58), which reads the §Value Axes table as its SSOT. Semantic duplication (a norm
-# restated in prose) remains with dreaming/PM review; this line exists so the split reads
-# as a decision, not an oversight.
+# restated in prose) has **no automated owner**: it rests on the §Value Axes declaration itself
+# plus PM mediation (project-docs-convention.md §Value Axes). 🔴 It is explicitly NOT dreaming's —
+# that skill's operations are refine · link · promotion ②, it reads only `p_memory`/`neocortex`,
+# and it never touches `docs/` at all (`skills/dreaming/SKILL.md`; ownership judged KJP-77). This
+# line exists so the split reads as a decision, not an oversight — and so "dreaming does it" is
+# not quietly reinvented by the next reader.
 # Scope = NNN_*/docs/** recursive (the docs trees only — the wiki layer has its own scan and
 # its dirs are not scanned here). index/_index are folder meta
 # (`next_id`, TOC titles), so they skip the unknown-key warn and the body-document rules
@@ -455,7 +578,10 @@ done < "$LIST" >> "$OUT"
 # ponytail: known limits, all judged not worth the weight for a real vault —
 #   · symlinked notes are skipped (`-type f`); use `find -L` if vaults ever use links.
 #   · filenames containing newlines break the line-based file list and counts.
-scanned="$n_sessions sessions, $n_knowledge knowledge, $n_shared shared, $n_docs docs"
+# The label is `wiki`, not `knowledge`: that is the canon's name for the layer (vault-tree.md
+# §Layers) and the name this file's own header has used since the 0.2.0 pass. The count line was
+# the last place the retired word survived.
+scanned="$n_sessions sessions, $n_wiki wiki, $n_index indexes, $n_shared shared, $n_docs docs"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
   echo "validate.sh: OK — no issues ($scanned) $VAULT"
