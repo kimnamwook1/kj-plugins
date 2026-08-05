@@ -173,8 +173,11 @@ while IFS= read -r f; do
     { sub(/\r$/, "") }
     NR == 1 && $0 == "---" { fm = 1; next }
     fm && $0 == "---" { exit }
-    fm && /^title:[ \t]*[^ \t]/ { ok = 1 }
-    END { if (!ok) print file ":1: missing frontmatter key: title" }
+    # `summary:` inherits the seat `title:` held. It is not a rename of a label but of a role:
+    # recall injects `_index.md` only, and every line there is `- [[stem]] — <summary>`, so a
+    # note without one is invisible to every future session rather than merely untitled.
+    fm && /^summary:[ \t]*[^ \t]/ { ok = 1 }
+    END { if (!ok) print file ":1: missing frontmatter key: summary" }
   ' "$f"
 done < "$LIST" >> "$OUT"
 
