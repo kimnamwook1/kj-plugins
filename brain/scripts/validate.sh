@@ -70,7 +70,7 @@ n_sessions="$(wc -l < "$LIST" | tr -d ' ')"
 
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
-  awk -v file="$f" -v base="$(basename "$f" .md)" "$AWK_PRELUDE"'
+  awk -v file="$f" "$AWK_PRELUDE"'
     { sub(/\r$/, "") }
     NR == 1 && $0 == "---" { fm = 1; next }
     fm && $0 == "---" { fm = 0; fmend = 1; next }
@@ -92,22 +92,21 @@ while IFS= read -r f; do
       for (i = 1; i <= n; i++)
         if (!(req[i] in seen)) print file ":1: missing frontmatter key: " req[i]
 
-      if ("uid" in seen) {
-        u = val["uid"]
-        # dreaming reports are cross-project batches: uid = YYYYMMDD-HHMMSS, no PREFIX by canon
-        # (dreaming/SKILL.md §Report format). Same shape-only + filename-match discipline.
-        if (val["session_type"] == "dreaming") {
-          if (u !~ /^[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/)
-            print file ":" ln["uid"] ": dreaming uid is not YYYYMMDD-HHMMSS: " u
-          else if (u != base)
-            print file ":" ln["uid"] ": uid \"" u "\" does not match filename \"" base "\""
-        }
-        # ponytail: shape-only check — TST-20261345-996699 (month 13, day 45) passes.
-        # Calendar validation in awk costs more than the class of typo it would catch.
-        else if (u !~ /^[A-Z][A-Z0-9]*-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/)
-          print file ":" ln["uid"] ": uid is not <PREFIX>-YYYYMMDD-HHMMSS: " u
-        else if (u != base)
-          print file ":" ln["uid"] ": uid \"" u "\" does not match filename \"" base "\""
+      # Retired 0.1.x keys. Same shape as the `cancel` message below: "missing key" cannot say
+      # anything about a key that is *present and no longer meant to be*, and a vault that never
+      # dropped them would otherwise pass in silence. Each message carries its own migration
+      # instruction, because "retired" alone would not say where the information went.
+      # The `session_type: dreaming` branch died here with `uid`: dreaming no longer writes a
+      # session at all — its log is a single accumulating file on the wiki layer.
+      nr = split("uid created writer", ret, " ")
+      for (i = 1; i <= nr; i++) {
+        if (!(ret[i] in seen)) continue
+        if (ret[i] == "uid")
+          print file ":" ln["uid"] ": retired key \"uid\" (the filename is the identity now — delete the key)"
+        else if (ret[i] == "created")
+          print file ":" ln["created"] ": retired key \"created\" (the first Progress entry dates the session — delete the key)"
+        else
+          print file ":" ln["writer"] ": retired key \"writer\" (git carries authorship — delete the key)"
       }
 
       if ("status" in seen) {
@@ -429,8 +428,6 @@ done < "$LIST" >> "$OUT"
 # ponytail: known limits, all judged not worth the weight for a real vault —
 #   · symlinked notes are skipped (`-type f`); use `find -L` if vaults ever use links.
 #   · filenames containing newlines break the line-based file list and counts.
-#   · `awk -v base=...` interprets backslash escapes, so a filename with a backslash
-#     reaches awk mangled (the uid/filename comparison may misreport).
 scanned="$n_sessions sessions, $n_knowledge knowledge, $n_shared shared, $n_docs docs"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
