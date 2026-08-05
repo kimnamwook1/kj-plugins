@@ -29,139 +29,154 @@ assert_exit() {    # <desc> <expected> <actual>
 }
 
 # ---------------------------------------------------------------- fixtures
-mkdir -p "$V/sessions/nested" "$V/013_selftest/knowledge/nested" \
+# The common root is manifest data, never a literal in this file: 0.2.0 `init` writes
+# `common_root: org` into `.brain-paths`, and every fixture vault below declares it the same way
+# a real vault does. `neocortex/` and `hippocampus/` take no manifest key — they are root-fixed
+# (vault-paths.sh manifests only the axes that move between vaults).
+COMMON=org
+mkdir -p "$V/hippocampus/nested" "$V/013_selftest/p_memory/nested" \
          "$V/013_selftest/docs/policy" "$V/013_selftest/docs/adr" \
          "$V/013_selftest/docs/tech-design" "$V/014_mirror/docs/tech-design" \
-         "$V/000_common/facts" "$V/000_common/facts/machines" \
-         "$V/000_common/patterns" "$V/000_common/policies" \
-         "$V/999_tools" "$V/candidates/nested"
+         "$V/$COMMON/facts" "$V/$COMMON/facts/machines" \
+         "$V/$COMMON/patterns" "$V/$COMMON/policies" \
+         "$V/999_tools" "$V/neocortex"
+printf -- 'common_root: %s\n' "$COMMON" > "$V/.brain-paths"
 
-session() {  # <basename> <uid> <status>
-  printf -- '---\nuid: %s\nproject: selftest\ncreated: 2026-07-18\nupdated: 2026-07-18\nstatus: %s\nwriter: nwkim\n---\n\n## Goal\n' \
-    "$2" "$3" > "$V/sessions/$1.md"
+# 0.2.0 session frontmatter = 5 keys, none of them an identity or authorship field: the filename
+# carries identity (`uid` retired) and git carries authorship (`writer` retired).
+session() {  # <basename> <status>
+  printf -- '---\nstatus: %s\nproject: selftest\nupdated: 2026-07-18T12:00:00\nrelated_ticket: huly:KJP-1\ncc_session_ids: [cc-selftest]\n---\n\n## Goal\n' \
+    "$2" > "$V/hippocampus/$1.md"
 }
 
-session CLEAN-20260718-120000 CLEAN-20260718-120000 active          # clean — must stay silent
-session BAD-20260718-120001   BAD-20260718-120001   draft           # doc status in a session
-session BAD-20260718-120002   BAD-20260718-120002   frozen          # invalid status
-session BAD-20260718-120003   BAD-20260718-999999   active          # uid != filename
-session BAD-20260718-120004   not-a-uid             active          # malformed uid
+session CLEAN-20260718-120000 active          # clean — must stay silent
+session BAD-20260718-120001   draft           # doc status in a session
+session BAD-20260718-120002   frozen          # invalid status
 
 # The 3-value vocabulary is active|parked|done (KJP-48). `parked` is first-class — a positive
 # fixture in the *quiet* direction only proves the scan ran if something else in the same scan
 # fires, which the pair below guarantees: `cancel` is the retired token and must be reported.
-session PARKED-20260718-120012 PARKED-20260718-120012 parked        # legal — parked is a session status
-session BAD-20260718-120013    BAD-20260718-120013    cancel        # retired vocabulary — must be caught
+session PARKED-20260718-120012 parked        # legal — parked is a session status
+session BAD-20260718-120013    cancel        # retired vocabulary — must be caught
 
-printf -- '---\nuid: BAD-20260718-120005\ncreated: 2026-07-18\nstatus: active\n---\n' \
-  > "$V/sessions/BAD-20260718-120005.md"                            # missing project/updated/writer
-printf -- '# just a body\n' > "$V/sessions/BAD-20260718-120006.md"   # no frontmatter
-printf -- '---\ntitle: sessions toc\n---\n' > "$V/sessions/_index.md"   # excluded (TOC, canonical form)
+printf -- '---\nstatus: active\n---\n' \
+  > "$V/hippocampus/BAD-20260718-120005.md"   # missing project/updated/related_ticket/cc_session_ids
+printf -- '# just a body\n' > "$V/hippocampus/BAD-20260718-120006.md"   # no frontmatter
+# 0.2.0 `_index.md` carries no frontmatter at all, which is exactly what makes it a broken
+# *session* — silence can only mean the exclusion held, never that the fixture was clean.
+printf -- '- [[CLEAN-20260718-120000]] — a session\n' > "$V/hippocampus/_index.md"  # excluded (TOC, canonical form)
 # index.md is the legacy spelling of the same folder-TOC rule (canon flip 2026-07-30:
 # _index.md canonical, index.md recognized as its equal) — kept as the legacy fixture that
-# pins both spellings. Broken as a session on purpose (no uid/status), so silence can only
-# mean the exclusion held.
-printf -- '---\ntitle: sessions index\n---\n' > "$V/sessions/index.md"  # excluded (TOC, legacy form)
+# pins both spellings.
+printf -- '- [[CLEAN-20260718-120000]] — a session\n' > "$V/hippocampus/index.md"   # excluded (TOC, legacy form)
 
 # Quoted scalars must NOT be false positives (regression: `status: "active"` blocked --strict).
-session QUOTED-20260718-120007 '"QUOTED-20260718-120007"' '"active"'
-printf -- '---\nuid: QUOTED-20260718-120008\nproject: s\ncreated: c\nupdated: u\nstatus: %s\nwriter: n\n---\n' \
-  "'done'" > "$V/sessions/QUOTED-20260718-120008.md"
+session QUOTED-20260718-120007 '"active"'
+printf -- '---\nstatus: %s\nproject: s\nupdated: u\nrelated_ticket: t\ncc_session_ids: [c]\n---\n' \
+  "'done'" > "$V/hippocampus/QUOTED-20260718-120008.md"
 
 # CRLF file — must be parsed, not misreported as "no frontmatter". Its status is invalid,
 # so this is a positive fixture: CR mishandling would change the message, not just silence it.
-printf -- '---\r\nuid: CRLF-20260718-120009\r\nproject: s\r\ncreated: c\r\nupdated: u\r\nstatus: frozen\r\nwriter: n\r\n---\r\n' \
-  > "$V/sessions/CRLF-20260718-120009.md"
+printf -- '---\r\nstatus: frozen\r\nproject: s\r\nupdated: u\r\nrelated_ticket: t\r\ncc_session_ids: [c]\r\n---\r\n' \
+  > "$V/hippocampus/CRLF-20260718-120009.md"
 
-# The schema placeholder: deliberately broken three ways (placeholder uid, placeholder status,
-# missing writer) so "silent" can only mean the exclusion held, not that the fixture was clean.
-printf -- '---\nuid: YYYYMMDD-HHMMSS\nproject: <project-slug>\ncreated: YYYY-MM-DD\nupdated: YYYY-MM-DD\nstatus: <active|parked|done>\n---\n' \
-  > "$V/sessions/sample-session.md"
+# Retired 0.1.x session keys still sitting in a frontmatter that is otherwise complete — the
+# migration safety net. Without a positive fixture here, a vault that never dropped `uid:`
+# would pass silently, which is the whole failure mode the retired-key check exists to catch.
+printf -- '---\nstatus: active\nproject: s\nupdated: u\nrelated_ticket: t\ncc_session_ids: [c]\nuid: RETIRED-20260718-120016\ncreated: 2026-07-18\nwriter: nwkim\n---\n' \
+  > "$V/hippocampus/RETIRED-20260718-120016.md"
+
+# The schema placeholder: deliberately broken three ways (placeholder status, missing
+# related_ticket, missing cc_session_ids) so "silent" can only mean the exclusion held.
+printf -- '---\nstatus: <active|parked|done>\nproject: <project-slug>\nupdated: YYYY-MM-DDTHH:MM:SS\n---\n' \
+  > "$V/hippocampus/sample-session.md"
 
 # Nested sessions are out of scope (-maxdepth 1). Broken on purpose so that dropping
 # -maxdepth 1 makes it surface and kills the assert below.
-printf -- '# no frontmatter\n' > "$V/sessions/nested/NESTED-20260718-120010.md"
+printf -- '# no frontmatter\n' > "$V/hippocampus/nested/NESTED-20260718-120010.md"
 
-# Dreaming reports: uid = YYYYMMDD-HHMMSS without PREFIX by canon (dreaming/SKILL.md §Report
-# format). Clean one must stay silent; the PREFIX-shaped one is the positive fixture — dropping
-# the session_type branch makes the clean one fire and kills the assert pair below.
-printf -- '---\nuid: 20260719-005513\nproject:\nsession_type: dreaming\ncreated: 2026-07-19\nupdated: 2026-07-19\nstatus: done\nwriter: scribe\n---\n' \
-  > "$V/sessions/20260719-005513.md"
-printf -- '---\nuid: DRM-20260719-005514\nproject:\nsession_type: dreaming\ncreated: 2026-07-19\nupdated: 2026-07-19\nstatus: done\nwriter: scribe\n---\n' \
-  > "$V/sessions/DRM-20260719-005514.md"                             # dreaming uid must NOT carry a PREFIX
-
-# Knowledge: one positive (missing title) fixture per scanned directory, so that dropping any
+# wiki layer: one positive (missing summary) fixture per scanned directory, so that dropping any
 # single directory from the scan scope kills a specific assert.
-printf -- '---\ntype: gotcha\ntitle: a real title\n---\n' > "$V/013_selftest/knowledge/good.md"
-printf -- '---\ntype: gotcha\nuid: X\n---\n' > "$V/013_selftest/knowledge/no-title.md"
-printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/_index.md"     # excluded (meta)
-printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/0.rejected.md" # excluded (meta)
-printf -- '---\ntype: gotcha\n---\n' > "$V/013_selftest/knowledge/nested/deep-no-title.md"  # out of scope
-printf -- '---\nkind: fact\n---\n'    > "$V/000_common/facts/facts-no-title.md"
-printf -- '---\nkind: pattern\n---\n' > "$V/000_common/patterns/patterns-no-title.md"
-printf -- '---\nkind: policy\n---\n'  > "$V/000_common/policies/policies-no-title.md"
-# facts/machines/ is nested under facts/ (depth 2) — only reachable because validate.sh adds it
-# as an explicit scan root. Positive fixture: reverting that expansion drops it from scope and
+printf -- '---\nsummary: a real one-liner\n---\n' > "$V/013_selftest/p_memory/good.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/no-summary.md"
+printf -- '- [[good]] — a real one-liner\n' > "$V/013_selftest/p_memory/_index.md"     # excluded (meta)
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/0.rejected.md"    # excluded (meta)
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/nested/deep-no-summary.md"  # out of scope
+# Retired 0.1.x wiki keys, all ten in one note. `summary:` is present, so only the retired-key
+# check can speak here — and one assert per key means dropping any single key from the check's
+# target list kills a specific assert rather than silently shrinking the net.
+printf -- '---\nsummary: a note still carrying 0.1.x keys\nuid: KJP-20260718-120018\ntitle: old title\ntype: gotcha\ntags: [a]\ndri: nwkim\nspecies: lesson\nsource_sessions: [KJP-20260718-120019]\nsource_items: [x]\nrecalled: 3\nuseful: 1\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/retired-keys.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/facts/facts-no-summary.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/patterns/patterns-no-summary.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/policies/policies-no-summary.md"
+# facts/machines/ is nested under facts/ (depth 2) — only reachable because validate.sh scans
+# the common layer recursively. Positive fixture: reverting that drops it from scope and
 # kills the assert below, while the deeper project nested/ note stays out of scope regardless.
-printf -- '---\nkind: fact\n---\n'     > "$V/000_common/facts/machines/machine-no-title.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/facts/machines/machine-no-summary.md"
 # Named misc-*, not tool-*: since KJP-44 a `tool-*.md` under facts/ would contradict the canon
-# (tool inventories live in 999_tools/). This fixture only has to be a titled facts note.
-printf -- '---\ntitle: a titled fact\n---\n' > "$V/000_common/facts/misc-x.md"
+# (tool inventories live in the tools root). This fixture only has to be a summarised facts note.
+printf -- '---\nsummary: a summarised fact\n---\n' > "$V/$COMMON/facts/misc-x.md"
 
-# 999_tools/ — machine-global tool inventory (KJP-44). It sits on BOTH sides of a deliberate
-# scope split, so it takes fixtures in both directions:
-#   · knowledge-title scan (the recall mirror) — IN scope, because recall scans it as a [C]
-#     source. Dropping the KDIRS root kills the no-title assert below.
+# neocortex/ — vault-wide knowledge, root-fixed (no manifest key) and IN the wiki lint scope
+# alongside p_memory (canon: the wiki layer is p_memory + neocortex). The no-summary fixture is
+# what proves the root is scanned at all; dropping the root kills it.
+printf -- '---\nupdated: 2026-07-18\n---\n'           > "$V/neocortex/NEO-no-summary.md"
+printf -- '---\nsummary: vault-wide knowledge\n---\n' > "$V/neocortex/NEO-good.md"
+printf -- '- [[NEO-good]] — vault-wide knowledge\n' > "$V/neocortex/_index.md"   # excluded (meta)
+# dream-logs.md is dreaming's run log, not a note: single-file accumulation whose frontmatter is
+# one key (`updated`). It must be excluded, or every real vault reports a phantom missing summary.
+printf -- '---\nupdated: 2026-07-18T10:00:00\n---\n\n- [2026-07-18]-ran a cycle\n' > "$V/neocortex/dream-logs.md"
+
+# The tools root (`999_tools/` by default) — machine-global tool inventory (KJP-44). It sits on
+# BOTH sides of a deliberate scope split, so it takes fixtures in both directions:
+#   · wiki summary scan (the recall mirror) — IN scope, because recall scans it as a source.
+#     Dropping the KDIRS root kills the no-summary assert below.
 #   · shared-surface wikilink scan — OUT of scope, because the folder is gitignored and no
 #     teammate ever pulls it. Adding it to SDIRS makes wl-tools.md fire and kills its quiet assert.
 # Note it reaches KDIRS only via its own explicit root: the [0-9][0-9][0-9]_* sweep demands a
-# knowledge/ subfolder, which this folder deliberately does not have.
-printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/tools-no-title.md"
-printf -- '---\ntitle: MCP inventory\n---\n'    > "$V/999_tools/tool-mcp.md"
-printf -- '---\nkind: fact\n---\n'              > "$V/999_tools/_index.md"  # excluded (meta) — same rule as knowledge/
-printf -- '---\ntitle: tool note citing a session\n---\n[[KJP-20260718-120011]]\n' \
+# p_memory/ subfolder, which this folder deliberately does not have.
+printf -- '---\nupdated: 2026-07-18\n---\n'      > "$V/999_tools/tools-no-summary.md"
+printf -- '---\nsummary: MCP inventory\n---\n'   > "$V/999_tools/tool-mcp.md"
+printf -- '- [[tool-mcp]] — MCP inventory\n'     > "$V/999_tools/_index.md"  # excluded (meta) — same rule as p_memory/
+printf -- '---\nsummary: tool note citing a session\n---\n[[KJP-20260718-120011]]\n' \
   > "$V/999_tools/wl-tools.md"
 
-# candidates/ — the vault-root promotion-candidate pool (vault-tree.md §Tree axes). IN scope for
-# the knowledge-title lint (same rule, same meta exclusions, -maxdepth 1 — the pool is flat:
-# promotion is a file move, not a tree), while recall excludes the pool by design — this lint is
-# exactly how a broken candidate gets caught before promotion time. wl-cand.md pins that the pool
-# stays OFF the shared-surface wikilink scan (extend on decision, not by drift); its quiet assert
-# is not vacuous because the no-title fixture proves the folder is scanned at all.
-printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/cand-no-title.md"
-printf -- '---\ntitle: a titled candidate\n---\n' > "$V/candidates/cand-good.md"
-printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/_index.md"   # excluded (meta)
-printf -- '---\nkind: candidate\n---\n'           > "$V/candidates/nested/cand-deep-no-title.md"  # out of scope
-printf -- '---\ntitle: candidate citing a session\n---\n[[KJP-20260718-120015]]\n' \
-  > "$V/candidates/wl-cand.md"
+# neocortex/ follows the same asymmetry for its own reason: it is the wiki lint's second root,
+# but step 6 renamed the shared-surface scan without extending it, so neocortex stays OFF that
+# scan. wl-neo.md pins that (scope extends on decision, not by drift); its quiet assert is not
+# vacuous because NEO-no-summary.md above proves the folder is scanned at all.
+printf -- '---\nsummary: neo note citing a session\n---\n[[KJP-20260718-120017]]\n' \
+  > "$V/neocortex/wl-neo.md"
 
 # Session-uid wikilinks on the shared surface. One positive fixture per scan root, so
-# dropping any root from the scope kills a specific assert. Every fixture carries a
-# `title:` so it stays silent for the knowledge-title rule, and the docs-tree ones carry
+# dropping any root from the scope kills a specific assert. Every wiki-layer fixture carries a
+# `summary:` so it stays silent for the summary rule, and the docs-tree ones carry
 # `status: draft` so the docs-status rule stays quiet too — only the wikilink rule can speak.
-printf -- '---\nstatus: draft\ntitle: doc with a session link\n---\n[[KJP-20260718-120000]] is the source.\n' \
+printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]] is the source.\n' \
   > "$V/013_selftest/docs/wl-doc.md"                                   # NNN_*/docs — bare uid
-printf -- '---\nstatus: draft\ntitle: doc with a path-form link\n---\nsee [[sessions/KJP-20260718-120001]] and [[KJP-20260718-120002|the session]]\n' \
+printf -- '---\nstatus: draft\n---\nsee [[hippocampus/KJP-20260718-120001]] and [[KJP-20260718-120002|the session]]\n' \
   > "$V/013_selftest/docs/wl-path.md"                                  # path prefix + alias form
-printf -- '---\ntitle: knowledge with a session link\nsource_sessions: [KJP-20260718-120003]\n---\nbody cites [[KJP-20260718-120003#Progress]]\n' \
-  > "$V/013_selftest/knowledge/wl-know.md"                             # NNN_*/knowledge — heading form
-printf -- '---\ntitle: nested knowledge with a session link\n---\n[[KJP-20260718-120004]]\n' \
-  > "$V/013_selftest/knowledge/nested/wl-nested.md"                    # recursion: nested is IN scope here
-printf -- '---\ntitle: common fact with a session link\n---\n![[KJP-20260718-120005]]\n' \
-  > "$V/000_common/facts/wl-common.md"                                 # 000_common — embed form
-printf -- '---\ntitle: common root note\n---\ndream report [[20260719-005513]]\n' \
-  > "$V/000_common/wl-dreaming.md"                                     # 000_common root + PREFIX-less uid
+printf -- '---\nsummary: p_memory note with a session link\n---\nbody cites [[KJP-20260718-120003#Progress]]\n' \
+  > "$V/013_selftest/p_memory/wl-pmem.md"                              # NNN_*/p_memory — heading form
+printf -- '---\nsummary: nested note with a session link\n---\n[[KJP-20260718-120004]]\n' \
+  > "$V/013_selftest/p_memory/nested/wl-nested.md"                     # recursion: nested is IN scope here
+printf -- '---\nsummary: common fact with a session link\n---\n![[KJP-20260718-120005]]\n' \
+  > "$V/$COMMON/facts/wl-common.md"                                    # common layer — embed form
+printf -- '---\nsummary: common root note\n---\ndream report [[20260719-005513]]\n' \
+  > "$V/$COMMON/wl-dreaming.md"                                        # common root + PREFIX-less uid
 
 # Legal shared-surface references, all in one file. Two of these are load-bearing beyond
 # "no false positive":
 #   · the `history:` line reproduces the v2 template (project-docs-convention §frontmatter
 #     Standard v2: `{ at, change, ticket }` — the KJP-39-era `session:` key is banned
 #     outright now), so the fixture fails the moment that template regresses;
-#   · `source_sessions:` pins the underscore guard — the session-key rule must not match
-#     the key "session" inside "source_sessions" (a knowledge-axis key, legal as plain uid);
+#   · `cc_session_ids:` pins the underscore guard — the session-key rule must not match the
+#     key "session" inside a longer key. It replaces the retired `source_sessions:` here: the
+#     guard needs a live 0.2.0 key, or the fixture pins the rule with a token nobody writes;
 #   · `[[<PREFIX>-ADR-0000N]]` / `[[<ID>]]` are vault-internal doc-to-doc links that
 #     project-docs-convention mandates — they must never be caught by the wikilink rule.
-printf -- '---\nstatus: draft\ntitle: doc citing sessions correctly\nsource_sessions: [KJP-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
+printf -- '---\nstatus: draft\ncc_session_ids: [cc-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
   > "$V/013_selftest/docs/wl-plain.md"
 
 # Docs frontmatter v2 (project-docs-convention §frontmatter Standard v2). The session key
@@ -216,12 +231,12 @@ printf -- '---\nstatus: draft\nsource: repo/openapi.yaml\nreadonly: true\nsynced
   > "$V/013_selftest/docs/tech-design/API_SPEC.md"
 printf -- '---\nstatus: draft\n---\nmirror\n' > "$V/014_mirror/docs/tech-design/API_SPEC.md"
 
-# A session note may wikilink other sessions — sessions/ is outside the shared surface
+# A session note may wikilink other sessions — hippocampus/ is outside the shared surface
 # and deliberately outside this scan. Otherwise-valid so only the wikilink rule could
 # speak; it must not.
-session WL-20260718-120014 WL-20260718-120014 active
-printf -- 'follows [[KJP-20260718-120000]] and [[sessions/KJP-20260718-120001]]\n' \
-  >> "$V/sessions/WL-20260718-120014.md"
+session WL-20260718-120014 active
+printf -- 'follows [[KJP-20260718-120000]] and [[hippocampus/KJP-20260718-120001]]\n' \
+  >> "$V/hippocampus/WL-20260718-120014.md"
 
 # ---------------------------------------------------------------- run
 # Findings (stdout) and warns (stderr) are separate channels by design — captured
@@ -233,37 +248,37 @@ echo "--- report ---"; printf '%s\n' "$REPORT"; echo "--- asserts ---"
 assert_exit    "default mode exits 0 even with findings" 0 "$rc"
 
 # rules fire
-assert_match   "doc status in session note is caught"        'BAD-20260718-120001.md:6: document status "draft"'
-assert_match   "invalid status is caught"                    'BAD-20260718-120002.md:6: invalid status "frozen"'
-assert_match   "retired status cancel is caught"             'BAD-20260718-120013.md:6: retired status "cancel"'
-assert_match   "uid/filename mismatch is caught"             'BAD-20260718-120003.md:2: uid .* does not match filename'
-assert_match   "malformed uid is caught"                     'BAD-20260718-120004.md:2: uid is not <PREFIX>-YYYYMMDD-HHMMSS'
+assert_match   "doc status in session note is caught"        'BAD-20260718-120001.md:2: document status "draft"'
+assert_match   "invalid status is caught"                    'BAD-20260718-120002.md:2: invalid status "frozen"'
+assert_match   "retired status cancel is caught"             'BAD-20260718-120013.md:2: retired status "cancel"'
 assert_match   "missing key: project"                        'BAD-20260718-120005.md:1: missing frontmatter key: project'
 assert_match   "missing key: updated"                        'BAD-20260718-120005.md:1: missing frontmatter key: updated'
-assert_match   "missing key: writer"                         'BAD-20260718-120005.md:1: missing frontmatter key: writer'
+assert_match   "missing key: related_ticket"                 'BAD-20260718-120005.md:1: missing frontmatter key: related_ticket'
+assert_match   "missing key: cc_session_ids"                 'BAD-20260718-120005.md:1: missing frontmatter key: cc_session_ids'
 assert_match   "missing frontmatter entirely is caught"      'BAD-20260718-120006.md:1: no YAML frontmatter'
-assert_match   "CRLF file is parsed, not misread"            'CRLF-20260718-120009.md:6: invalid status "frozen"'
+assert_match   "CRLF file is parsed, not misread"            'CRLF-20260718-120009.md:2: invalid status "frozen"'
 assert_no_match "CRLF file is not misreported as headerless" 'CRLF-20260718-120009.md:1: no YAML frontmatter'
-assert_no_match "dreaming report uid without PREFIX is legal" '20260719-005513\.md'
-assert_match   "dreaming uid with a PREFIX is caught"        'DRM-20260719-005514.md:2: dreaming uid is not YYYYMMDD-HHMMSS'
+assert_no_match "retired uid is not a required key"          'missing frontmatter key: uid'
+assert_no_match "retired writer is not a required key"       'missing frontmatter key: writer'
+assert_no_match "retired created is not a required key"      'missing frontmatter key: created'
 
-# knowledge scope — one positive per directory pins the scope
-assert_match   "project knowledge dir is scanned"            'knowledge/no-title.md:1: missing frontmatter key: title'
-assert_match   "000_common/facts is scanned"                 'facts/facts-no-title.md:1: missing frontmatter key: title'
-assert_match   "000_common/facts/machines is scanned"        'machines/machine-no-title.md:1: missing frontmatter key: title'
-assert_match   "000_common/patterns is scanned"              'patterns/patterns-no-title.md:1: missing frontmatter key: title'
-assert_match   "000_common/policies is scanned"              'policies/policies-no-title.md:1: missing frontmatter key: title'
-assert_match   "999_tools is scanned (recall mirror)"        '999_tools/tools-no-title.md:1: missing frontmatter key: title'
-assert_match   "candidates/ pool is scanned (title lint)"    'candidates/cand-no-title.md:1: missing frontmatter key: title'
+# wiki scope — one positive per directory pins the scope
+assert_match   "project p_memory dir is scanned"             'p_memory/no-summary.md:1: missing frontmatter key: summary'
+assert_match   "common facts/ is scanned"                    'facts/facts-no-summary.md:1: missing frontmatter key: summary'
+assert_match   "common facts/machines is scanned"            'machines/machine-no-summary.md:1: missing frontmatter key: summary'
+assert_match   "common patterns/ is scanned"                 'patterns/patterns-no-summary.md:1: missing frontmatter key: summary'
+assert_match   "common policies/ is scanned"                 'policies/policies-no-summary.md:1: missing frontmatter key: summary'
+assert_match   "tools root is scanned (recall mirror)"       '999_tools/tools-no-summary.md:1: missing frontmatter key: summary'
+assert_match   "neocortex/ is scanned (wiki layer)"          'neocortex/NEO-no-summary.md:1: missing frontmatter key: summary'
 
 # session-uid wikilinks on the shared surface — one positive per scan root
-assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:5: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
-assert_match   "docs/: sessions/-prefixed link is caught"    'docs/wl-path.md:5: .*\[\[sessions/KJP-20260718-120001\]\]'
-assert_match   "alias form (uid pipe label) is caught"       'docs/wl-path.md:5: .*\[\[KJP-20260718-120002|the session\]\]'
-assert_match   "knowledge/: heading form is caught"          'knowledge/wl-know.md:5: .*\[\[KJP-20260718-120003#Progress\]\]'
-assert_match   "wikilink scan recurses into nested/"         'knowledge/nested/wl-nested.md:4: .*\[\[KJP-20260718-120004\]\]'
-assert_match   "000_common: embed form (bang-link) is caught" 'facts/wl-common.md:4: .*\[\[KJP-20260718-120005\]\]'
-assert_match   "000_common root + PREFIX-less dreaming uid"  'wl-dreaming.md:4: .*\[\[20260719-005513\]\]'
+assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:4: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
+assert_match   "docs/: hippocampus/-prefixed link is caught" 'docs/wl-path.md:4: .*\[\[hippocampus/KJP-20260718-120001\]\]'
+assert_match   "alias form (uid pipe label) is caught"       'docs/wl-path.md:4: .*\[\[KJP-20260718-120002|the session\]\]'
+assert_match   "p_memory/: heading form is caught"           'p_memory/wl-pmem.md:4: .*\[\[KJP-20260718-120003#Progress\]\]'
+assert_match   "wikilink scan recurses into nested/"         'p_memory/nested/wl-nested.md:4: .*\[\[KJP-20260718-120004\]\]'
+assert_match   "common layer: embed form (bang-link) caught" 'facts/wl-common.md:4: .*\[\[KJP-20260718-120005\]\]'
+assert_match   "common root + PREFIX-less uid"               'wl-dreaming.md:4: .*\[\[20260719-005513\]\]'
 
 # docs frontmatter — session key = finding (both YAML shapes); unknown keys = stderr warn
 assert_match   "docs fm: inline-map session key is caught"   'fm-session.md:5: session key in docs frontmatter'
@@ -298,7 +313,7 @@ assert_no_match "docs fm: session key is never demoted to a warn" 'session key i
 assert_match   "docs fm: date-only updated warns on stderr"  'fm-legacy.md:5: date-only updated'
 assert_match   "docs fm: quoted unknown key still warns"     'fm-qsession.md:4: unknown docs frontmatter key: kind'
 assert_no_match "docs fm: datetime updated never warns"      'fm-v2.md'
-assert_no_match "docs fm: sessions/ placeholder is outside the docs scan" 'sample-session.md'
+assert_no_match "docs fm: hippocampus/ placeholder is outside the docs scan" 'sample-session.md'
 REPORT="$SAVED_REPORT"
 
 # quiet cases
@@ -307,53 +322,60 @@ assert_no_match "non-uid wikilinks are not flagged"          'another-note'
 # Pattern is anchored to the wikilink message — the id/next_id fixtures above legitimately
 # put KJP-ADR/KJP-POL filenames into the findings stream, and must not trip this assert.
 assert_no_match "ADR/policy doc wikilinks are not session uids" 'wikilink on the shared surface: .*KJP-\(ADR\|POL\)'
-assert_no_match "session wikilinks inside sessions/ are legal" 'WL-20260718-120014'
+assert_no_match "session wikilinks inside hippocampus/ are legal" 'WL-20260718-120014'
 assert_no_match "clean session note produces no finding"     'CLEAN-20260718-120000'
 assert_no_match "parked is a legal session status"           'PARKED-20260718-120012'
 assert_no_match "quoted scalars are not false positives"     'QUOTED-20260718-12000[78]'
-assert_no_match "sessions/_index.md is excluded (TOC rule)"  'sessions/_index.md'
-assert_no_match "sessions/index.md is excluded (legacy TOC)" 'sessions/index.md'
+assert_no_match "hippocampus/_index.md is excluded (TOC rule)"  'hippocampus/_index.md'
+assert_no_match "hippocampus/index.md is excluded (legacy TOC)" 'hippocampus/index.md'
 assert_no_match "sample-session.md placeholder is excluded"  'sample-session.md'
 assert_no_match "nested session is out of scope"             'NESTED-20260718-120010'
-assert_no_match "nested knowledge note is out of scope"      'deep-no-title.md'
-assert_no_match "knowledge _index.md is excluded"            'knowledge/_index.md'
-assert_no_match "knowledge 0.* meta file is excluded"        '0.rejected.md'
-assert_no_match "titled knowledge note produces no finding"  'knowledge/good.md'
-assert_no_match "000_common facts note with title is quiet"  'misc-x.md'
-assert_no_match "999_tools note with title is quiet"         'tool-mcp.md'
-assert_no_match "999_tools _index.md is excluded (meta rule)" '999_tools/_index.md'
-# The load-bearing one for the scope split: 999_tools is gitignored, so it is NOT the shared
+assert_no_match "nested p_memory note is out of scope"       'deep-no-summary.md'
+assert_no_match "p_memory _index.md is excluded"             'p_memory/_index.md'
+assert_no_match "p_memory 0.* meta file is excluded"         '0.rejected.md'
+assert_no_match "summarised p_memory note produces no finding" 'p_memory/good.md'
+assert_no_match "common facts note with summary is quiet"    'misc-x.md'
+assert_no_match "tools note with summary is quiet"           'tool-mcp.md'
+assert_no_match "tools _index.md is excluded (meta rule)"    '999_tools/_index.md'
+# The load-bearing one for the scope split: the tools root is gitignored, so it is NOT the shared
 # surface and a session wikilink there is legal. Adding it to SDIRS makes this line fire.
-assert_no_match "999_tools is outside the shared-surface scan" 'wl-tools.md'
-assert_no_match "titled candidate note is quiet"             'cand-good.md'
-assert_no_match "candidates/_index.md is excluded (meta rule)" 'candidates/_index.md'
-assert_no_match "nested candidate is out of scope"           'cand-deep-no-title.md'
-# Scope decision, same shape as the 999_tools split: candidates/ is the title lint only —
-# adding it to SDIRS makes this line fire.
-assert_no_match "candidates/ is outside the shared-surface scan" 'wl-cand.md'
+assert_no_match "tools root is outside the shared-surface scan" 'wl-tools.md'
+assert_no_match "neocortex note with summary is quiet"       'NEO-good.md'
+assert_no_match "neocortex _index.md is excluded (meta rule)" 'neocortex/_index.md'
+# dream-logs.md is dreaming's run log, not a note — it has no summary and must never be asked
+# for one. Its exclusion is by name, so a real vault does not report a phantom finding.
+assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
+# Scope decision, same shape as the tools split: neocortex/ is the wiki lint only — step 6
+# renamed the shared-surface scan without extending it, so adding it to SDIRS makes this fire.
+assert_no_match "neocortex/ is outside the shared-surface scan" 'wl-neo.md'
 
 # Scan counts are reported, so a collapsed scan is visible rather than silent. The exact
-# numbers are asserted (not just "some count"): 15 sessions (12 + 2 dreaming + 1 wikilink
-# fixture; index/_index/sample excluded); 16 knowledge = 3 project (good + no-title +
-# wl-know; index/0.*/nested excluded) + 3 facts + 1 machines + 1 pattern + 1 policy
-# + 1 common-root note + 3 tools (999_tools, _index.md excluded) + 3 candidates
-# (cand-good + cand-no-title + wl-cand; index/nested excluded);
-# 34 shared = 20 docs-tree files (19 under 013 + the 014_mirror API_SPEC — no exclusions on
-# this surface) + 7 knowledge + 7 under 000_common; 20 docs = the same docs-tree files
-# counted again by the docs frontmatter scan (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 ·
-# adr/ 2 — index/_index counted here: meta files skip rules, not the scan).
-# 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: 999_tools
+# numbers are asserted (not just "some count"), recomputed by hand for the 0.2.0 fixture set:
+#   12 sessions — CLEAN · BAD-1 · BAD-2 · PARKED-12 · BAD-13 · BAD-5 · BAD-6 · QUOTED-7 ·
+#     QUOTED-8 · CRLF-9 · RETIRED-16 · WL-14 (index/_index/sample excluded; nested out of scope)
+#   17 knowledge — 4 p_memory (good + no-summary + wl-pmem + retired-keys; _index/0.*/nested
+#     excluded) + 7 common (3 facts + 1 machines + 1 pattern + 1 policy + 1 common-root note)
+#     + 3 neocortex (NEO-no-summary + NEO-good + wl-neo; _index/dream-logs excluded)
+#     + 3 tools (_index.md excluded)
+#   35 shared — 20 docs-tree files (19 under 013 + the 014_mirror API_SPEC; no exclusions on
+#     this surface) + 8 p_memory (recursive here, so _index/0.*/nested all count) + 7 common
+#   20 docs — the same docs-tree files counted again by the docs frontmatter scan
+#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 — index/_index counted here:
+#     meta files skip rules, not the scan)
+# 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: the tools root
 # raises the knowledge count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
-# candidates/ follows the same asymmetry for its own reason: title lint only (a broken candidate
-# must be caught before promotion), while the shared count not moving pins that it stayed off
-# the shared-surface scan — its scope extends on decision, not by drift.
+# neocortex/ follows the same asymmetry for its own reason: it is the wiki lint's second root
+# (+3 knowledge), while the shared count not moving pins that it stayed off the shared-surface
+# scan — that scope extends on decision, not by drift.
 # The common-root note (`wl-dreaming.md`) counts from the vault-paths change on: the common
 # layer is scanned recursively now, because its sub-axes are not the same shape in every vault.
 # The old scan named `{facts,patterns,policies}` and so silently skipped notes sitting at the
-# common root — a gap, not a rule. Measured on the real beafter vault: every other count is
-# byte-identical before and after (19 sessions, 102 knowledge, 321 shared, 24 issues).
-assert_match   "scanned counts appear in the summary"        '(15 sessions, 16 knowledge, 34 shared, 20 docs)'
+# common root — a gap, not a rule. Historical measurement, real beafter vault 2026-07, kept
+# verbatim because it records what was measured then, not what this fixture set counts now:
+# every other count was byte-identical before and after (19 sessions, 102 knowledge, 321 shared,
+# 24 issues).
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 17 knowledge, 35 shared, 20 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -362,7 +384,7 @@ assert_exit "--strict exits 1 when there are findings" 1 "$rc"
 # The vault above has many findings, so the assert just made cannot say *which* rule
 # blocked. This isolated vault has exactly one finding — a shared-surface wikilink —
 # so it pins that the new rule alone is enough to fail --strict.
-W="$(mktemp -d -t brain-selftest-wl)"; mkdir -p "$W/sessions" "$W/013_wl/docs"
+W="$(mktemp -d -t brain-selftest-wl)"; mkdir -p "$W/hippocampus" "$W/013_wl/docs"
 printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]]\n' \
   > "$W/013_wl/docs/only.md"
 REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
@@ -374,10 +396,10 @@ rm -rf "$W"
 
 # unreadable file becomes a finding rather than a silent stderr warning
 CHMOD_OK=1
-printf -- '---\nuid: LOCKED-20260718-120011\nproject: s\ncreated: c\nupdated: u\nstatus: active\nwriter: n\n---\n' \
-  > "$V/sessions/LOCKED-20260718-120011.md"
-chmod 000 "$V/sessions/LOCKED-20260718-120011.md" 2>/dev/null || CHMOD_OK=0
-[ -r "$V/sessions/LOCKED-20260718-120011.md" ] && CHMOD_OK=0   # running as root defeats the test
+printf -- '---\nstatus: active\nproject: s\nupdated: u\nrelated_ticket: t\ncc_session_ids: [c]\n---\n' \
+  > "$V/hippocampus/LOCKED-20260718-120011.md"
+chmod 000 "$V/hippocampus/LOCKED-20260718-120011.md" 2>/dev/null || CHMOD_OK=0
+[ -r "$V/hippocampus/LOCKED-20260718-120011.md" ] && CHMOD_OK=0   # running as root defeats the test
 if [ "$CHMOD_OK" -eq 1 ]; then
   REPORT="$(/bin/bash "$VALIDATE" "$V" 2>/dev/null)"
   assert_match "unreadable file is reported as a finding" 'LOCKED-20260718-120011.md:1: cannot read file'
@@ -386,31 +408,32 @@ if [ "$CHMOD_OK" -eq 1 ]; then
 else
   echo "skip — unreadable-file asserts (chmod ineffective; running as root?)"
 fi
-chmod 644 "$V/sessions/LOCKED-20260718-120011.md" 2>/dev/null
-rm -f "$V/sessions/LOCKED-20260718-120011.md"
+chmod 644 "$V/hippocampus/LOCKED-20260718-120011.md" 2>/dev/null
+rm -f "$V/hippocampus/LOCKED-20260718-120011.md"
 
 # path robustness: trailing slashes and glob metacharacters must not collapse the scan
 for suffix in "" "/" "//"; do
   REPORT="$(/bin/bash "$VALIDATE" "$V$suffix" 2>/dev/null)"
-  assert_match "knowledge scan survives vault path suffix '$suffix'" 'facts/facts-no-title.md'
+  assert_match "wiki scan survives vault path suffix '$suffix'" 'facts/facts-no-summary.md'
 done
 GP="$(mktemp -d -t brain-selftest-glob)"; G="$GP/my[vault]"
-mkdir -p "$G/000_common/facts" "$G/sessions"
-printf -- '---\nkind: fact\n---\n' > "$G/000_common/facts/glob-no-title.md"
+mkdir -p "$G/$COMMON/facts" "$G/hippocampus"
+printf -- 'common_root: %s\n' "$COMMON" > "$G/.brain-paths"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$G/$COMMON/facts/glob-no-summary.md"
 REPORT="$(/bin/bash "$VALIDATE" "$G")"
-assert_match "knowledge scan survives glob metachars in vault path" 'glob-no-title.md'
+assert_match "wiki scan survives glob metachars in vault path" 'glob-no-summary.md'
 rm -rf "$GP"
 
 # env seam: BRAIN_TOOLS_REL overrides manifest/default, the same contract as BRAIN_COMMON_REL.
 # Pointing it at a folder that does not exist empties the tools root *silently* — the
-# 999_tools fixture drops out of the knowledge scan, nothing warns, every other scan survives.
+# tools fixture drops out of the wiki scan, nothing warns, every other scan survives.
 REPORT="$(BRAIN_TOOLS_REL=no-such-tools /bin/bash "$VALIDATE" "$V" 2>&1)"
-assert_no_match "BRAIN_TOOLS_REL override drops the tools root" 'tools-no-title.md'
+assert_no_match "BRAIN_TOOLS_REL override drops the tools root" 'tools-no-summary.md'
 assert_no_match "an absent tools override stays silent"         'no-such-tools'
-assert_match    "other scans survive the tools override"        'facts/facts-no-title.md'
+assert_match    "other scans survive the tools override"        'facts/facts-no-summary.md'
 
 # empty vault: no files at all — must not blow up, and must show a zero scan count
-E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/sessions"
+E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/hippocampus"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
 assert_match "empty vault reports a zero scan count" '(0 sessions, 0 knowledge, 0 shared, 0 docs)'
@@ -421,37 +444,37 @@ rm -rf "$E"
 # restructured vault: `.brain-paths` moves the two tree axes, and every scan must follow.
 # This is the layout that used to return a silent zero — the whole reason vault-paths.sh exists.
 R="$(mktemp -d -t brain-selftest-restructured)"
-mkdir -p "$R/sessions" "$R/_primary/patterns" "$R/_primary/_company/machines" \
-         "$R/projects/013_restructured/knowledge" "$R/projects/013_restructured/docs" \
-         "$R/999_Archive" "$R/_templates/machines" "$R/gear" "$R/candidates"
+mkdir -p "$R/hippocampus" "$R/_primary/patterns" "$R/_primary/_company/machines" \
+         "$R/projects/013_restructured/p_memory" "$R/projects/013_restructured/docs" \
+         "$R/999_Archive" "$R/_templates/machines" "$R/gear" "$R/neocortex"
 printf -- 'common_root: _primary\nprojects_root: projects\ntools_root: gear\n' > "$R/.brain-paths"
-# tools_root moves the tools layer like the other two axes — a no-title note under gear/
-# pins that the manifest key is followed (the default 999_tools is pinned by the main vault).
+# tools_root moves the tools layer like the other two axes — a no-summary note under gear/
+# pins that the manifest key is followed (the default tools root is pinned by the main vault).
 # gear/ raises only the knowledge count: the tools layer is never on the shared surface.
-printf -- '---\nkind: fact\n---\n'     > "$R/gear/rs-tools-no-title.md"
-# candidates/ stays at the vault root even when every manifest axis moves — root-fixed by
-# design, no candidates_root key (vault-paths.sh manifests only the axes that move between
-# vaults; same class as sessions/). This fixture pins that the scan ignores the manifest.
-printf -- '---\nkind: candidate\n---\n' > "$R/candidates/rs-cand-no-title.md"
-printf -- '---\nkind: pattern\n---\n'  > "$R/_primary/patterns/rs-pattern-no-title.md"
-printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/machines/rs-nested-no-title.md"
-printf -- '---\nkind: fact\n---\n'     > "$R/_primary/_company/_index.md"        # excluded (meta)
-printf -- '---\nkind: lesson\n---\n'   > "$R/projects/013_restructured/knowledge/rs-know-no-title.md"
-printf -- '---\nkind: fact\n---\n'     > "$R/999_Archive/rs-archived-no-title.md"   # excluded (retired)
-printf -- '---\nkind: fact\n---\n'     > "$R/_templates/machines/hardware.md"       # excluded (skeleton)
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/gear/rs-tools-no-summary.md"
+# neocortex/ stays at the vault root even when every manifest axis moves — root-fixed by
+# design, no neocortex_root key (vault-paths.sh manifests only the axes that move between
+# vaults; same class as hippocampus/). This fixture pins that the scan ignores the manifest.
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/neocortex/rs-neo-no-summary.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/_primary/patterns/rs-pattern-no-summary.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/_primary/_company/machines/rs-nested-no-summary.md"
+printf -- '- [[x]] — toc\n'                 > "$R/_primary/_company/_index.md"        # excluded (meta)
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/projects/013_restructured/p_memory/rs-know-no-summary.md"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/999_Archive/rs-archived-no-summary.md"   # excluded (retired)
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/_templates/machines/hardware.md"         # excluded (skeleton)
 # The docs frontmatter scan resolves its roots through the same manifest — a session key
 # under projects/<NNN_*>/docs must be found, or the scan silently missed the moved tree.
 printf -- '---\nstatus: draft\nhistory:\n  - { at: 2026-07-28T10:00:00, change: x, session: "RS-20260718-120000" }\n---\n' \
   > "$R/projects/013_restructured/docs/rs-fm-session.md"
 REPORT="$(/bin/bash "$VALIDATE" "$R" 2>&1)"
-assert_match    "restructured: common root under _primary is scanned"   'rs-pattern-no-title.md'
-assert_match    "restructured: nested common subtree is scanned"        'rs-nested-no-title.md'
-assert_match    "restructured: projects/ NNN_* knowledge is scanned"    'rs-know-no-title.md'
+assert_match    "restructured: common root under _primary is scanned"   'rs-pattern-no-summary.md'
+assert_match    "restructured: nested common subtree is scanned"        'rs-nested-no-summary.md'
+assert_match    "restructured: projects/ NNN_* p_memory is scanned"     'rs-know-no-summary.md'
 assert_match    "restructured: docs frontmatter scan follows the manifest" 'rs-fm-session.md:4: session key in docs frontmatter'
-assert_match    "restructured: manifest tools_root is followed"         'rs-tools-no-title.md:1: missing frontmatter key: title'
-assert_match    "restructured: root-fixed candidates pool is scanned"   'rs-cand-no-title.md:1: missing frontmatter key: title'
+assert_match    "restructured: manifest tools_root is followed"         'rs-tools-no-summary.md:1: missing frontmatter key: summary'
+assert_match    "restructured: root-fixed neocortex is scanned"         'rs-neo-no-summary.md:1: missing frontmatter key: summary'
 assert_no_match "restructured: _index.md is excluded (meta rule)"       '_index.md'
-assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-title.md'
+assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-summary.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
 assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 knowledge, 5 shared, 1 docs)'
@@ -467,13 +490,13 @@ rm -rf "$R"
 # it is a *legal* state — absence must be silent (no warning, unlike the common root) and must
 # not collapse any other scan.
 R2="$(mktemp -d -t brain-selftest-org)"
-mkdir -p "$R2/sessions" "$R2/org/patterns" "$R2/org/empty-axis"
-printf -- 'common_root: org\n' > "$R2/.brain-paths"
-printf -- '---\nkind: pattern\n---\n'   > "$R2/org/patterns/org-no-title.md"
-printf -- '---\ntitle: axis toc\n---\n' > "$R2/org/empty-axis/_index.md"     # excluded (meta)
+mkdir -p "$R2/hippocampus" "$R2/$COMMON/patterns" "$R2/$COMMON/empty-axis"
+printf -- 'common_root: %s\n' "$COMMON" > "$R2/.brain-paths"
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$R2/$COMMON/patterns/org-no-summary.md"
+printf -- '- [[x]] — axis toc\n'            > "$R2/$COMMON/empty-axis/_index.md"     # excluded (meta)
 REPORT="$(/bin/bash "$VALIDATE" "$R2" 2>&1)"; rc=$?
 assert_exit     "org vault: exits 0" 0 "$rc"
-assert_match    "org vault: common root under org/ is scanned"          'org-no-title.md:1: missing frontmatter key: title'
+assert_match    "org vault: common root under org/ is scanned"          'org-no-summary.md:1: missing frontmatter key: summary'
 assert_no_match "org vault: _index-only folder stays quiet"             'empty-axis'
 assert_no_match "org vault: absent tools root is silent (legal state)"  '999_tools'
 assert_no_match "org vault: no missing-root warning at all"             'not found'
@@ -498,7 +521,7 @@ rm -rf "$R2"
 #     a moved SSOT would hide.
 DRIFT="${DRIFT_SH:-$HERE/value-axis-drift.sh}"
 DV="$(mktemp -d -t brain-selftest-drift)"
-mkdir -p "$DV/013_drift/docs/tech-design" "$DV/013_drift/docs/pricebook" "$DV/sessions"
+mkdir -p "$DV/013_drift/docs/tech-design" "$DV/013_drift/docs/pricebook" "$DV/hippocampus"
 
 # Alternate-home fixture canon — same table shape as project-docs-convention §Value Axes,
 # different home. The decoy row after the section end pins the section scoping: rule data
@@ -565,7 +588,7 @@ assert_exit     "drift: --strict exits 1 on findings"             1 $?
 # Pins two things at once: the relative-path seam works from wherever the script lives,
 # and the real canon still carries the pricing row with home BUSINESS §BM.
 DV2="$(mktemp -d -t brain-selftest-drift2)"
-mkdir -p "$DV2/014_real/docs/tech-design" "$DV2/014_real/docs/business" "$DV2/sessions"
+mkdir -p "$DV2/014_real/docs/tech-design" "$DV2/014_real/docs/business" "$DV2/hippocampus"
 printf -- '---\nstatus: draft\n---\n티어별 과금은 월 ₩12,000이다.\n' > "$DV2/014_real/docs/tech-design/ARCHITECTURE.md"
 printf -- '---\nstatus: draft\n---\n월 ₩12,000 (원본).\n'            > "$DV2/014_real/docs/business/BUSINESS.md"
 REPORT="$(/bin/bash "$DRIFT" "$DV2" 2>/dev/null)"; rc=$?
@@ -578,7 +601,7 @@ assert_match    "drift: real-canon vault counts"                   '1 finding(s)
 
 # Clean vault — OK line with a visible scan count (a collapsed scan must not look clean).
 DV3="$(mktemp -d -t brain-selftest-drift3)"
-mkdir -p "$DV3/013_clean/docs" "$DV3/sessions"
+mkdir -p "$DV3/013_clean/docs" "$DV3/hippocampus"
 printf -- '---\nstatus: draft\n---\nNo literals here; the plan is to ship.\n' > "$DV3/013_clean/docs/notes.md"
 REPORT="$(/bin/bash "$DRIFT" "$DV3" 2>/dev/null)"; rc=$?
 assert_exit     "drift: clean vault exits 0"                       0 "$rc"
