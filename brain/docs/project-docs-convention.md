@@ -85,7 +85,7 @@ history:
 
 | Value kind | The only original |
 |---|---|
-| pricing · tiers · unit economics | BUSINESS §BM |
+| pricing · tiers · unit economics | PRD §BM |
 | security normative statements | a `## POL-NNN` clause in `docs/develop/P_POLICY.md` |
 | threat · mitigation tables | THREAT_MODEL |
 | logical data model | ARCHITECTURE §데이터 모델 |
@@ -95,15 +95,18 @@ history:
 
 The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh <vault-root>` reads this table as its SSOT and reports (report-only) literals living outside their home (KJP-58). Semantic duplication — a norm restated in prose — remains this declaration + PM mediation.
 
-> 🔴 **The pricing row is stale and deliberately left that way (KJP-86, 2026-08-12).** `BUSINESS` was retired and §BM now lives in `PRD` ([[doc-catalog]]), so the detector currently prints a hint naming a document that no longer exists. **Editing this one cell is not a one-cell change** — measured: `BUSINESS §BM` → `PRD §BM` widens the detector's own exclusion (126 → 151 docs scanned, 19 → 28 findings, because the `docs/business/` tree exclusion is derived from the home name) **and fails 4 `validate-selftest.sh` assertions that pin `BUSINESS` as the home fixture**. The fix therefore has to land together with `scripts/value-axis-drift.sh` + `scripts/validate-selftest.sh`, in one commit that re-pins the fixtures. Until then the row stays as-is so the self-test keeps passing.
+🔴 **The pricing home moved from `BUSINESS §BM` to `PRD §BM` when KJP-86 dissolved `BUSINESS.md`, and that widened the drift scan on purpose — 126 → 151 docs, 19 → 28 findings (measured 2026-08-12).** It is not a broken exclusion, and re-narrowing it would re-hide a live violation. The detector excludes the home in two shapes, `<HOME>.md` anywhere and the `docs/<home-lowercase>/` tree, because a home may be a file or a folder. Under `BUSINESS` the second shape resolved to `docs/business/` — the whole folder — only because the home document happened to carry its folder's name. That coincidence, never a decision, also excluded `COMPLIANCE` · `MILESTONE` · `MARKETING` from pricing checks. `PRD` names no folder, so only `PRD.md` is excluded now and the other 25 files in the tree are scanned for the first time. **All 9 new findings are price literals in one file — `MARKETING.md`, the document the split created — which is drift by this very table: GTM copy links to `PRD §BM`, it does not restate the prices.**
+
+> An earlier note here (KJP-86) held the row stale on the reading that the widening was the exclusion *breaking*, and deferred the edit until `value-axis-drift.sh` could be changed alongside it. That reading was tested and did not hold: the 25 extra files are not a leak, they are the folder that was never anyone's home, and the script needed no change at all — its two-shape derivation is already correct for a home that is a file. The four self-test assertions were re-pinned instead, one of them inverted into a positive fixture so the old blanket exemption cannot return quietly.
 
 ## stub Pre-creation Rules
 
-- **Pre-created = 6** — 2 in `business/` (`PRD` · `BUSINESS`) + 4 in `develop/` (`ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`). **At project onboarding the PM delegates pre-creating all of them as `status: created`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
-- **`API_SPEC` is not pre-created** — it is a read-only repo-spec mirror (§The Only Exception below), generated and re-synced by a **PM-delegated sync worker** once an API exists. 🔴 **Never by `dreaming`** — the unattended cycle writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/`, and `docs/` is written solely by an AI acting on a user instruction ([[vault-tree]] §Write permission). `COMPLIANCE` · `DESIGN` · `MILESTONE` stay situational (created on trigger).
+- **Pre-created = 5** — 1 in `business/` (`PRD`) + 4 in `develop/` (`ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`). **At project onboarding the PM delegates pre-creating all of them as `status: created`.** Former standalone kinds live on as sections of these 5 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
+  - **`BUSINESS` left the list with KJP-86, and `MARKETING` did not take its seat.** The split sent business-model content to `PRD §BM` and GTM content to `MARKETING.md`, and **GTM is not something a project needs at creation time** — the same reason `MILESTONE` · `COMPLIANCE` · `DESIGN` are situational. A PRD is universal; a market-entry strategy is not. `MARKETING.md` is created on trigger, like the rest of them.
+- **`API_SPEC` is not pre-created** — it is a read-only repo-spec mirror (§The Only Exception below), generated and re-synced by a **PM-delegated sync worker** once an API exists. 🔴 **Never by `dreaming`** — the unattended cycle writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/`, and `docs/` is written solely by an AI acting on a user instruction ([[vault-tree]] §Write permission). `COMPLIANCE` · `DESIGN` · `MILESTONE` · `MARKETING` stay situational (created on trigger).
 - **Feature document set = 2** (`FRD` · `TDC`) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be). A rule that applies to this feature alone stays in the feature's own §Rules — there is no per-feature `policy/` folder (§Policy System).
 - **ADRs are never pre-created** — one is created only when a meaningful decision actually occurs: **the PM delegates it as a recording brief carrying the `architecture` owner label** (a brief label, not a resident agent — workers never write the vault directly; [[memory-control-convention]] §Governance. ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".
-- The catalog lists more kinds than get pre-created (situational + trigger-generated + the feature set). **Only 6 are pre-created** — do not conflate the two numbers.
+- The catalog lists more kinds than get pre-created (situational + trigger-generated + the feature set). **Only 5 are pre-created** — do not conflate the two numbers.
 
 ## TDC — if FRD is the "what", TDC is the "how"
 
@@ -115,7 +118,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 
 ## Policy System
 
-**Home = one file per project: `<project>/docs/develop/P_POLICY.md`.** Situational — created when the first project-wide rule actually exists. It is **not** one of the 6 pre-created stubs.
+**Home = one file per project: `<project>/docs/develop/P_POLICY.md`.** Situational — created when the first project-wide rule actually exists. It is **not** one of the 5 pre-created stubs.
 
 **The (single) inclusion criterion**: *"Does this rule apply to **2 or more features**?"*
 
@@ -136,9 +139,12 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 
 - **Format `<PREFIX>-<TYPE>-0000N`** (project PREFIX · document TYPE · 5-digit serial).
 - **Issuer = the PM, in advance.** Read the **frontmatter `next_id`** of that type's folder TOC — `_index.md` first; where absent, a legacy `index.md` is recognized as its equal — assign +1, then update `next_id`. Workers never pick their own numbers (collisions under concurrent work).
-- **Verification = `scripts/validate.sh`, presence only** — `id:` required on an ADR body document, `next_id:` required on `docs/adr/`'s index. ⚠️ **Duplicate and gap detection has no owner** — stated as a known gap, not as a rule anyone is following.
+- **Verification = `scripts/validate.sh`** — two units, both of it. Per file: `id:` required on an ADR body document, `next_id:` required on `docs/adr/`'s index. Per folder (the ADR ID audit, KJP-83): **duplicate ids**, **holes in the issued sequence**, and a **`next_id` that is not ahead of the highest issued id**. Findings in default mode, `--strict` blocks.
+  - **The two directions of `next_id` drift are judged differently, on purpose.** Above highest + 1 = numbers issued and their records not written yet — that is issuance *in advance*, which this section prescribes, so it is silent. At or below the highest = the next number handed out is one a file already holds, a duplicate that has not happened yet — that is the finding.
+  - **A hole is judged against 1, not against the lowest id present.** Measured 2026-08-12: every ADR folder with no files carries `next_id: 1`, so serial 1 is always the first number a counter hands out and a hole beneath the lowest file is a consumed number rather than numbering that began later.
+  - **A number carried only by a filename still counts as consumed.** `<PREFIX>-ADR-0000N.md` with no `id:` key is already reported by the presence check; calling its number a hole too would name the wrong defect twice.
 
-- 🔴 **The unattended cycle (`sc` · `dreaming`) can never be that owner.** It writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/` ([[vault-tree]] §Write permission), and it neither reads nor writes `docs/adr/` at all ([[knowledge-escalate-convention]] §What does not ride this ladder).
+- 🔴 **The unattended cycle (`sc` · `dreaming`) is not that owner and never could be.** It writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/` ([[vault-tree]] §Write permission), and it neither reads nor writes `docs/adr/` at all ([[knowledge-escalate-convention]] §What does not ride this ladder). The audit lives in the linter for that reason — a gate the PM runs, not a background cycle.
 - **`next_id` home = that type's folder `_index.md`** (absent → a legacy `index.md` is its equal — folder-TOC equivalence: [[vault-tree]]) — ADR: `<project>/docs/adr/_index.md`. **That is the only `next_id` in the vault.**
 - **ADRs are collected in `docs/adr/` — never placed in feature folders.** Why: ① ADRs that **attach to no feature** — stack choices, infra decisions — would have nowhere to go ② when a feature is scrapped, its decision record gets buried with it — an ADR is standalone evidence of "why we decided this" and outlives the feature. (A third reason once read "`docs/policy/` has the same shape, so the rule stays unified" — that folder is retired, and the first two reasons carry the rule on their own.)
 - If an ADR relates to a feature, reference it from that feature's `FRD`·`TDC` via a `[[<PREFIX>-ADR-0000N]]` wikilink. **Never move the file into the feature folder.**

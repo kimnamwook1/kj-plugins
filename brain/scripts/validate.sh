@@ -9,10 +9,12 @@
 # name a file that is not there — checked on every index recall injects, docs TOCs and project hubs
 # included; plus, on the wiki layer alone, the canonical line form and the inverse question, notes
 # no index names), session-uid wikilinks on the
-# team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
+# team-shared surface, docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
-# only). Reports as `file:line: message`.
+# only), and the ADR ID audit over `docs/adr/` (the same ids read across files rather than one at
+# a time: duplicate ids, holes in the issued sequence, and a `next_id` that is not ahead of them).
+# Reports as `file:line: message`.
 # Findings alone never fail the run (exit 0); --strict turns any finding into exit 1.
 # Usage errors (bad args / unreadable root / mktemp failure) exit 2 in both modes.
 #
@@ -50,7 +52,12 @@ NCOVER="$(mktemp -t brain-validate-ncover)" || { echo "validate.sh: mktemp faile
 # different rules (see the scope note at the index scan), and $LIST is consumed by the coverage
 # check afterwards, which must keep seeing the wiki layer alone.
 DOCIDX="$(mktemp -t brain-validate-docidx)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
-trap 'rm -f "$OUT" "$LIST" "$TARGETS" "$NOTES" "$NCOVER" "$DOCIDX"' EXIT
+# The ADR audit's own two files: the `docs/adr/` subset of the docs list (a cross-file question —
+# duplicate ids and sequence holes are invisible to a per-file scan), and one integer back out of
+# awk, the same seam NCOVER uses.
+ADRL="$(mktemp -t brain-validate-adr)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
+NADR="$(mktemp -t brain-validate-nadr)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
+trap 'rm -f "$OUT" "$LIST" "$TARGETS" "$NOTES" "$NCOVER" "$DOCIDX" "$ADRL" "$NADR"' EXIT
 
 # ----------------------------------------------------------- the manifest's schema version
 # 🔴 One level above every scan below. `.brain-paths` is what tells a consumer where the tree is;
@@ -605,11 +612,10 @@ done < "$LIST" >> "$OUT"
 #   · `docs/adr/`: body files without `id:` (multi-instance, PM-issued, immutable); its
 #     index/_index without `next_id:` (the issuance counter). ADR is the ONLY multi-instance
 #     kind — `docs/policy/` was the other one until KJP-79 retired the folder model.
-#     ⚠️ Presence only. **Duplicate IDs and gaps in the sequence have no owner** — the audit that
-#     would have caught them was retired with the dreaming feature set (KJP-77), and
-#     project-docs-convention.md §ID Issuance records the hole as a known gap rather than a rule
-#     someone is following. Named here so the presence check is not mistaken for the whole
-#     contract; closing it is a separate card, not this one.
+#     ⚠️ Presence only, and that is all this per-file scan can be: whether two files carry the
+#     SAME id, or whether an issued number has lost its file, is a question about the folder
+#     rather than about any one document in it. That half is the ADR ID audit below (KJP-83) —
+#     same paths, different unit.
 #   · `docs/develop/API_SPEC.md` without `source:` + `readonly: true` (mirror contract).
 #   WARNS (stderr only, never a finding — --strict must not fail on them):
 #   · unknown top-level keys (protects docs imported from outside; migration off the v1
@@ -768,13 +774,215 @@ while IFS= read -r f; do
   ' "$f"
 done < "$LIST" >> "$OUT"
 
+# ------------------------------------- ADR ID audit (duplicates · sequence gaps · next_id)
+# 🔴 The half the presence check above cannot reach, and the reason it needed its own owner
+# (KJP-83). `id:`/`next_id:` presence proves every ADR carries *a* number; it says nothing about
+# whether two carry the SAME one, or whether a number the counter handed out has lost its file.
+# Both failures are silent by construction — every file is well-formed, every required key is
+# there, and the vault reports clean — and both break the thing an ID exists for:
+#   · duplicate — `[[<PREFIX>-ADR-0000N]]` stops naming one decision. The link still resolves, to
+#                 whichever file the reader opens first, so nothing ever errors.
+#   · gap       — a number was issued and its record is gone. Links to it dangle, and because IDs
+#                 are immutable the number cannot be reused to make the ledger whole again.
+#   · counter   — `next_id` at or below the highest issued id, i.e. the *next* issuance is already
+#                 a duplicate. The only one of the three that predicts a defect instead of
+#                 reporting one, which is why it is worth a finding before anything breaks.
+# Canon: project-docs-convention.md §ID Issuance. ADR is the only multi-instance kind — policy
+# stopped being one when KJP-79 retired the folder model, so `## POL-NNN` is a heading serial
+# inside one file and has no `id:`, no `next_id`, and nothing for this audit to hold.
+#
+# Scope = `docs/adr/` and no other path, reusing the docs-layer list the scan above just consumed
+# rather than opening a scan root of its own: one manifest-derived enumeration, so a moved
+# `projects_root` cannot reach one scan and miss the other.
+#
+# 🔴 No `sort`/`uniq` anywhere in here, deliberately. Every set is an awk subscript — byte-exact
+# string keys, no collation, no dedup pass — so the KJP-74 hazard (macOS `sort -u` collapsing
+# non-ASCII names that carry no primary collation weight, measured `en_US.UTF-8` → 1 line of 4)
+# has no seat. The shell pipeline that would have had one is the naive spelling of this check,
+# `awk '{print id}' | sort | uniq -d`, which would silently under-count duplicates among
+# non-ASCII filenames; the selftest's 결정-가/결정-나 pair is the fixture that keeps it out.
+: > "$ADRL"
+while IFS= read -r f; do
+  # The same path predicate the id/next_id obligations use above — one rule, not a second copy.
+  case "$f" in */docs/adr/*) printf '%s\n' "$f" >> "$ADRL" ;; esac
+done < "$LIST"
+
+awk -v adrlist="$ADRL" -v countf="$NADR" "$AWK_PRELUDE"'
+  # Dynamic regex strings, not /literals/: one-true-awk (macOS /usr/bin/awk) cannot parse a `/`
+  # inside a bracket class in a regex literal. Same discipline as the coverage scan above.
+  function folder_of(path,   dir)  { dir = path; sub(DIRPART, "", dir); return dir }
+  function base_of(path,   name)   { name = path; sub(BASEPART, "", name); return name }
+  function trim(text) { sub(/^[ \t]+/, "", text); sub(/[ \t]+$/, "", text); return text }
+  function idform(folder, serial) { return IDPREFIX[folder] sprintf("%05d", serial) }
+
+  # One ADR file, frontmatter only. A body file contributes its `id:`, the folder TOC its
+  # `next_id:` — the two halves of one issuance record. GOTID reports back whether this file
+  # yielded an id, which is what the filename fallback keys off.
+  function harvest(file, folder,   line, lineno, keyname, value) {
+    GOTID = 0; lineno = 0
+    while ((getline line < file) > 0) {
+      lineno++
+      sub(/\r$/, "", line)
+      if (lineno == 1 && line != "---") break
+      if (lineno == 1) continue
+      if (line == "---") break
+      if (!match(line, TOPKEY)) continue
+      keyname = substr(line, 1, RLENGTH - 1); gsub(QC, "", keyname)
+      value = unq(trim(substr(line, RLENGTH + 1)))
+      if (keyname == "id") record_id(folder, file, value, lineno)
+      else if (keyname == "next_id" && value != "") {
+        NEXTVAL[folder] = value; NEXTLINE[folder] = lineno; NEXTFILE[folder] = file
+      }
+    }
+    close(file)
+  }
+
+  # An id joins two tables. The literal string drives duplicate detection, because the string IS
+  # the link target and identical strings are exactly what makes `[[...]]` ambiguous; the trailing
+  # digit run drives the sequence. A value the serial parse cannot read still counts as a
+  # duplicate — it simply sits outside the sequence rather than dodging the audit.
+  # ponytail: two different prefixes on one serial in one folder (`KJP-ADR-00001` beside
+  # `ABC-ADR-00001`) is a double issuance this misses, since the strings differ. No instance in
+  # either measured vault, and mixed prefixes in one folder are their own defect; revisit if one
+  # appears.
+  function record_id(folder, file, value, lineno,   slot, serial) {
+    if (value == "") return
+    GOTID = 1; IDTOTAL++
+    slot = folder SUBSEP value
+    if (!(slot in IDCOUNT)) {
+      IDCOUNT[slot] = 0; IDLINE[slot] = lineno; IDANCHOR[slot] = file
+      NIDORDER[folder]++; IDORDER[folder, NIDORDER[folder]] = value
+    }
+    IDCOUNT[slot]++
+    IDFILES[slot] = (IDCOUNT[slot] == 1) ? base_of(file) : IDFILES[slot] " " base_of(file)
+    if (!match(value, /[0-9]+$/)) return
+    serial = substr(value, RSTART, RLENGTH) + 0
+    ISSUED[folder, serial] = 1
+    if (!(folder in IDPREFIX)) IDPREFIX[folder] = substr(value, 1, RSTART - 1)
+    if (serial > TOPSERIAL[folder]) {
+      TOPSERIAL[folder] = serial; TOPID[folder] = value; TOPFILE[folder] = file
+    }
+  }
+
+  # A body file whose `id:` is absent or unreadable still consumed its number if the FILENAME
+  # carries one. `KJP-ADR-00001.md` with no `id:` key is already reported by the presence check
+  # above; calling its number a hole as well would say "the record is gone" about a file sitting
+  # right there — the wrong defect, reported twice. (The coverage scan makes the same call about
+  # malformed index lines: already a finding, so not counted as missing too.)
+  # 🔴 A stem is recorded in its own set and never touches TOPSERIAL: it may only ever silence a
+  # gap, never invent one above the highest *issued* id. Otherwise one misnamed file
+  # (`KJP-ADR-00099.md` in a folder that has issued three) would manufacture 95 findings.
+  function record_stem(folder, file,   stem) {
+    stem = base_of(file); sub(/\.md$/, "", stem)
+    if (!match(stem, /[0-9]+$/)) return
+    NAMEDSERIAL[folder, substr(stem, RSTART, RLENGTH) + 0] = 1
+  }
+
+  # One finding per duplicated id, not one per file: the collision is the defect, and the message
+  # names every file in it so the anchor line does not have to carry that meaning alone.
+  function report_dupes(folder,   i, value, slot) {
+    for (i = 1; i <= NIDORDER[folder]; i++) {
+      value = IDORDER[folder, i]; slot = folder SUBSEP value
+      if (IDCOUNT[slot] < 2) continue
+      print IDANCHOR[slot] ":" IDLINE[slot] ": duplicate ADR id: " value " is carried by " IDCOUNT[slot] \
+            " files (" IDFILES[slot] ") — an id is the link target, so [[" value "]] resolves to whichever one the reader opens and no link can tell the two decisions apart; the folder counter issues one number to one decision (project-docs-convention.md §ID Issuance), so a collision means two files were written against the same next_id"
+    }
+  }
+
+  # 🔴 Holes are enumerated over 1..highest-issued, never up to next_id. A number ABOVE every file
+  # is issuance in advance, which canon expects and report_counter deliberately stays silent about;
+  # a number BELOW a file that exists was handed out and then lost its record. The range starts at
+  # 1 rather than at the lowest id present: measured 2026-08-12 on the techtainment vault, all 6
+  # ADR folders holding no files carry `next_id: 1`, so serial 1 is always the first number the
+  # counter hands out and a hole underneath the lowest file is a consumed number, not numbering
+  # that began later. (That measurement is also what makes this rule earn its keep: the vault has
+  # exactly one such hole, and it is a leading one.)
+  # Anchored at the file carrying the highest issued id — the file whose own number proves the
+  # counter walked past the hole. Not the folder TOC: an ADR folder is not guaranteed to have one
+  # (the `missing next_id:` finding above can only speak when an index file exists), and an anchor
+  # that exists only sometimes is a finding that disappears sometimes.
+  function report_gaps(folder,   serial, miss, nmiss) {
+    if (TOPSERIAL[folder] + 0 == 0) return
+    nmiss = 0; miss = ""
+    for (serial = 1; serial <= TOPSERIAL[folder]; serial++) {
+      if ((folder, serial) in ISSUED || (folder, serial) in NAMEDSERIAL) continue
+      nmiss++
+      if (nmiss <= GAPCAP) miss = (nmiss == 1) ? idform(folder, serial) : miss ", " idform(folder, serial)
+    }
+    if (nmiss == 0) return
+    if (nmiss > GAPCAP) miss = miss " and " (nmiss - GAPCAP) " more"
+    print TOPFILE[folder] ":1: gap in the ADR sequence: " miss " (issued, then unaccounted for — the counter handed out every number below " TOPID[folder] ", so a hole is a decision record deleted, moved out of docs/adr/, or never written; ids are immutable so the number can never be reissued, and any link to it dangles)"
+  }
+
+  # 🔴 The asymmetric judgment, and the reason it is asymmetric. `next_id` is what the PM reads to
+  # issue the next number (§ID Issuance), so the two directions of drift are not the same thing:
+  #   · ABOVE highest + 1 — numbers issued, records not written yet. Canon puts issuance *in
+  #     advance* ("issuer = the PM, in advance"), so this is a legal, expected, transient state.
+  #     Silent — and not a stderr warn either: warns here are for legacy-legal spellings, and this
+  #     is current-legal. A gate that fires on correct behaviour is a gate that gets ignored.
+  #   · AT OR BELOW highest — the next number the PM hands out is one a file already holds. That
+  #     is a duplicate that has not happened yet, and there is no reading in which it is correct.
+  # Measured 2026-08-12, techtainment vault: every one of the 5 ADR folders holding files carries
+  # next_id = highest + 1, and all 6 empty ones carry `next_id: 1` — so the counter is maintained
+  # as "the next number to hand out", which is the semantics this comparison assumes.
+  # An index carrying no `next_id` at all is already reported above; repeating it here would add
+  # no instruction. A value with no digits is left alone for the same reason format is not this
+  # audit’s question — it is counted by neither side and reported by neither.
+  function report_counter(folder,   next_serial) {
+    if (!(folder in NEXTVAL) || TOPSERIAL[folder] + 0 == 0) return
+    if (!match(NEXTVAL[folder], /[0-9]+$/)) return
+    next_serial = substr(NEXTVAL[folder], RSTART, RLENGTH) + 0
+    if (next_serial > TOPSERIAL[folder]) return
+    print NEXTFILE[folder] ":" NEXTLINE[folder] ": next_id " NEXTVAL[folder] " is not ahead of the highest issued id " TOPID[folder] " (the counter hands out the next number, so the PM'"'"'s next issuance collides with a file that already exists — set next_id to " (TOPSERIAL[folder] + 1) ")"
+  }
+
+  BEGIN {
+    # A quoted key is the same key, and a quoted value the same value — the same bypass the docs
+    # scan above closed (`"id":` / `id: "KJP-ADR-00001"`). QC is built with %c because a literal
+    # single quote cannot appear inside this single-quoted awk program; unq() comes from the
+    # shared prelude rather than a second copy.
+    QC = "[\"" sprintf("%c", 39) "]"
+    TOPKEY = "^" QC "?[A-Za-z_][A-Za-z0-9_]*" QC "?:"
+    DIRPART = "/[^/]*$"; BASEPART = "^.*/"
+    METAPAT = "^_?index[.]md$"
+    # Gap listing cap. A mistyped serial (`id: KJP-ADR-2026`) would otherwise enumerate two
+    # thousand holes and bury every other finding in the run — the false-positive rate that gets a
+    # gate ignored. The COUNT stays exact; only the printed list is trimmed.
+    GAPCAP = 10
+    while ((getline file < adrlist) > 0) {
+      folder = folder_of(file)
+      if (!(folder in FOLDERSEEN)) {
+        FOLDERSEEN[folder] = 1; NFOLDERS++; FOLDERS[NFOLDERS] = folder
+      }
+      harvest(file, folder)
+      if (!GOTID && base_of(file) !~ METAPAT) record_stem(folder, file)
+    }
+    close(adrlist)
+    printf "%d\n", (IDTOTAL + 0) > countf
+    close(countf)
+    # Per folder, because every rule here is scoped to one counter: the same id string under two
+    # folders is two decisions under two counters, not a collision.
+    for (i = 1; i <= NFOLDERS; i++) {
+      report_dupes(FOLDERS[i]); report_gaps(FOLDERS[i]); report_counter(FOLDERS[i])
+    }
+  }
+' >> "$OUT"
+# The evidence base, carried out of awk as one integer — the same reason `entries` is reported:
+# a folder of ADRs whose ids never got parsed yields zero duplicates and zero gaps, which reads
+# exactly like a clean ledger.
+n_adr="$(tr -d ' \n' < "$NADR")"
+[ -n "$n_adr" ] || n_adr=0
+
 # ------------------------------------------------------------------------ report
 # The scanned counts print on every run so a collapsed scan (0 files) is visibly
 # different from a clean vault — "OK" on its own cannot distinguish the two.
-# `entries` is the odd one out: not a file count but the number of distinct link targets the
-# folder indexes yielded, i.e. how much evidence the coverage check actually had. It is the only
-# number here that no other implies, and the only one that tells a vault whose notes are all
-# indexed from a run whose indexes were never parsed — both report zero coverage findings.
+# `entries` and `adr ids` are the odd ones out: not file counts but payload counts — the distinct
+# link targets the folder indexes yielded, and the `id:` values the ADR bodies yielded. Each is
+# the evidence base of a check whose clean result and whose collapsed result are the same output.
+# A vault whose notes are all indexed and a run whose indexes were never parsed both report zero
+# coverage findings; a folder of ADRs and a folder whose ids never got parsed both report zero
+# duplicates and zero gaps. Neither number is implied by any file count next to it, which is
+# exactly why both are printed.
 # 🔴 `wiki indexes` and `docs indexes` are two numbers, not one, for the same reason: they are two
 # scans under two rules, and a single total could hide either half collapsing to zero. The docs
 # number is also the *only* place a project hub is ever counted — it sits above `docs/` and outside
@@ -787,7 +995,7 @@ done < "$LIST" >> "$OUT"
 # The label is `wiki`, not `knowledge`: that is the canon's name for the layer (vault-tree.md
 # §Layers) and the name this file's own header has used since the 0.2.0 pass. The count line was
 # the last place the retired word survived.
-scanned="$n_sessions sessions, $n_wiki wiki, $n_index wiki indexes, $n_dindex docs indexes, $n_cover entries, $n_shared shared, $n_docs docs"
+scanned="$n_sessions sessions, $n_wiki wiki, $n_index wiki indexes, $n_dindex docs indexes, $n_cover entries, $n_shared shared, $n_docs docs, $n_adr adr ids"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
   echo "validate.sh: OK — no issues ($scanned) $VAULT"
