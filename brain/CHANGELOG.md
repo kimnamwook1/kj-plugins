@@ -3,6 +3,12 @@
 ## 0.2.4 — 2026-08-12
 
 ### Changed
+- 🔴 **스텁 6종 → 5종 전파 — `init` 이 아직 `BUSINESS` 를 만들고 있었다 (KJP-85).** KJP-86 이 `BUSINESS` 를 해체(§BM → `PRD`, §GTM → `MARKETING.md`)했는데 **스캐폴드 생산자와 트리가 따라오지 않았다.** 판정은 새로 하지 않았다 — 답은 이미 `doc-catalog.md` 에 있었다: `MARKETING` 은 자리를 물려받지 않는다, **GTM 은 프로젝트 생성 시점에 필요한 것이 아니기 때문**이다(`MILESTONE`·`COMPLIANCE`·`DESIGN` 이 상황적인 것과 같은 이유). 이 카드는 그 판정의 **전파**다.
+  - 🔴 **실효 결함은 `skills/init/SKILL.md:100` 하나뿐이었다** — 나머지는 서술이지만 이 줄은 **스캐폴드를 실제로 생산**한다. 6종 → 5종, `business/` 2 → 1.
+  - **전서 자기모순 해소.** `:217` 이 "BUSINESS 한 파일 2절 모델 폐기 · 6번째 자리는 «스킬» 탭 `skills/init` §4 축에서 판정"이라 위임해 놓고 `:220`·`:1366` 은 스텁 6종에 `BUSINESS` 를 그대로 넣고 있었다. 위임받은 축이 5종으로 답했으므로 세 곳을 그 답으로 닫았다.
+  - 🔴 **`MARKETING.md` 가 정본 트리에 아예 없었다** — KJP-86 이 만든 문서가 `vault-tree.md` `business/` 블록에 등재되지 않았다. `MILESTONE`·`COMPLIANCE` 와 같은 표기로 상황적 문서 등재.
+  - **덤으로 잡힌 2건** (같은 `BUSINESS` 잔재 축): `init` 이 `API_SPEC` 생성 주체를 아직 `dreaming` 이라 적고 있었다 — canon 은 **PM 위임 동기화 워커**이고 `dreaming` 은 `docs/` 를 쓸 수 없다(KJP-77). 전서 `:1587` 은 `value-axis-drift.sh` 가 `"[[BUSINESS]] §BM 링크로 교체"` 를 낸다고 적고 있었는데 **실측 출력은 `[[PRD]] §BM`** 이다(힌트는 표의 home 열 파생, KJP-86 이 home 을 옮겼다).
+  - 손댄 곳: `skills/init/SKILL.md` · `skills/onboard/SKILL.md` · `vault-tree`(`business/` 블록 · 네이밍 예시) · `doc-catalog`(머리말 개수 · §Core 머리말 · MARKETING 유보 노트) · 전서(`:217`·`:220`·`:1364`·`:1366`·`:1587`).
 - 🔴 **feature 문서 모델을 전서에 맞춘다 — 기능당 폴더+2파일이 아니라 파일 1개 (KJP-84).** `FRD.md`·`TDC.md` 를 `docs/develop/feature/<pp>_<slug>_0000N.md` **단일 문서**로 통합. 전서(`.artifact/brain-0.2.0.html:188` §트리 · `:826` §양식 feature 결정표)는 처음부터 통합 모델이었고 레포 canon 4곳이 폐기된 폴더형을 말하고 있었다.
   - 🔴 **볼트가 이미 통합 모델로 살고 있었다** — 실측 2026-08-12: `RSS_ui-redesign_00001.md` · `PNF_status-cascade_00001.md` · `MOSH_host-key-trust_00001.md` 3건이 기능별 폴더 없이 `feature/` 직속에 있고 `id:` 도 파일명과 같다. **문서만 뒤처져 있었다.**
   - **`<fp>` 는 정의된 적이 없었다.** 전서 전체에서 `:188`(`<pp>_<fp>_0000N.md`)과 `:843`(`id: <PP>_<FP>_00001`) 두 곳에만 나오고 뜻이 어디에도 없다 — 대조군인 `<pp>` 는 `:200` 이 "접두는 위키링크 전역 유일성용"으로 설명한다. **정의를 새로 쓰는 대신 토큰을 없앴다**: 위 3개 실측 파일이 전부 kebab 슬러그였고, `<slug>` 는 같은 트리의 `p_memory`·`hippocampus` 행이 이미 쓰는 어휘다. 정의가 필요한 토큰을 새로 세우는 것이 곧 드리프트다. 두 곳의 대소문자 불일치(`<pp>` vs `<PP>`)도 같이 맞췄다 — `:843` 주석이 "파일명과 일치"라고 요구한다.

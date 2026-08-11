@@ -59,10 +59,11 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
       p_memory.base
     docs/                            # official documents
       _index.md
-      business/                      # pre-created stubs = the 2 below marked ★
+      business/                      # pre-created stub = the 1 below marked ★
         _index.md
-        PRD.md                       # ★ + §비기능 요구(NFR) · §용어(Glossary)
-        BUSINESS.md                  # ★ one file, two sections — §BM · §GTM
+        PRD.md                       # ★ + §비기능 요구(NFR) · §용어(Glossary) · §BM (pricing · tiers · unit economics)
+        MARKETING.md                 # situational — GTM · positioning · channels. Links to PRD §BM,
+                                     #   never restates a price (project-docs-convention §Value Axes)
         MILESTONE.md                 # NOT pre-created — "when what" phased delivery plan
         COMPLIANCE.md                # situational — compliance for this project
       develop/                       # pre-created stubs = the 4 below marked ★
@@ -157,7 +158,7 @@ So: **judge line by line, read the `git diff` with your eyes, and report what wa
 - **folders = lowercase**
   - e.g. `docs/` · `docs/develop/feature/` · `docs/adr/` · `docs/business/`
 - **required document files = uppercase**
-  - `PRD.md` · `BUSINESS.md` · `RUNBOOK.md`
+  - `PRD.md` · `MARKETING.md` · `RUNBOOK.md`
   - Exception: documents under `resources/` may be lowercase.
   - Exception: a `feature/` document is `<pp>_<slug>_0000N.md` — uppercase prefix + **lowercase kebab slug** + serial. It is named for its feature, not for a fixed document role, so the uppercase rule does not reach it (§tree).
 - **machine notes = `<hostname>.md`, lowercase-kebab**

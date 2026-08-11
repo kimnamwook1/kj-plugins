@@ -1,6 +1,6 @@
 # Doc Catalog — Canonical Source for Document Selection
 
-> **The PM selects documents with this table — per task, and for the project onboarding baseline.** At project onboarding the PM delegates pre-creation of **2 `business/` + 4 `develop/` = 6** stubs ([[project-docs-convention]]), and their content is filled in as judged by this table. Former standalone kinds live on as **sections** of the 6 (per-row "absorbs" notes below) — split a section into its own file only when it actually grows heavy, never pre-emptively.
+> **The PM selects documents with this table — per task, and for the project onboarding baseline.** At project onboarding the PM delegates pre-creation of **1 `business/` + 4 `develop/` = 5** stubs ([[project-docs-convention]]), and their content is filled in as judged by this table. Former standalone kinds live on as **sections** of the 5 (per-row "absorbs" notes below) — split a section into its own file only when it actually grows heavy, never pre-emptively.
 >
 > - **Naming = abbreviation + full name, everywhere a document is titled** — this table's Document column and every stub H1: `# PRD (Product Requirements Doc — 제품 요구사항)`.
 > - **tier = universal (baseline)**: laid down by default for any non-trivial project.
@@ -20,7 +20,7 @@
 |---|---|---|---|---|---|
 | **Project hub** | `project` | pm | root `_index.md` | Once at onboarding. **One-line definition + PREFIX + TOC pointers only** — no content prose (`_index.md` pointer principle, [[vault-tree]]) | universal |
 
-**Core documents** (`docs/business/` · `docs/develop/`) — the 5 marked ★stub here are pre-created at project creation ([[project-docs-convention]]); the 6th slot was `BUSINESS`, retired by KJP-86 and **left open** (its successor is decided on the `skills/init` axis, not here), and the rest are created on trigger
+**Core documents** (`docs/business/` · `docs/develop/`) — the 5 marked ★stub here are pre-created at project creation ([[project-docs-convention]]); the 6th slot was `BUSINESS`, retired by KJP-86, and **it stays empty — the baseline is 5 (KJP-85)**. `MARKETING` inherited `BUSINESS`'s GTM content but not its stub seat: GTM is not needed at project creation. The rest are created on trigger
 
 | Document | kind | owner | Location | When (trigger) · absorbed sections | Tier |
 |---|---|---|---|---|---|
@@ -63,7 +63,7 @@
 
 > **`BUSINESS` is retired (KJP-86, 2026-08-12).** Its two sections went to the separate homes the canonical tree already names: **§BM → [[PRD]] §BM** (pricing · tiers · unit economics — the [[project-docs-convention]] §Value Axes home) and **§GTM → `MARKETING.md`**. One file carrying both was the 0.1.5 model; the 0.2.0 §트리 supersedes it.
 >
-> 🔴 **Whether `MARKETING` is an init scaffold target is not settled here.** This card decided the document *identity* only. Which documents get pre-created is the `skills/init` §4 skeleton's call — a deliberately narrower axis of the 전서 than §트리 — so the stub count is reconciled there, not in this catalog.
+> ✅ **`MARKETING` is not an init scaffold target — settled on the `skills/init` §4 axis (KJP-85, 2026-08-12).** That card decided the document *identity*; this one decided the seat. **`MARKETING` is situational**, created on trigger like `MILESTONE` · `COMPLIANCE` · `DESIGN`, so the pre-created baseline is **5** and `BUSINESS`'s slot stays empty. A market-entry strategy is not something a project has at creation time; a PRD is.
 
 **Planning (roadmap)** — **not pre-created** (created on trigger, not part of the 6-stub baseline)
 

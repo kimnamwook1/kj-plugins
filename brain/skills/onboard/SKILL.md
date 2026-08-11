@@ -37,7 +37,7 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
 
 7. **Answer → application mapping**:
    - **① Ticket system** → update `ticket-system` in `CLAUDE.md` (brain config; pre-split projects: wherever the key currently lives). **Identifier only** — real credentials go in neither CLAUDE file (separate env, e.g. `~/.config/claude/huly.env`). If there is a system, confirm the project identifier and MCP availability, and record the session `related_ticket` mapping (which system's issue IDs get written) in the brain config. If none, `ticket-system: none` — manage via session To-Dos only.
-   - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, also `BUSINESS` §BM.
+   - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, that goes in **`PRD` §BM** — the only original for pricing · tiers · unit economics (`docs/project-docs-convention.md` §Value Axes). GTM/channel content is **`MARKETING.md`**, which is situational and created on trigger, not here.
    - **③ Stack** → `CODE_CONVENTION` · `ARCHITECTURE` (architecture brief) · **`RUNBOOK` §Delivery** (devops label). Classify from Q1/Q2 and record the bucket in `RUNBOOK` §Delivery:
      - Q1 *I control* + Q2 *SaaS* → **server-SaaS** · Q1 *I control* + Q2 *personal/internal* → **server-personal** · Q1 *someone else controls* → **client** (Q2 skipped).
      - Recording the bucket gives the stub real content — the same write flips `RUNBOOK` `status: created → draft` (pre-created rule, `docs/project-docs-convention.md`; the init-seeded §Delivery pointer alone does not clear it — the bucket does).
