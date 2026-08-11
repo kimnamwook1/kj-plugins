@@ -131,6 +131,24 @@ The bands are a default-layout property. A manifest pointing `common_root`/`tool
 
 🔴 **Anything scanning for *project* folders must exclude the reserved bands, not just the common root.** The `[0-9]*_*` glob matches every band, and a `000`-banded common root used to be safe only by accident — max-based numbering ignores the minimum. A `9xx` folder breaks that accident from the other end: measured on a fixture, a `999`-banded tools root drove `/brain:ss`'s next-project number to **`1000`**, a 4-digit prefix the `NNN_` convention does not allow. Consumers and their guards: `skills/ss/SKILL.md` §Ensure the project folder (number computation **and** `*_<project>` lookup — a project slugged `tools` otherwise resolves to the tools root) · `skills/sr/SKILL.md` (same lookup) · `scripts/validate.sh`.
 
+## Renaming a path term — sweep live pointers only
+
+🔴 **A path-term rename touches only the pointers that still point.** When a folder is renamed (`sessions/` → `hippocampus/`, `knowledge/` → `p_memory/`, `tech-design/` → `develop/`), the old string keeps appearing in prose for reasons that are not pointers, and rewriting those is not consistency — it is **forgery**.
+
+The same string splits five ways, and only the first is in scope:
+
+| Kind | Example | Sweep? |
+|---|---|---|
+| **live pointer** | a hub index line naming `sessions/KJP-*.md` | ✅ **yes** |
+| past incident / measurement record | "the glob mis-staged `…/docs/tech-design/DESIGN.md`" | 🔴 no — that path was the fact at that time |
+| external tool's real path | `~/.codex/sessions/` · `~/.grok/sessions/` | 🔴 no — not this vault's namespace |
+| code sample inside a note | `"$root"/*/knowledge/*.md` in a glob-bug note | 🔴 no — breaking the sample voids the note |
+| the note's own subject | a file named `sessions-gitignore-is-team-share-scope…` | 🔴 no |
+
+Measured 2026-08-11 (vault-wide prose sweep, 54 hits across six retired names): live pointers were the minority, four hits were another tool's real paths, and — the case that settles the rule — **two of the hits were the note warning that path sweeps miss a direction, which quotes the `sessions/` → `hippocampus/` rename as its worked example.** A blanket substitution would have destroyed the note that warns about the sweep.
+
+So: **judge line by line, read the `git diff` with your eyes, and report what was fixed and what was preserved as separate counts.** "Zero occurrences" is the wrong goal; a machine substitution that reaches zero has overwritten history. The same principle already governs recorded measurements elsewhere in this harness — a count captured under an old label stays under that label.
+
 ## Naming Conventions
 
 - **folders = lowercase**
