@@ -609,7 +609,7 @@ done < "$LIST" >> "$OUT"
 #     project-docs-convention.md §ID Issuance records the hole as a known gap rather than a rule
 #     someone is following. Named here so the presence check is not mistaken for the whole
 #     contract; closing it is a separate card, not this one.
-#   · `docs/tech-design/API_SPEC.md` without `source:` + `readonly: true` (mirror contract).
+#   · `docs/develop/API_SPEC.md` without `source:` + `readonly: true` (mirror contract).
 #   WARNS (stderr only, never a finding — --strict must not fail on them):
 #   · unknown top-level keys (protects docs imported from outside; migration off the v1
 #     schema is "no longer written", never a forced rewrite). Known set = the v2
@@ -631,8 +631,9 @@ done < "$LIST" >> "$OUT"
 # its dirs are not scanned here). index/_index are folder meta
 # (`next_id`, TOC titles), so they skip the unknown-key warn and the body-document rules
 # (status·id·mirror·updated) but not the session check. Feature-tier policies
-# (`docs/feature/<F>/policy/`) are NOT under the id rule yet — deliberate scope, extend on
-# decision, not by drift.
+# (`docs/develop/feature/<F>/policy/`) are NOT under the id rule yet — deliberate scope, extend on
+# decision, not by drift. Only the path term moved with the tree (vault-tree.md §트리 — the folder
+# now sits under `develop/`); the exemption itself is untouched and still awaits a decision.
 DDIRS=()
 while IFS= read -r d; do
   [ -d "$d/docs" ] && DDIRS[${#DDIRS[@]}]="$d/docs"
@@ -651,11 +652,11 @@ while IFS= read -r f; do
   # Path-derived obligations — only the *paths* are matched here; the kind ← path matrix
   # itself stays in project-docs-convention (never replicated):
   #   docs/policy/ · docs/adr/         body → `id:` required; index/_index → `next_id:` required
-  #   docs/tech-design/API_SPEC.md     repo-spec mirror → `source:` + `readonly: true` required
+  #   docs/develop/API_SPEC.md         repo-spec mirror → `source:` + `readonly: true` required
   idreq=0; nidreq=0; mirror=0
   case "$f" in
     */docs/policy/*|*/docs/adr/*) if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
-    */docs/tech-design/API_SPEC.md) mirror=1 ;;
+    */docs/develop/API_SPEC.md) mirror=1 ;;
   esac
   awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE"'
     BEGIN {

@@ -36,7 +36,7 @@ assert_exit() {    # <desc> <expected> <actual>
 COMMON=org
 mkdir -p "$V/hippocampus/nested" "$V/013_selftest/p_memory/nested" \
          "$V/013_selftest/docs/policy" "$V/013_selftest/docs/adr" \
-         "$V/013_selftest/docs/tech-design" "$V/014_mirror/docs/tech-design" \
+         "$V/013_selftest/docs/develop" "$V/014_mirror/docs/develop" \
          "$V/$COMMON/facts" "$V/$COMMON/facts/machines" \
          "$V/$COMMON/patterns" "$V/$COMMON/policies" \
          "$V/999_tools" "$V/neocortex"
@@ -273,7 +273,7 @@ Intro prose, which a docs TOC is allowed to carry.
 - [[fm-v2]] - hyphen where the wiki canon writes an em dash
 - [[fm-legacy]]
 - `rdb-schema.sql` — a bullet naming a non-note file
-- [[013_selftest/docs/tech-design/API_SPEC]] — vault-relative form, resolves
+- [[013_selftest/docs/develop/API_SPEC]] — vault-relative form, resolves
 EOF
 
 # The project hub. It sits in no other scan at all — one level above docs/, outside the wiki roots,
@@ -295,10 +295,10 @@ EOF
 # Lines 6-7 are the `../` pair: Obsidian resolves relative addressing inside a wikilink, so the
 # one that lands on a real file must stay quiet and the one that lands on nothing must still fire.
 for _k in 문서가 문서나; do
-  printf -- '---\nstatus: draft\n---\nbody\n' > "$V/013_selftest/docs/tech-design/$_k.md"
+  printf -- '---\nstatus: draft\n---\nbody\n' > "$V/013_selftest/docs/develop/$_k.md"
 done
-cat > "$V/013_selftest/docs/tech-design/_index.md" <<'EOF'
-# tech-design — 목차
+cat > "$V/013_selftest/docs/develop/_index.md" <<'EOF'
+# develop — 목차
 
 - [[문서가]] — non-ASCII stem, exists
 - [[문서나]] — non-ASCII stem, exists
@@ -362,8 +362,8 @@ printf -- '---\ntitle: adr toc\n---\n'                         > "$V/013_selftes
 # API_SPEC mirror contract: `source:` + `readonly: true`. PASS and FAIL live in two projects
 # because the singleton filename can exist only once per docs tree.
 printf -- '---\nstatus: draft\nsource: repo/openapi.yaml\nreadonly: true\nsynced: 2026-07-28T10:00:00\n---\nmirror\n' \
-  > "$V/013_selftest/docs/tech-design/API_SPEC.md"
-printf -- '---\nstatus: draft\n---\nmirror\n' > "$V/014_mirror/docs/tech-design/API_SPEC.md"
+  > "$V/013_selftest/docs/develop/API_SPEC.md"
+printf -- '---\nstatus: draft\n---\nmirror\n' > "$V/014_mirror/docs/develop/API_SPEC.md"
 
 # A session note may wikilink other sessions — hippocampus/ is outside the shared surface
 # and deliberately outside this scan. Otherwise-valid so only the wikilink rule could
@@ -459,7 +459,7 @@ assert_no_match "index: hippocampus/ TOCs are outside the scan"  'ghost-session'
 # specific assert rather than quietly shrinking the net.
 assert_match   "docs index: the docs TOC is scanned for dangling links" 'docs/_index.md:9: dangling _index link: \[\[ghost-doc\]\]'
 assert_match   "docs index: the project hub is scanned"                 '013_selftest/_index.md:5: dangling _index link: \[\[ghost-hub\]\]'
-assert_match   "docs index: the scan recurses into docs subfolders"     'tech-design/_index.md:5: dangling _index link: \[\[ghost-nested-doc\]\]'
+assert_match   "docs index: the scan recurses into docs subfolders"     'develop/_index.md:5: dangling _index link: \[\[ghost-nested-doc\]\]'
 # 🔴 The exclusion this card had to keep alive rather than kill. Every bullet in that docs TOC
 # breaks the wiki line form (hyphen · no summary · no wikilink at all) and the file opens with
 # frontmatter and prose. Measured 2026-08-11: 85 of the real vault's docs index lines would be
@@ -484,7 +484,7 @@ assert_no_match "docs index: p_memory/ subfolders are in neither index scan" 'gh
 # names nothing must still fire. Measured 2026-08-11: zero instances in the real vault's index
 # list lines today, which is exactly why the pair below is fixture-pinned rather than assumed.
 assert_no_match "docs index: a ../ link that resolves is not dangling" 'dangling _index link: \[\[\.\./fm-v2\]\]'
-assert_match    "docs index: a ../ link that resolves to nothing fires" 'tech-design/_index.md:7: dangling _index link: \[\[\.\./ghost-updir\]\]'
+assert_match    "docs index: a ../ link that resolves to nothing fires" 'develop/_index.md:7: dangling _index link: \[\[\.\./ghost-updir\]\]'
 
 # Index coverage (KJP-82) — the same relation read backwards. A dangling link makes recall believe
 # in a note that is not there; an uncovered note makes recall never learn that a real one exists.
@@ -551,9 +551,9 @@ assert_match   "adr/: missing id is caught"                  'adr/KJP-ADR-00001.
 assert_no_match "policy/: id present passes"                 'KJP-POL-00001.md'
 assert_match   "adr/: legacy index.md without next_id is caught" 'adr/index.md:1: missing next_id:'
 assert_no_match "policy/: _index.md with next_id passes"     'policy/_index.md'
-assert_match   "API_SPEC mirror: missing source is caught"   '014_mirror/docs/tech-design/API_SPEC.md:1: missing source:'
-assert_match   "API_SPEC mirror: missing readonly is caught" '014_mirror/docs/tech-design/API_SPEC.md:1: API_SPEC mirror without readonly: true'
-assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/tech-design/API_SPEC.md'
+assert_match   "API_SPEC mirror: missing source is caught"   '014_mirror/docs/develop/API_SPEC.md:1: missing source:'
+assert_match   "API_SPEC mirror: missing readonly is caught" '014_mirror/docs/develop/API_SPEC.md:1: API_SPEC mirror without readonly: true'
+assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/develop/API_SPEC.md'
 
 SAVED_REPORT="$REPORT"; REPORT="$WARNS"
 assert_match   "docs fm: unknown key warns on stderr"        'fm-legacy.md:2: unknown docs frontmatter key: kind'
@@ -611,7 +611,7 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 #     them: p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index + org/_index
 #   5 docs indexes — every index under a project folder that the wiki scan does not own (KJP-82):
 #     013_selftest/_index (the hub) + docs/_index + docs/policy/_index + docs/adr/index (legacy
-#     spelling) + docs/tech-design/_index. 🔴 The hub is in NO other count — it is above docs/ and
+#     spelling) + docs/develop/_index. 🔴 The hub is in NO other count — it is above docs/ and
 #     outside every wiki root — so this number is the only evidence that half of the scan ran.
 #     p_memory/nested/_index is excluded here and out of scope there, which is what its own
 #     dangling fixture pins.
@@ -628,7 +628,7 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 #     here) + 5 neocortex (whole folder, meta files included). 🔴 The project hub is NOT here:
 #     this sweep takes docs/ and p_memory/, and the hub sits one level above both.
 #   24 docs — the same 24 docs-tree files counted again by the docs frontmatter scan
-#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index · tech-design/_index ·
+#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index · develop/_index ·
 #     문서가 · 문서나 — index/_index counted here: meta files skip rules, not the scan).
 #     It tracks the docs-tree half of `shared` exactly, and the hub's absence from both is what
 #     makes `docs indexes` the only place the hub can appear.
@@ -825,7 +825,7 @@ rm -rf "$R2"
 #     a moved SSOT would hide.
 DRIFT="${DRIFT_SH:-$HERE/value-axis-drift.sh}"
 DV="$(mktemp -d -t brain-selftest-drift)"
-mkdir -p "$DV/013_drift/docs/tech-design" "$DV/013_drift/docs/pricebook" "$DV/hippocampus"
+mkdir -p "$DV/013_drift/docs/business" "$DV/013_drift/docs/pricebook" "$DV/hippocampus"
 
 # Alternate-home fixture canon — same table shape as project-docs-convention §Value Axes,
 # different home. The decoy row after the section end pins the section scoping: rule data
@@ -844,7 +844,11 @@ EOF
 # One line = one scenario; the line numbers are load-bearing for the asserts below.
 # Frontmatter (line 3), fence (line 10), inline code (line 12), and bare plan/원인 prose
 # (line 13) are the false-positive half; lines 6-8 and 14 are the positive half.
-cat > "$DV/013_drift/docs/tech-design/PRD.md" <<'EOF'
+# 🔴 It sits in `docs/business/`, PRD's canon home (vault-tree.md §트리), and that placement is
+# load-bearing here rather than cosmetic: this vault's canon declares the home as PRICEBOOK §Rates,
+# so a drift detector that had `docs/business/` hardcoded as its exclusion would skip this file and
+# kill all twelve asserts below at once. The alternate-home claim above is what it proves.
+cat > "$DV/013_drift/docs/business/PRD.md" <<'EOF'
 ---
 status: draft
 pricehint: $5 per seat
@@ -892,8 +896,8 @@ assert_exit     "drift: --strict exits 1 on findings"             1 $?
 # Pins two things at once: the relative-path seam works from wherever the script lives,
 # and the real canon still carries the pricing row with home BUSINESS §BM.
 DV2="$(mktemp -d -t brain-selftest-drift2)"
-mkdir -p "$DV2/014_real/docs/tech-design" "$DV2/014_real/docs/business" "$DV2/hippocampus"
-printf -- '---\nstatus: draft\n---\n티어별 과금은 월 ₩12,000이다.\n' > "$DV2/014_real/docs/tech-design/ARCHITECTURE.md"
+mkdir -p "$DV2/014_real/docs/develop" "$DV2/014_real/docs/business" "$DV2/hippocampus"
+printf -- '---\nstatus: draft\n---\n티어별 과금은 월 ₩12,000이다.\n' > "$DV2/014_real/docs/develop/ARCHITECTURE.md"
 printf -- '---\nstatus: draft\n---\n월 ₩12,000 (원본).\n'            > "$DV2/014_real/docs/business/BUSINESS.md"
 REPORT="$(/bin/bash "$DRIFT" "$DV2" 2>/dev/null)"; rc=$?
 assert_exit     "drift: real canon via script-relative default"    0 "$rc"
