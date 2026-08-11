@@ -250,7 +250,8 @@ the **shape**, with each movable axis written as the manifest key that resolves 
         <pp>_<slug>.md
       docs/              #   official docs — business/ · develop/ · adr/ · resources/ ·
                          #   develop/P_POLICY.md (project rules, one `## POL-NNN` each) ·
-                         #   develop/feature/<F>/ (FRD · TDC — diagrams live in its §Diagrams)
+                         #   develop/feature/<pp>_<slug>_0000N.md (one file per feature —
+                         #   FRD+TDC merged; diagrams live in its §Design)
   <tools_root>/          # machine-global tool inventory — opt-in (onboard step 6) ·
                          # git-untracked, 9xx = reserved band
     tool-{mcp,skill,cli,plugin}.md

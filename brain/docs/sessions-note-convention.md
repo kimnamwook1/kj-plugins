@@ -25,7 +25,7 @@ The **filename is the session's identifier** (`PROJECT_PREFIX_YYYYMMDD_<slug>.md
 > | Object | Value set | Canon |
 > |---|---|---|
 > | **Session note** (`hippocampus/<filename>.md`) | `active` \| `parked` \| `done` | this document |
-> | **Docs document** (PRD·FRD·TDC·POL·ADR…) | `created` \| `draft` \| `approved` \| `deprecated` | [[project-docs-convention]] §frontmatter Standard |
+> | **Docs document** (PRD·feature·POL·ADR…) | `created` \| `draft` \| `approved` \| `deprecated` | [[project-docs-convention]] §frontmatter Standard |
 > | **Memory note** (`p_memory` · `neocortex`) | *(no status key)* — freshness is derived from `updated:` | [[knowledge-convention]] |
 
 ## Sections

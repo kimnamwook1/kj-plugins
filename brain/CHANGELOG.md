@@ -3,6 +3,12 @@
 ## 0.2.4 — 2026-08-12
 
 ### Changed
+- 🔴 **feature 문서 모델을 전서에 맞춘다 — 기능당 폴더+2파일이 아니라 파일 1개 (KJP-84).** `FRD.md`·`TDC.md` 를 `docs/develop/feature/<pp>_<slug>_0000N.md` **단일 문서**로 통합. 전서(`.artifact/brain-0.2.0.html:188` §트리 · `:826` §양식 feature 결정표)는 처음부터 통합 모델이었고 레포 canon 4곳이 폐기된 폴더형을 말하고 있었다.
+  - 🔴 **볼트가 이미 통합 모델로 살고 있었다** — 실측 2026-08-12: `RSS_ui-redesign_00001.md` · `PNF_status-cascade_00001.md` · `MOSH_host-key-trust_00001.md` 3건이 기능별 폴더 없이 `feature/` 직속에 있고 `id:` 도 파일명과 같다. **문서만 뒤처져 있었다.**
+  - **`<fp>` 는 정의된 적이 없었다.** 전서 전체에서 `:188`(`<pp>_<fp>_0000N.md`)과 `:843`(`id: <PP>_<FP>_00001`) 두 곳에만 나오고 뜻이 어디에도 없다 — 대조군인 `<pp>` 는 `:200` 이 "접두는 위키링크 전역 유일성용"으로 설명한다. **정의를 새로 쓰는 대신 토큰을 없앴다**: 위 3개 실측 파일이 전부 kebab 슬러그였고, `<slug>` 는 같은 트리의 `p_memory`·`hippocampus` 행이 이미 쓰는 어휘다. 정의가 필요한 토큰을 새로 세우는 것이 곧 드리프트다. 두 곳의 대소문자 불일치(`<pp>` vs `<PP>`)도 같이 맞췄다 — `:843` 주석이 "파일명과 일치"라고 요구한다.
+  - **kind `frd`·`tdc` → `feature` 1종.** kind 는 **경로에서 파생**되는데(`project-docs-convention` §kind ← path matrix) 경로가 하나면 kind 둘을 뽑을 수 없다 — 매트릭스가 판정 불능이 된다. **기계적 영향 0**: `validate.sh` 는 feature 경로를 매치한 적이 없다(경로 분기는 `*/docs/adr/*` 와 `*/docs/develop/API_SPEC.md` 둘뿐 — `:667-668`, `frd`·`tdc` grep 히트 0).
+  - **충돌 서열 6티어 → 5티어.** `… > PRD > FRD > TDC` 는 두 파일이 하나가 된 순간 **문서가 자기 자신보다 상위**라는 뜻이 된다. `… > PRD > feature` 로 접고, 규약이 "새 랭크는 실제 충돌이 날 때만"이라고 못박아 둔 조항과 구별되게 **"문서가 사라져서 줄어든 것이지 랭크를 불필요하다고 판정한 것이 아니다"**를 명기했다.
+  - 손댄 곳: 전서(`:188`·`:269`·`:587`·`:843`) · `project-docs-convention`(kind 매트릭스 · §stub 개수 · §TDC 절 개편 · §Policy 인용 · §ID Issuance · 서열) · `doc-catalog`(location 규약 · CODE_CONVENTION 행 · DESIGN 행 · MILESTONE 경계 · Feature 표) · `vault-tree`(트리 · 네이밍 예시) · `doc-templates`(DESIGN 제목 · MILESTONE 경계·표) · `sessions-note-convention`(문서 열거) · `README`(트리).
 - 🔴 **정책 모델을 하나로 확정 — `docs/develop/P_POLICY.md` 단일 파일 + `## POL-NNN` 조항 헤딩 (KJP-79).** 전서·`project-docs-convention`·`doc-catalog`·`vault-tree`·`validate.sh` 다섯 곳이 이제 같은 모델을 서술한다. 종전에는 전서가 단일 파일을, 나머지가 `docs/policy/<PREFIX>-POL-0000N` **2티어 폴더형**을 말해 「스텁 6종」을 아무도 정확히 열거할 수 없었다.
   - 🔴 **전서는 이미 모델 전체를 명세하고 있었다** — 조항 헤딩 계약 · 번호=파일 내 연번(PM 발급) · 단일 기능 규칙은 feature 파일로 · 충돌 서열 + org 승격 · 비대 시 자연 분리. **설계할 것이 없었고 나머지 문서가 못 따라간 것이었다.**
   - **고친 트리는 §스킬 init 스켈레톤이다 — §트리는 손대지 않았다.** 근거: 스켈레톤 자신이 **2줄 간격으로 모순**이었다. `docs/{business,develop,develop/feature,adr,resources}/` 를 스캐폴드해놓고 바로 다음 줄에서 **자기가 만들지도 않는** `docs/policy` 의 `next_id` 를 규정했다.

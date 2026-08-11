@@ -76,10 +76,12 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
         P_POLICY.md                  # situational — project rules, one `## POL-NNN` heading each.
                                      #   Single file at this one tier; a single-feature rule goes in
                                      #   that feature's §Rules — project-docs-convention §Policy System
-        feature/                     # per-feature design (FRD·TDC — diagrams live in TDC §Diagrams)
-          <feature>/
-            FRD.md
-            TDC.md
+        feature/                     # per-feature spec — one file per feature, no per-feature folder
+          <pp>_<slug>_0000N.md       #   FRD+TDC merged into one document (kind `feature`).
+                                     #   Slug = the human-readable axis, the number = the immutable id.
+                                     #   Diagrams live in its §Design section.
+          feature.base
+          _index.md
       adr/                           #   standalone evidence of hard-to-reverse decisions <PREFIX>-ADR-0000N.md
       resources/                     #   research · meeting records · reference material (free-form · not a recall target)
   <tools_root>/                      # machine-global tool inventory · opt-in · git-untracked. Reserved band (below)
@@ -155,8 +157,9 @@ So: **judge line by line, read the `git diff` with your eyes, and report what wa
 - **folders = lowercase**
   - e.g. `docs/` · `docs/develop/feature/` · `docs/adr/` · `docs/business/`
 - **required document files = uppercase**
-  - `PRD.md` · `FRD.md` · `BUSINESS.md` · `RUNBOOK.md`
+  - `PRD.md` · `BUSINESS.md` · `RUNBOOK.md`
   - Exception: documents under `resources/` may be lowercase.
+  - Exception: a `feature/` document is `<pp>_<slug>_0000N.md` — uppercase prefix + **lowercase kebab slug** + serial. It is named for its feature, not for a fixed document role, so the uppercase rule does not reach it (§tree).
 - **machine notes = `<hostname>.md`, lowercase-kebab**
   - `<common_root>/machines/kj-mac-mini-m4.md` — a fact note, so lowercase; not an uppercase document file (`COMPLIANCE.md`).
   - frontmatter = the note form of [[knowledge-convention]] (`summary` · `updated` · `related` · `aliases`), plus `verified:` for a measured fact.
