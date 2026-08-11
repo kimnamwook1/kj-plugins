@@ -145,7 +145,7 @@ The same string splits five ways, and only the first is in scope:
 | code sample inside a note | `"$root"/*/knowledge/*.md` in a glob-bug note | 🔴 no — breaking the sample voids the note |
 | the note's own subject | a file named `sessions-gitignore-is-team-share-scope…` | 🔴 no |
 
-Measured 2026-08-11 (vault-wide prose sweep, 54 hits across six retired names): live pointers were the minority, four hits were another tool's real paths, and — the case that settles the rule — **two of the hits were the note warning that path sweeps miss a direction, which quotes the `sessions/` → `hippocampus/` rename as its worked example.** A blanket substitution would have destroyed the note that warns about the sweep.
+Measured 2026-08-11 (vault-wide prose sweep, 54 hits across six retired names, classified line by line): **live pointers 26 · preserve 20 · undecided 4 · false positives 4.** So a blanket substitution would have been wrong on **more than half the hits** — including four that are another tool's real paths, and — the case that settles the rule — **two that are the note warning that path sweeps miss a direction, which quotes the `sessions/` → `hippocampus/` rename as its worked example.** The sweep would have destroyed the note that warns about the sweep.
 
 So: **judge line by line, read the `git diff` with your eyes, and report what was fixed and what was preserved as separate counts.** "Zero occurrences" is the wrong goal; a machine substitution that reaches zero has overwritten history. The same principle already governs recorded measurements elsewhere in this harness — a count captured under an old label stays under that label.
 
