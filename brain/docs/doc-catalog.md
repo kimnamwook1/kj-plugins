@@ -20,11 +20,11 @@
 |---|---|---|---|---|---|
 | **Project hub** | `project` | pm | root `_index.md` | Once at onboarding. **One-line definition + PREFIX + TOC pointers only** — no content prose (`_index.md` pointer principle, [[vault-tree]]) | universal |
 
-**Core documents** (`docs/business/` · `docs/develop/`) — the 5 marked ★stub here are pre-created at project creation ([[project-docs-convention]]); the 6th (`BUSINESS`) is in the next table, and the rest are created on trigger
+**Core documents** (`docs/business/` · `docs/develop/`) — the 5 marked ★stub here are pre-created at project creation ([[project-docs-convention]]); the 6th slot was `BUSINESS`, retired by KJP-86 and **left open** (its successor is decided on the `skills/init` axis, not here), and the rest are created on trigger
 
 | Document | kind | owner | Location | When (trigger) · absorbed sections | Tier |
 |---|---|---|---|---|---|
-| **PRD (Product Requirements Doc — 제품 요구사항)** ★stub | `prd` | planning | `docs/business/` | When defining product direction & requirements (early in the project). **References [[BUSINESS]] (§BM · §GTM) via wikilinks.** Absorbs as sections: **§비기능 요구 (NFR)** — performance/availability/security targets that affect the design · **§용어 (Glossary)** — domain terms, accumulated as they become ambiguous | universal |
+| **PRD (Product Requirements Doc — 제품 요구사항)** ★stub | `prd` | planning | `docs/business/` | When defining product direction & requirements (early in the project). **Links to [[MARKETING]] for GTM.** Absorbs as sections: **§BM (Business Model — 수익 모델)** — the only original for pricing · tiers · unit economics ([[project-docs-convention]] §Value Axes); anchor heading = contract, never renamed · **§비기능 요구 (NFR)** — performance/availability/security targets that affect the design · **§용어 (Glossary)** — domain terms, accumulated as they become ambiguous | universal |
 | **ARCHITECTURE (시스템 설계)** ★stub | `architecture` | architecture | `docs/develop/` | When system design begins. Absorbs as sections: **§데이터 모델 (ERD)** — when there is persistent data · **§외부 연동 (Integrations)** — external service contracts. Split a section into its own file only when it actually grows heavy | universal |
 | **API_SPEC (API Specification — repo spec 미러)** | `api` | content=backend / sync=PM 위임 동기화 워커 (🔴 **dreaming 아님**) | `docs/develop/` | When exposing an API/service boundary. ⚠️ **Read-only mirror — SSOT is the repo spec** ([[project-docs-convention]]). **Not pre-created** — the sync worker generates it once an API exists (a stub mirror of nothing would be noise). 🔴 **Never by dreaming** — `docs/` is outside the unattended cycle's write scope ([[vault-tree]] §Write permission) | universal |
 | **THREAT_MODEL (위협 모델)** ★stub | `threat-model` | security | `docs/develop/` | When handling user data or authentication (mandatory once before launch). **Kept independent** — security/evidence character; never folded into another document | universal |
@@ -55,11 +55,15 @@
 >
 > **Agent branch names are not this section's call** — the coder's `<type>/<PREFIX>-<number>-<title-slug>` is harness canon (`agents/coder.md` §First action) and applies in every repo the harness runs in. `<type>` is the shared type vocabulary (canon: `docs/git-convention.md` — **never restated here**). §Delivery records the *human* convention alongside it when one exists. **A repo whose humans use type-shaped prefixes too does not merge the two** — the agent format is fixed by the harness, the human one is a measurement, and they coexist unreconciled.
 
-**1 more business document** — pre-created as a stub at project creation (2 `business/` + 4 `develop/` = **6**)
+**1 more business document** — GTM strategy, split out of the retired `BUSINESS` (KJP-86)
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **BUSINESS (사업 — BM·GTM 통합)** ★stub | `business` | **business** | `docs/business/` | One file, two sections. **§BM (Business Model — 수익 모델)** — when revenue model, cost structure, or unit economics affect product decisions · **§GTM (Go-To-Market — 진입 전략)** — when launch, channel, or positioning decisions are needed. Referenced by the PRD | universal |
+| **MARKETING (마케팅 전략 — GTM)** | `marketing` | **business** | `docs/business/` | When launch, channel, or positioning decisions are needed. 🔴 **Pricing/tier literals never live here** — the only original is [[PRD]] §BM and this document links to it. Absorbs as sections: **§포지셔닝 · 메시징** — a competitor gets a line, never a chapter · **§홍보 자산 인덱스** — the real copy/social/PR assets are deliverables outside the vault, so this holds the index table only | universal |
+
+> **`BUSINESS` is retired (KJP-86, 2026-08-12).** Its two sections went to the separate homes the canonical tree already names: **§BM → [[PRD]] §BM** (pricing · tiers · unit economics — the [[project-docs-convention]] §Value Axes home) and **§GTM → `MARKETING.md`**. One file carrying both was the 0.1.5 model; the 0.2.0 §트리 supersedes it.
+>
+> 🔴 **Whether `MARKETING` is an init scaffold target is not settled here.** This card decided the document *identity* only. Which documents get pre-created is the `skills/init` §4 skeleton's call — a deliberately narrower axis of the 전서 than §트리 — so the stub count is reconciled there, not in this catalog.
 
 **Planning (roadmap)** — **not pre-created** (created on trigger, not part of the 6-stub baseline)
 
