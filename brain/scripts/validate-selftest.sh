@@ -49,8 +49,12 @@ printf -- 'schema_version: 2\ncommon_root: %s\n' "$COMMON" > "$V/.brain-paths"
 
 # 0.2.0 session frontmatter = 5 keys, none of them an identity or authorship field: the filename
 # carries identity (`uid` retired) and git carries authorship (`writer` retired).
+# `related_ticket` is checked for PRESENCE only (validate.sh's required-key split), never for its
+# value — sibling fixtures below pass a bare `t` and stay silent. So the vendor here is purely
+# illustrative of the `<system>:<id>` shape (sessions-note-convention.md) and changing it proves
+# nothing and breaks nothing; it reads `plane` because the fixture's KJP prefix is this repo's own.
 session() {  # <basename> <status>
-  printf -- '---\nstatus: %s\nproject: selftest\nupdated: 2026-07-18T12:00:00\nrelated_ticket: huly:KJP-1\ncc_session_ids: [cc-selftest]\n---\n\n## Goal\n' \
+  printf -- '---\nstatus: %s\nproject: selftest\nupdated: 2026-07-18T12:00:00\nrelated_ticket: plane:KJP-1\ncc_session_ids: [cc-selftest]\n---\n\n## Goal\n' \
     "$2" > "$V/hippocampus/$1.md"
 }
 

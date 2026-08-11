@@ -25,7 +25,9 @@
 - **머신 스코프 층 설계 (회사/개인)** — 분리 경계는 볼트 유지(개인=techtainment·회사=beafter). 남은 문제는 머신 사실의 이중 기록(같은 맥북을 두 볼트가 각자 서술 — 31KB vs 3KB 드리프트 실측). tools 층과 같은 머신-스코프 축으로 설계.
 - **0.2.0 컷 + 전면 재적용** — CHANGELOG 확정 → bump → push → 재설치 byte 검증 → techtainment 12곳 재검증 + beafter 6곳 하네스 적용.
 
-## 열린 티켓 접점 (Huly)
+## 열린 티켓 접점 (Plane)
+
+> 🔴 **아래 4개 ID 는 Huly 시절 번호다 — 그대로 Plane 에서 열면 다른 카드가 나온다.** 이 목록은 2026-08-05 에 쓰였고 Plane 이관은 2026-08-12 이라 번호가 재발급됐다(`CLAUDE.md` brain config: 구 Huly N = Plane N−4). **재매핑은 Plane 조회로 확인한 뒤에** 한다 — 산술만 믿고 고쳐 적으면 검증되지 않은 번호가 정본이 된다.
 
 - KJP-52 cc_session_ids 빈 값 13건 → ③에 흡수
 - KJP-59 frontmatter 미규정 키 71건 처분 (version 46건 스키마 판단 포함) → ③·⑤ 접점

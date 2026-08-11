@@ -60,12 +60,12 @@ history:
 |---|---|
 | `docs/business/<SINGLETON>.md` | singleton filename mapping: `PRD.md`→`prd` · `MARKETING.md`→`marketing` · `MILESTONE.md`→`milestone` · `COMPLIANCE.md`→`compliance` |
 | `docs/develop/<SINGLETON>.md` | singleton filename mapping: `ARCHITECTURE.md`→`architecture` · `API_SPEC.md`→`api` · `THREAT_MODEL.md`→`threat-model` · `CODE_CONVENTION.md`→`code-convention` · `RUNBOOK.md`→`runbook` · `DESIGN.md`→`design` · `P_POLICY.md`→`policy` |
-| `docs/develop/feature/<F>/FRD.md` | `frd` |
-| `docs/develop/feature/<F>/TDC.md` | `tdc` |
+| `docs/develop/feature/<pp>_<slug>_0000N.md` | `feature` |
 | `docs/adr/*` | `adr` |
 | `docs/resources/**` | free-form (no kind) |
 
 - **Path vs an explicit field: the path wins.** A leftover `kind:`/`scope:` disagreeing with the path is stale metadata, not a second truth.
+- **`frd` and `tdc` are retired as separate kinds (KJP-84, 2026-08-12).** The two documents merged into one file, and a kind is derived from a path — one path cannot yield two kinds without the matrix becoming undecidable. The merged file's kind is `feature`, which is also what its folder and its `species:` already call it. Nothing mechanical moved with them: `validate.sh` never matched a feature path (its only path arms are `docs/adr/` and `docs/develop/API_SPEC.md`), so `kind` here is documentation vocabulary and this row is its only home.
 
 ### history & session linkage
 
@@ -104,15 +104,17 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 - **Pre-created = 5** — 1 in `business/` (`PRD`) + 4 in `develop/` (`ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`). **At project onboarding the PM delegates pre-creating all of them as `status: created`.** Former standalone kinds live on as sections of these 5 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
   - **`BUSINESS` left the list with KJP-86, and `MARKETING` did not take its seat.** The split sent business-model content to `PRD §BM` and GTM content to `MARKETING.md`, and **GTM is not something a project needs at creation time** — the same reason `MILESTONE` · `COMPLIANCE` · `DESIGN` are situational. A PRD is universal; a market-entry strategy is not. `MARKETING.md` is created on trigger, like the rest of them.
 - **`API_SPEC` is not pre-created** — it is a read-only repo-spec mirror (§The Only Exception below), generated and re-synced by a **PM-delegated sync worker** once an API exists. 🔴 **Never by `dreaming`** — the unattended cycle writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/`, and `docs/` is written solely by an AI acting on a user instruction ([[vault-tree]] §Write permission). `COMPLIANCE` · `DESIGN` · `MILESTONE` · `MARKETING` stay situational (created on trigger).
-- **Feature document set = 2** (`FRD` · `TDC`) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be). A rule that applies to this feature alone stays in the feature's own §Rules — there is no per-feature `policy/` folder (§Policy System).
+- **Feature document set = 1** (the merged `feature` file — FRD+TDC in one document) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be). There is no per-feature folder either: one feature = one file directly under `docs/develop/feature/` ([[vault-tree]] §tree). A rule that applies to this feature alone stays in the feature's own §Rules — there is no per-feature `policy/` folder (§Policy System).
 - **ADRs are never pre-created** — one is created only when a meaningful decision actually occurs: **the PM delegates it as a recording brief carrying the `architecture` owner label** (a brief label, not a resident agent — workers never write the vault directly; [[memory-control-convention]] §Governance. ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".
 - The catalog lists more kinds than get pre-created (situational + trigger-generated + the feature set). **Only 5 are pre-created** — do not conflate the two numbers.
 
-## TDC — if FRD is the "what", TDC is the "how"
+## The feature document — the "what" and the "how" in one file
 
-- **Role**: implementation approach · interfaces · trade-offs · **lightweight decisions**. 🔴 **Never bury major decisions in the TDC — split them out as ADRs and link** — an ADR is standalone evidence of a hard-to-reverse decision; mixed into a document, it cannot be found.
-- **TDC = prose + §Diagrams in one file**: the data-flow · sequence · state diagrams live **inside the TDC as a `§Diagrams` section** (they absorbed the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files — only diagrams remained there once prose was banned from them). **Prose (why it flows this way) lives only in the prose sections; §Diagrams holds diagrams only** — scatter prose into diagram captions and the two drift apart. A state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.) — otherwise omit it.
-- **Reference direction (one-way)**: `FRD → TDC → (ADR · policy)`. Never create reverse references — with a cycle, which one is upstream disappears (the conflict order ("Document Conflict Precedence" below) stops working).
+**`FRD` and `TDC` are one document (KJP-84, 2026-08-12).** The design canon merged them: `docs/develop/feature/<pp>_<slug>_0000N.md`, `species: Feature — 기능 명세 (FRD+TDC 통합)`. Section order carries the old split — **what** (§Why · §Scope · §Rules · §Acceptance) then **how** (§Design). The two never were separate audiences here; a reader who needs the rules also needs the design.
+
+- **Role of the §Design half**: implementation approach · interfaces · trade-offs · **lightweight decisions**. 🔴 **Never bury major decisions in it — split them out as ADRs and link** — an ADR is standalone evidence of a hard-to-reverse decision; mixed into a document, it cannot be found.
+- **Diagrams live in §Design**, which absorbed the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files (only diagrams remained there once prose was banned from them). A state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.) — otherwise omit it.
+- **Reference direction (one-way)**: `feature → (ADR · policy)`. Never create reverse references — with a cycle, which one is upstream disappears (the conflict order ("Document Conflict Precedence" below) stops working). The former `FRD → TDC` leg is gone: it was an edge between two files that are now one.
 
 > **Non-code decisions** (stack, vendor, scope) go to a memory note in `p_memory/`, not an ADR — only code/design decisions get an ADR.
 
@@ -129,7 +131,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 | (shared across all projects) | the common root's `*policies*` directory — normative-axis identification → [[vault-tree]] §The common layer |
 
 - **One rule = one `## POL-NNN <title>` heading.** `NNN` is a **serial within the file** (read the last heading, add 1), issued by the PM. It is **not** a `<PREFIX>-…` document ID — see §ID Issuance.
-- **Reference = the `[[P_POLICY#POL-003]]` anchor**, which is the citation unit for rank 2 of §Document Conflict Precedence. **FRD·TDC never copy policy values** — they link to the anchor.
+- **Reference = the `[[P_POLICY#POL-003]]` anchor**, which is the citation unit for rank 2 of §Document Conflict Precedence. **A feature document never copies policy values** — it links to the anchor.
 - **No folder, no file-per-policy, no `id:` frontmatter, no `next_id` counter.** The former two-tier folder model (`docs/policy/` + `docs/feature/<F>/policy/`) is **retired — KJP-79, 2026-08-12**. Grounds: the design canon (`.artifact/brain-0.2.0.html` §트리) carries only `develop/P_POLICY.md`, and the vault's 9 project-tier + 1 feature-tier policy folders held **`_index.md` and nothing else** (measured 2026-08-12 — zero body documents, so nothing needed migrating).
 - 🔴 **Escalation, not promotion — and only outward, to the common layer.** When a clause overlaps an org-wide norm, **do not restate it**: raise it into the common root's `*policies*`, or leave a pointer. **This is a PM judgment, never an automatic ladder** — the common layer is a fact record maintained by measurement, *not* a promotion tier, and the unattended cycle (`sc` · `dreaming`) may never write there ([[knowledge-escalate-convention]] §What does not ride this ladder). Within a project there is nothing to promote *between*: one file is the only tier.
 - **Splitting is a size decision, not a tier decision.** When the file grows heavy, split it and the clause heading becomes the filename naturally. Callers cite the `POL-NNN` anchor, so their links survive the split.
@@ -147,7 +149,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 - 🔴 **The unattended cycle (`sc` · `dreaming`) is not that owner and never could be.** It writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/` ([[vault-tree]] §Write permission), and it neither reads nor writes `docs/adr/` at all ([[knowledge-escalate-convention]] §What does not ride this ladder). The audit lives in the linter for that reason — a gate the PM runs, not a background cycle.
 - **`next_id` home = that type's folder `_index.md`** (absent → a legacy `index.md` is its equal — folder-TOC equivalence: [[vault-tree]]) — ADR: `<project>/docs/adr/_index.md`. **That is the only `next_id` in the vault.**
 - **ADRs are collected in `docs/adr/` — never placed in feature folders.** Why: ① ADRs that **attach to no feature** — stack choices, infra decisions — would have nowhere to go ② when a feature is scrapped, its decision record gets buried with it — an ADR is standalone evidence of "why we decided this" and outlives the feature. (A third reason once read "`docs/policy/` has the same shape, so the rule stays unified" — that folder is retired, and the first two reasons carry the rule on their own.)
-- If an ADR relates to a feature, reference it from that feature's `FRD`·`TDC` via a `[[<PREFIX>-ADR-0000N]]` wikilink. **Never move the file into the feature folder.**
+- If an ADR relates to a feature, reference it from that feature's document via a `[[<PREFIX>-ADR-0000N]]` wikilink. **Never move the file into `feature/`.**
 
 #### `<PREFIX>-POL-0000N` is retired (KJP-79, 2026-08-12)
 
@@ -163,13 +165,14 @@ Policy no longer takes a document ID **because it no longer has documents.** A `
 The pecking order when documents disagree — the higher one wins:
 
 ```
-*policies* (vault-global)  >  develop/P_POLICY.md  >  PRD §비기능 요구(NFR)  >  PRD  >  FRD  >  TDC
+*policies* (vault-global)  >  develop/P_POLICY.md  >  PRD §비기능 요구(NFR)  >  PRD  >  feature
 ```
 
 - 🔴 **This table is the PM's arbitration tool — not for workers.** Worker instructions carry only one line: "on conflict, don't judge on your own — report to the PM". Hand workers the pecking order and it becomes "I won, so ignore that one", and fixing the losing document never happens.
 - 🔴 **A conflict is usually a signal that one of the two is wrong.** Follow the winner and **fix the loser** — left alone, the next person hits the same conflict again.
-- The logic of the order: norms (must be followed) > constraints (the PRD's NFR section) > the what (PRD→FRD) > the how (TDC). **The lower you go the more concrete it gets, and the concrete never beats the abstract.** (A section outranking the rest of its own document is intentional — a constraint binds the requirements written next to it.)
-- **A new rank is added only when a real conflict occurs — one line at a time, never pre-emptively.** The 6-tier order stays as-is; no full-spectrum (12-tier) expansion.
+- The logic of the order: norms (must be followed) > constraints (the PRD's NFR section) > the product-wide what (PRD) > the one feature's what and how (the feature document). **The lower you go the more concrete it gets, and the concrete never beats the abstract.** (A section outranking the rest of its own document is intentional — a constraint binds the requirements written next to it.)
+- **A new rank is added only when a real conflict occurs — one line at a time, never pre-emptively.** The 5-tier order stays as-is; no full-spectrum (12-tier) expansion.
+  - 🔴 **It was 6 tiers until KJP-84 merged FRD and TDC**, which collapsed the last two into one rank — a document cannot outrank itself. The count changed because a document disappeared, **not** because a rank was judged unnecessary; that is still something only a real conflict may do.
 
 ## What Not to Put in the Vault (boundaries)
 

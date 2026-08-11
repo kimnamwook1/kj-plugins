@@ -22,7 +22,7 @@
 
 ---
 
-## DESIGN — design-system spec (FRD-grade)
+## DESIGN — design-system spec (feature-document-grade)
 
 - **Role**: the design-system contract for a UI product — tokens, components, states, interaction rules — **plus links to the SSOT**.
 - **SSOT rule → [[project-docs-convention]] §Value Axes, "UI pixels" row — the only original, not restated here.** The pixels/source live at the SSOT; this document holds the **links + the rules the SSOT cannot enforce in prose** (token names, state matrices, interaction invariants). Never paste screenshots as the source of truth — link. This is the **same shape as the API_SPEC repo-mirror pattern** ([[project-docs-convention]] §The Only Exception): the authoritative artifact lives outside the vault; the vault document links and rules, never overrides.
@@ -64,7 +64,7 @@
 ## MILESTONE — phased delivery plan ("when what")
 
 - **Role**: the roadmap. Sequences already-defined scope across time. Records **when**, never **what/why** (PRD) or **why-we-decided** (ADR).
-- **Boundaries** (owner of overlap — [[doc-catalog]] MILESTONE note): references PRD/FRD scope via wikilinks (never restates it); links ADRs for rationale; leaves fluid task/sprint status to the tracker. This doc is the **durable** plan, not a task mirror. Home = `docs/` root ([[doc-catalog]]).
+- **Boundaries** (owner of overlap — [[doc-catalog]] MILESTONE note): references PRD/feature scope via wikilinks (never restates it); links ADRs for rationale; leaves fluid task/sprint status to the tracker. This doc is the **durable** plan, not a task mirror. Home = `docs/` root ([[doc-catalog]]).
 - **Frontmatter**: §frontmatter Standard v2 ([[project-docs-convention]]) — singleton, so no `id`. Owner routing = the [[doc-catalog]] MILESTONE row (a routing label, not a frontmatter field).
 
 ```markdown
@@ -72,8 +72,8 @@
 <!-- What this roadmap covers and the planning horizon. One paragraph. -->
 
 ## Milestones
-<!-- The durable plan. Scope cells link PRD/FRD; Status points at the tracker, never restates task state. -->
-| Milestone | Target | Scope (→ [[PRD]] / [[FRD]]) | Exit criteria | Status (→ tracker) |
+<!-- The durable plan. Scope cells link the PRD or a feature document; Status points at the tracker, never restates task state. -->
+| Milestone | Target | Scope (→ [[PRD]] / feature) | Exit criteria | Status (→ tracker) |
 |---|---|---|---|---|
 
 ## Sequencing rationale
