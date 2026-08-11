@@ -5,7 +5,11 @@
 org: techtainment
 project: kj-plugins
 prefix: KJP
-ticket-system: huly   # identifier only — 워크스페이스 techtainment · 프로젝트 KJP (확정 2026-07-18). 실 크레덴셜은 env 분리.
+ticket-system: plane  # identifier only — 개인 인스턴스 plane.koreanjoker.com · 워크스페이스 techtainment · 프로젝트 KJP
+                      #   UUID 6caeceb2-408a-4b28-a8d1-c0f26b854899 (CLI 는 identifier 가 아니라 UUID 를 받는다)
+                      #   CLI = `plane` (개인) / `bplane` (회사 beafter). 실 크레덴셜은 프로필 분리.
+                      #   🔴 Huly 에서 이관 2026-08-12 — 번호가 재발급됐다. 구 Huly N = Plane N−4.
+                      #   이관된 것 = 제목·설명·상태·우선순위. 코멘트는 넘어오지 않았다(Huly 가 그 기록의 유일 사본).
 ```
 
 ## PM role
