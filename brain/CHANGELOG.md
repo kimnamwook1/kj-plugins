@@ -7,6 +7,16 @@
   - **볼트 실물이 canon 과 일치한다** — `find` 실측: `projects/013_kj-plugins/docs/business/MILESTONE.md` 1건. 문서만 뒤처져 있었고 볼트 이동은 필요 없다.
   - 고친 문장은 홈만 바꾸지 않고 **왜**(로드맵은 business 축 문서)와 **대조 포인터 2개**(`doc-catalog` §MILESTONE home 노트 · `vault-tree` `docs/business/` 블록)를 같이 실었다 — 한쪽만 적힌 사실은 다음 스윕에서 또 갈린다.
 
+### Added
+- 🔴 **docs 층에 폐기키 검사를 만들지 않는다 — 없는 것이 결정이었다 (KJP-89).** 「폐기키 검사가 docs 층을 흘린다」는 전제를 실측으로 **반증**했다. 검사를 신설하지도, unknown-key 경고를 finding 으로 승격하지도 않고, **그 판정을 canon 에 적고 어서션으로 고정**했다.
+  - 🔴 **폐기키로 지목된 6건은 규약을 지키고 있었다.** 볼트 feature 3파일의 `version`·`species` 는 stale 이 아니라 **전서 feature 템플릿(`ft-editor` 블록)이 살아있는 필드로 선언한 것**이다 — `version: 0.0.0` · `species: Feature — 기능 명세 (FRD+TDC 통합)` 까지 템플릿과 문자 그대로 일치한다(`PNF_status-cascade_00001.md` 실측). 전제가 근거로 삼은 폐기 선언은 **전서 `adr-editor` 블록 안**에 있어 **ADR 한정**이고, 실볼트 ADR 7건에는 그 키가 하나도 없다.
+  - **승격안은 규약이 명시적으로 금지한다.** `project-docs-convention` §Absence semantics 가 「unknown key = warn only, never a hard fail」을 **이유와 함께**(외부에서 들여온 문서 보호) 정해 두었고, `validate-selftest.sh` §docs frontmatter v2 의 legacy 픽스처 주석이 같은 것을 「migration 은 '더 이상 쓰지 않는다'이지 강제 재작성이 아니다 — 그러니 이 중 무엇도 finding 이 되어선 안 된다」로 못박고 어서션으로 지키고 있었다.
+  - **승격의 대가를 셌다: 실볼트 unknown-key 경고 42건, 그중 폐기키 0건.** 전부 `related_ticket`·`screen_id`·`summary`·`adr_number`·`methodology` 같은 **살아있는 kind 별 필드**다. 참 양성 0인 규칙을 42 findings 로 바꾸는 것이 곧 무시당하는 게이트다.
+  - 🔴 **docs 의 폐기 여부는 kind 별이라 합칠 목록 자체가 없다.** 같은 문자열이 kind 마다 다르다 — feature 는 `version`·`species` 를 살리고 ADR 은 죽인다. `title` 은 더 날카롭다: **wiki 층에서는 finding 이고 docs 층에서는 절대 finding 이 아니다.** 두 목록을 합치면 이 구분이 사라진다(직전 KJP-83 이 `species` 로 같은 것을 실측했다).
+  - **어서션 3개 추가 — 판정을 되돌리려는 스윕에서 깨지도록.** docs 경로는 절대 `retired key` finding 을 내지 않는다는 경계 어서션 1개 + legacy 픽스처의 `title`·`owner` 가 stderr 경고에 실제로 도달하는지 2개(종전에는 `kind` 하나만 고정돼 있어 뒤 키가 조용히 스캔에서 빠져도 통과했다).
+  - **변이 2종으로 비공허성 증명** (`VALIDATE_SH` seam). **M1** wiki 폐기키 검사를 docs 로 이식(경고 → stdout finding, 문구 `retired key`) → 경계 어서션 **FAIL** · **M2** 인식 키 집합에 `title` 을 몰래 추가 → `deleted title` 어서션만 **FAIL** 하고 `owner` 는 ok(스코프가 정확하다는 증거).
+  - **볼트 출력 무변화** — 규약의 deleted fields 8종(`kind`·`title`·`project`·`owner`·`scope`·`feature`·`tags`·`description`)은 실볼트 docs 162파일 어디에도 없다(실측 0건). 볼트 3파일 정리도 **필요 없다** — 위 반증대로 규약 준수 상태다.
+
 ### Changed
 - 🔴 **`.base` 7종 폐기 — 못 만든 것이 아니라 안 만들기로 했다 (KJP-83).** 사용자 판정 2026-08-12: 「저 base 는 사람이 보기 위함이야. 필요 없으면 그냥 없애자, 어차피 `sl` 로 보면 되니까.」 §트리의 7종(`projects`·`feature`·`adr`·`p_memory`·`neocortex`·`hippocampus`·`tools`)과 **그것에 기대던 근거 문장**을 전서·`vault-tree`·`skills/dreaming` 에서 함께 걷어냈다.
   - 🔴 **「content spec 부재」는 폐기 사유가 아니다** — 이전 카드 문구를 물려받지 않았다. 포맷은 Obsidian Bases 의 것이라 **발명할 것이 없었고**, 볼트 실물이 동작 형태를 이미 보여주고 있었다. 만들 수 있었는데 **필요 없다고 판정한 것**이다.
