@@ -158,6 +158,17 @@ Only **memory and design documents** live in this vault. Keep the two classes be
 - **Documents that live in the repo** — `README` · `SETUP` · `CONTRIBUTING` · `CHANGELOG` · `CLAUDE.md` · test code · **user-facing legal** (terms of service, privacy policy). Versioned and shipped alongside the code.
 - **Things that live in the tracker** — tasks · bugs · roadmap · sprints. For execution items whose status changes often, the tracker is canonical. (Per-project tracker: session frontmatter `related_ticket`)
 
+#### `legal/` is a repo folder, not a vault folder (KJP-85, 2026-08-12)
+
+The 0.2.0 design canon (`.artifact/brain-0.2.0.html` §트리) placed terms-of-service / privacy-policy under a **vault** `docs/business/legal/`, contradicting the `user-facing legal` boundary above. **This rule wins; the canon's tree was corrected in the same commit.** Recorded so the rule is not quietly deleted the next time the two are compared:
+
+- **This document is the arbitration authority** (`CLAUDE.md` §PM role points conflict resolution here). A design artifact cannot silently overturn the document that defines what wins.
+- **The exception list below is closed at one member** — promoting `legal/` to a second mirror would first have to overturn "the sole exception", and nothing argues for that.
+- **The drift reason is strongest here, not weakest.** The canon's own legal template requires an `effective:` date. Two copies of a document carrying a legal effective date is a liability, not an inconvenience — the operative terms are the *published* ones, so citing a vault copy means citing the wrong terms.
+- **The canon was not even describing a mirror** — it called the vault path the "공개 게시 원본" (the original for publication), so the API_SPEC exception could not have rescued it.
+- **Measured 2026-08-12** — `legal/` existed in 0 of the techtainment vault's 13 projects, and 0 `TERMS*`/`PRIVACY*` files. No migration cost.
+- **The template survives; only the home moved.** The `<법적 문서>.md` skeleton (including `effective:`) stays canon and is authored **in the repo**. The vault's `COMPLIANCE.md` links to the repo path / published URL per item and never copies the body.
+
 ### The Only Exception — the API_SPEC Mirror
 
 **`docs/develop/API_SPEC.md` is the sole exception to the "repo = code only" principle.**

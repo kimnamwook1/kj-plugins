@@ -139,6 +139,13 @@
   <h2>폴더 트리 및 양식</h2>
   <p class="sub">파란 파일명을 누르면 그 문서의 양식이 아래에 열린다.</p>
 
+  <div class="card" style="margin:0 0 12px">
+    <span class="tag">먼저 읽어라 — 전서에는 트리가 둘이고 교환 불가다</span>
+    <b>이 트리 = 볼트가 <u>도달하는</u> 모습. <code>init</code> 이 <u>만드는</u> 것이 아니다.</b>
+    프로젝트가 다 자랐을 때의 최종 레이아웃이라 <b>여기 있는 것이 전부 스캐폴드 대상은 아니다</b>. <span class="w">◇ 표시 = <code>init</code> 비대상</span> — 트리거가 왔을 때 사람·PM 이 만드는 상황적 문서와, 아직 만들 주체가 없는 <code>.base</code> 다.
+    🔴 <b><code>init</code> 이 실제로 무엇을 만드는지가 궁금하면 이 트리를 보면 안 된다</b> — 정본은 «스킬» 탭 <code>skills/init</code> §4 스켈레톤이고, 그쪽은 <b>의도적으로 더 좁다</b>. 스캐폴드를 구현·검증·리뷰하는 소비자는 그 절을 읽어야 한다. 이 트리를 스캐폴드 명세로 읽으면 상황적 문서를 미리 만들어 <code>project-docs-convention.md</code> §stub Pre-creation Rules 를 정면 위반한다(실제로 0.2.0 랜딩에서 발생할 뻔한 사고).
+  </div>
+
   <div class="tree"><pre>
 <span class="g">&lt;vault&gt;/</span>
 <span class="g">├─</span> <span class="f">.brain-paths</span>                    <span class="c">축 키 · init 최우선 작성 · schema_version 포함</span>
@@ -158,18 +165,16 @@
 <span class="g">├─</span> <span class="b">neocortex/</span>                      <span class="c">볼트 전역 지식 · recall 대상</span>
 <span class="g">│  ├─</span> <button class="fnode" data-e="nc">NEO-&lt;slug&gt;.md</button>              <span class="c">번호 없음 · 파일명이 동일성 키 · aliases:로 구 이름 보존</span>
 <span class="g">│  ├─</span> <button class="fnode" data-e="dr">dream-logs.md</button>              <span class="c">dreaming 실행 기록 · 단일 파일 누적</span>
-<span class="g">│  ├─</span> <span class="f">neocortex.base</span>
+<span class="g">│  ├─</span> <span class="f">neocortex.base</span>             <span class="c"><span class="w">◇</span> §트리 전용 — init 비대상</span>
 <span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
-<span class="g">├─</span> <span class="b">&lt;projects_root&gt;/NNN_&lt;slug&gt;/</span>     <span class="c">001–999 · 직속에 projects.base</span>
+<span class="g">├─</span> <span class="b">&lt;projects_root&gt;/NNN_&lt;slug&gt;/</span>     <span class="c">001–999 · 직속에 projects.base(<span class="w">◇</span> init 비대상)</span>
 <span class="g">│  ├─</span> <span class="b">docs/</span>
 <span class="g">│  │  ├─</span> <span class="b">business/</span>
 <span class="g">│  │  │  ├─</span> <button class="fnode" data-e="prd">PRD.md</button>              <span class="c">목표·요구사항·NFR·GLOSSARY·BM</span>
 <span class="g">│  │  │  ├─</span> <button class="fnode" data-e="mkt">MARKETING.md</button>        <span class="c">GTM·마케팅 전략</span>
-<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="mst">MILESTONE.md</button>        <span class="c">Phase 로드맵 · Phase 0 = MVP</span>
-<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="cmp">COMPLIANCE.md</button>       <span class="c">염두할 법안</span>
-<span class="g">│  │  │  ├─</span> <span class="b">legal/</span>              <span class="c">이용약관·개인정보처리방침 등 프로젝트가 지켜야 할 법적 문서를 작성·보관</span>
-<span class="g">│  │  │  │  ├─</span> <button class="fnode" data-e="cmp">&lt;법적 문서&gt;.md</button>
-<span class="g">│  │  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="mst">MILESTONE.md</button>        <span class="c"><span class="w">◇</span> Phase 로드맵 · Phase 0 = MVP · 상황적</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="cmp">COMPLIANCE.md</button>       <span class="c"><span class="w">◇</span> 염두할 법안 · 상황적(규제 대상 데이터·AI 기능)</span>
+<span class="g">│  │  │   </span> <span class="w">✗ legal/ 없음</span>       <span class="c">이용약관·개인정보처리방침 = <b>레포 거주</b> · 볼트 복사 금지 — 판정 근거는 아래 §legal</span>
 <span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">│  │  ├─</span> <span class="b">develop/</span>
 <span class="g">│  │  │  ├─</span> <button class="fnode" data-e="arc">ARCHITECTURE.md</button>     <span class="c">시스템설계·데이터모델·외부연동·ERD</span>
@@ -177,35 +182,54 @@
 <span class="g">│  │  │  ├─</span> <button class="fnode" data-e="rb">RUNBOOK.md</button>          <span class="c">배포·운영·관측·DR·마이그레이션</span>
 <span class="g">│  │  │  ├─</span> <button class="fnode" data-e="tm">THREAT_MODEL.md</button>     <span class="c">위협·완화 표</span>
 <span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">P_POLICY.md</button>         <span class="c">프로젝트 내부 정책</span>
-<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">DESIGN.md</button>           <span class="c">Tokens·Components·States·A11y·Responsive</span>
-<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">API_SPEC.md</button>         <span class="c">API 규약</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">DESIGN.md</button>           <span class="c"><span class="w">◇</span> Tokens·Components·States·A11y·Responsive · 상황적(UI 있을 때)</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="d3">API_SPEC.md</button>         <span class="c"><span class="w">◇</span> API 규약 · read-only 미러 — 동기화 워커가 생성</span>
 <span class="g">│  │  │  ├─</span> <span class="b">feature/</span>
-<span class="g">│  │  │  │  ├─</span> <button class="fnode" data-e="ft">&lt;pp&gt;_&lt;fp&gt;_0000N.md</button>  <span class="c">FRD+TDC 통합</span>
-<span class="g">│  │  │  │  ├─</span> <span class="f">feature.base</span>
+<span class="g">│  │  │  │  ├─</span> <button class="fnode" data-e="ft">&lt;pp&gt;_&lt;fp&gt;_0000N.md</button>  <span class="c"><span class="w">◇</span> FRD+TDC 통합 · 기능 킥오프 때 생성(폴더만 init)</span>
+<span class="g">│  │  │  │  ├─</span> <span class="f">feature.base</span>    <span class="c"><span class="w">◇</span> §트리 전용 — init 비대상</span>
 <span class="g">│  │  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">│  │  ├─</span> <span class="b">adr/</span>
-<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="adr">&lt;pp&gt;-ADR-0000N.md</button> <span class="c">1결정=1파일 · 불변 ID</span>
-<span class="g">│  │  │  ├─</span> <span class="f">adr.base</span>
+<span class="g">│  │  │  ├─</span> <button class="fnode" data-e="adr">&lt;pp&gt;-ADR-0000N.md</button> <span class="c"><span class="w">◇</span> 1결정=1파일 · 불변 ID · 결정이 실제로 날 때만(폴더만 init)</span>
+<span class="g">│  │  │  ├─</span> <span class="f">adr.base</span>      <span class="c"><span class="w">◇</span> §트리 전용 — init 비대상</span>
 <span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">│  │  ├─</span> <span class="b">resources/</span>                <span class="c">자료조사 · 미팅 기록 · 참고 자료 · freeform · recall 비대상</span>
 <span class="g">│  │  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">│  ├─</span> <span class="b">p_memory/</span>                    <span class="c">프로젝트 지식 · recall 대상</span>
 <span class="g">│  │  ├─</span> <button class="fnode" data-e="pm">&lt;pp&gt;_&lt;slug&gt;.md</button>          <span class="c">접두는 위키링크 전역 유일성용 · 번호 없음</span>
-<span class="g">│  │  ├─</span> <span class="f">p_memory.base</span>
+<span class="g">│  │  ├─</span> <span class="f">p_memory.base</span>           <span class="c"><span class="w">◇</span> §트리 전용 — init 비대상</span>
 <span class="g">│  │  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">├─</span> <span class="b">hippocampus/</span>                    <span class="c">세션 · git 추적 안 함 · recall 비대상</span>
 <span class="g">│  ├─</span> <button class="fnode" data-e="ss">&lt;pp&gt;_YYYYMMDD_&lt;slug&gt;.md</button>  <span class="c">같은 날 같은 슬러그 금지</span>
-<span class="g">│  ├─</span> <span class="f">hippocampus.base</span>
+<span class="g">│  ├─</span> <span class="f">hippocampus.base</span>       <span class="c"><span class="w">◇</span> §트리 전용 — init 비대상</span>
 <span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
-<span class="g">├─</span> <span class="b">&lt;tools_root&gt;/</span>                   <span class="c">opt-in · 부재 = 합법</span>
+<span class="g">├─</span> <span class="b">&lt;tools_root&gt;/</span>                   <span class="c"><span class="w">◇</span> opt-in · 부재 = 합법 · <b>init 은 이 층을 통째로 만들지 않는다</b></span>
 <span class="g">│  ├─</span> <span class="b">cli/</span> <span class="b">mcp/</span> <span class="b">plugins/</span> <span class="b">skills/</span>   <span class="c">각 노트 frontmatter 로 설치·사용 상태 구분</span>
-<span class="g">│  ├─</span> <span class="f">tools.base</span>
+<span class="g">│  ├─</span> <span class="f">tools.base</span>                 <span class="c"><span class="w">◇</span> §트리 전용 — init 비대상</span>
 <span class="g">│  └─</span> <button class="fnode" data-e="idx">_index.md</button>
 <span class="g">└─</span> <button class="fnode" data-e="idx">_index.md</button>
 </pre></div>
+
+  <h3>◇ 표시 — <code>init</code> 이 만들지 않는 것</h3>
+  <p class="sub">위 트리에서 <span class="w">◇</span> 가 붙은 항목은 <b><code>init</code> 스캐폴드 대상이 아니다</b>. 세 부류이고 사유가 각각 다르다.</p>
+  <p class="sub">⚠️ <b>표시 유보 2건 — 이 카드에서 판정하지 않았다.</b> <code>MARKETING.md</code>(규약·doc-catalog 는 <code>BUSINESS.md</code> 한 파일이 §BM·§GTM 을 흡수한다고 본다)와 <code>P_POLICY.md</code>(규약은 <code>docs/policy/&lt;PREFIX&gt;-POL-*</code> 폴더형)는 <b>이름·형태가 규약과 어긋난다</b>. 스텁 6종 목록에 두 이름이 없는 이유가 이것이고, <b>무표시가 "스캐폴드 대상"을 뜻하지 않는다</b>. 별도 카드에서 정리한다.</p>
+  <div class="grid">
+    <div class="card"><span class="tag">상황적 문서</span><b>트리거가 와야 생긴다</b><code>MILESTONE</code> · <code>COMPLIANCE</code> · <code>DESIGN</code>. 미리 만들면 <b>"결정이 있었다"는 거짓 신호</b>가 남는다 — 빈 ADR 이 해로운 것과 같은 이유(<code>project-docs-convention.md</code> §stub Pre-creation Rules). <b>스텁 6종은 <code>PRD</code>·<code>BUSINESS</code> + <code>ARCHITECTURE</code>·<code>CODE_CONVENTION</code>·<code>RUNBOOK</code>·<code>THREAT_MODEL</code></b> 뿐이다.</div>
+    <div class="card"><span class="tag">본문 문서</span><b>폴더만 init, 파일은 나중</b><code>feature/</code>·<code>adr/</code> 폴더는 <code>init</code> 이 만들지만 그 안의 문서는 <b>기능 킥오프·실제 결정 시점</b>에 생긴다. <code>API_SPEC</code> 은 <b>read-only 미러</b>라 API 가 생긴 뒤 동기화 워커가 만든다 — 🔴 <code>dreaming</code> 은 절대 아니다.</div>
+    <div class="card"><span class="tag">.base</span><b>§트리에만 있고 만들 주체가 없다</b>6종(<code>projects</code>·<code>feature</code>·<code>adr</code>·<code>p_memory</code>·<code>neocortex</code>·<code>hippocampus</code>) + <code>tools.base</code>. 🔴 <b>전서 어디에도 작성 가능한 content spec 이 없다</b> — <code>.base</code> 언급 <b>11회</b>(실측) 중 <b>7회가 트리의 파일명뿐</b>이고, 나머지는 <code>feature.base</code> 의 <b>원료</b>가 frontmatter 라는 언급 2회 · <code>dream-logs</code> 에는 <code>.base</code> 가 <b>없다</b>는 부재 진술 1회 · <code>.base</code> 가 <code>file.inFolder</code> 로 필터한다는 단편 1회다. <b>뷰·컬럼·필터 정의가 어디에도 없어</b> 지금 만들면 스펙을 발명하는 셈이다. 실측: 실볼트에 <code>.base</code> 는 <b>1건</b>(<code>hippocampus/_sessions_overview.base</code>)이고 <b>이름조차 전서와 다르다</b>. 실행은 별도 카드 <b>KJP-87</b>.</div>
+  </div>
+
+  <h3 id="legal-verdict">§legal — <code>business/legal/</code> 충돌 판정 <span class="badge b-ok">✅ 해소</span></h3>
+  <p class="sub">전서 §트리는 이용약관·개인정보처리방침을 볼트 <code>docs/business/legal/</code> 에 뒀고, <code>project-docs-convention.md</code> §What Not to Put in the Vault 는 <b>user-facing legal 을 레포 거주로 못박고 볼트 복사를 금지</b>한다(사유: 드리프트 방지). 한 레포 안의 정면 모순이라 <b>규약이 이겼다</b>. 근거 넷:</p>
+  <div class="grid">
+    <div class="card"><span class="tag">① 권한</span><b>규약이 중재 권한 자체다</b><code>CLAUDE.md</code> §PM role — "문서 충돌 중재 — 정본 우선순위는 <code>project-docs-convention.md</code>". <b>무엇이 이기는지를 정의하는 문서</b>를 설계 산출물(전서)이 조용히 뒤집을 수는 없다.</div>
+    <div class="card"><span class="tag">② 예외는 닫혀 있다</span><b>"the sole exception"</b>규약이 <code>API_SPEC</code> 미러를 <b>유일 예외</b>라고 명시한다. legal 을 두 번째 미러로 승격하려면 그 단어를 먼저 뒤집어야 하는데, 그럴 근거가 없다.</div>
+    <div class="card"><span class="tag">③ 사유가 여전히 유효</span><b>legal 은 드리프트 위험이 가장 큰 부류다</b>전서 자신이 legal 양식에 <code>effective:</code>(시행일)를 요구한다. <b>효력 발생일을 가진 문서의 사본 두 벌</b>은 불편이 아니라 <b>책임 문제</b>다 — 실제 약관은 게시된 쪽인데 볼트 사본을 인용하면 틀린 약관을 인용하게 된다.</div>
+    <div class="card"><span class="tag">④ 전서가 미러도 아니었다</span><b>전서는 볼트에 "원본"을 뒀다</b>전서 §양식이 그 경로를 <b>"공개 게시 원본"</b>이라 부른다. read-only 미러가 아니라 원본이므로 <b>②의 미러 예외로 구제되지도 않는다</b>. 실측 보강: 실볼트 13개 프로젝트에 <code>legal/</code> 은 <b>0건</b> — 마이그레이션 비용 없음.</div>
+  </div>
+  <p class="sub">🔴 <b>양식을 지우지는 않았다.</b> 아래 <code>&lt;법적 문서&gt;.md</code> 양식(<code>effective:</code> 포함)은 그대로 canon 이고, <b>바뀐 것은 거주지뿐</b> — 볼트가 아니라 <b>레포</b>에 쓴다. 볼트 <code>COMPLIANCE.md</code> 는 각 항목에서 <b>레포 경로·게시 URL 로 링크</b>하고 본문을 복사하지 않는다.</p>
 
   <h3>하네스 파일 <span class="badge b-todo">📝 5자 회담 2R 확정</span></h3>
   <p class="sub">볼트가 아니라 <b>플러그인 레포</b>의 파일이다. 상한은 합의가 아니라 <b>덧셈</b>으로 나왔다 — KERNEL 8줄이 바닥을 정한다.</p>
@@ -415,6 +439,7 @@ species: Milestone — Phase 로드맵 · 일정·날짜의 유일 원본
 <div id="ed-cmp" hidden>
     <h3>COMPLIANCE · legal/TERMS_OF_SERVICE 0.2.0 초안 <span class="badge b-todo">📝 frontmatter만</span></h3>
     <p class="sub">본문은 프로젝트·규제 환경마다 달라 양식화 불가 (사용자 판정 2026-07-31 — 0.1.x free-form 지위와 일치). <b>양식 = frontmatter + 경계 주석까지.</b> legal/ 문서는 이 골격을 공통으로 쓴다. 편집 → 자동 저장 → 파일로 저장 → "적용했어".</p>
+    <p class="sub">🔴 <b>두 문서의 거주지가 다르다</b> — <code>COMPLIANCE.md</code> 는 <b>볼트</b> 문서이고, <code>legal/</code> 문서는 <b>레포</b> 문서다(§legal 판정 — user-facing legal 은 볼트 복사 금지). 양식은 공통이되 <b>쓰는 위치가 다르다</b>.</p>
 
     <h3 style="margin-top:18px">COMPLIANCE.md</h3>
     <p class="form-path"><code>docs/business/COMPLIANCE.md</code> — 싱글턴 · 트리거 시 작성(규제 대상 데이터·AI 기능 발생)</p>
@@ -432,10 +457,10 @@ species: Compliance — 규제·법규 준수 검토
 &lt;!-- 제목 = 파일명(COMPLIANCE.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 본문 free-form — 염두할 법안(개인정보보호법·EU AI Act 등)과 대응 상태. 트리거 시 작성.
      미작성/created = 미검토일 뿐 — 근거 인용·출시 판단 금지. "적용 규제 없음"은 검토 결과이므로 draft 이상에서 명시 기록해야 성립.
-     공개 이행물 원본은 docs/business/legal/ — 각 항목에서 해당 legal 문서로 링크. --&gt;</textarea>
+     공개 이행물 원본은 **레포**의 docs/business/legal/ — 볼트에 복사하지 말고 레포 경로·게시 URL 로 링크(드리프트 방지). --&gt;</textarea>
 
     <h3 style="margin-top:18px">legal/TERMS_OF_SERVICE.md</h3>
-    <p class="form-path"><code>docs/business/legal/&lt;법적 문서&gt;.md</code> — 공개 게시 원본 (웹·앱 게시용) · COMPLIANCE와 링크</p>
+    <p class="form-path">🔴 <b>레포</b>의 <code>docs/business/legal/&lt;법적 문서&gt;.md</code> — <b>볼트 아님</b>(§legal 판정) · 공개 게시 원본 (웹·앱 게시용) · 볼트 COMPLIANCE 가 링크로 참조</p>
     <div class="editbar">
       <button id="tos-save">파일로 저장 (TERMS_OF_SERVICE-draft.md)</button>
       <button id="tos-reset">기본값 복원</button>
@@ -1291,6 +1316,11 @@ schema_version: 2
 <div id="ed-sk" hidden>
 <h3>skills/init · skills/onboard</h3>
 <p class="sub">스킬은 <b>호출될 때만</b> 로드된다 — 에이전트 정의와 같은 자로 재지 않는다. <code>init</code> ≤80줄 · <code>onboard</code> ≤50줄.</p>
+<div class="card" style="margin:0 0 12px">
+  <span class="tag">전서에는 트리가 둘이고 교환 불가다</span>
+  <b>§4 스켈레톤 = <code>init</code> 이 <u>만드는</u> 것 — 스캐폴드의 정본은 여기다</b>
+  «폴더 트리 및 양식» 탭 §트리는 볼트가 <u>도달하는</u> 모습이라 <b>의도적으로 더 넓다</b> — 상황적 문서(<code>MILESTONE</code>·<code>COMPLIANCE</code>·<code>DESIGN</code>)와 <code>.base</code> 를 포함한다. 🔴 <b>그 둘을 스캐폴드 명세로 읽으면 안 된다</b>: 상황적 문서를 미리 만들면 <code>project-docs-convention.md</code> §stub Pre-creation Rules 위반이고, <code>.base</code> 는 canon 에 content spec 이 없다(KJP-87). 두 트리가 어긋나 보이면 <b>그건 버그가 아니라 설계</b>다.
+</div>
 <div class="editbar">
   <button id="sk-save">파일로 저장 (init-onboard.md)</button>
   <button id="sk-reset">기본값 복원</button>
@@ -1321,7 +1351,7 @@ common_root: org
 projects_root: projects
 tools_root:                # opt-in — 빈 값이면 조용히 스캔 안 함
 ```
-그다음 트리:
+그다음 트리 — 🔴 **이 목록이 스캐폴드의 전부다.** 전서 «폴더 트리 및 양식» §트리는 볼트가 **도달하는** 모습이라 더 넓다(상황적 문서·`.base` 포함). 그 트리를 스캐폴드 명세로 읽지 않는다:
 ```
 &lt;common_root&gt;/{about,machines,network,platforms,policies}/
 neocortex/                          + dream-logs.md
@@ -1332,6 +1362,7 @@ hippocampus/
 각 폴더 _index.md                    ← frontmatter 없음. docs/policy·docs/adr 만 next_id
 docs 스텁 6종                        ← status: created
 ```
+- **스텁 6종 = `PRD`·`BUSINESS` + `ARCHITECTURE`·`CODE_CONVENTION`·`RUNBOOK`·`THREAT_MODEL`.** 🔴 **`MILESTONE`·`COMPLIANCE`·`DESIGN` 은 상황적이라 만들지 않고**, `API_SPEC` 은 미러라 동기화 워커 몫, `.base` 6종은 content spec 이 없어 대상 아님(KJP-87).
 - **삭제**: `candidates/`(0.2.0 폐기 층) · `knowledge/`(→ `p_memory/`)
 - tools 층은 만들지 않는다(opt-in).
 - 기존 볼트를 만나면 **덮지 않는다** — 차이를 보고하고 마이그레이션은 별도 1회성 작업으로 남긴다.
