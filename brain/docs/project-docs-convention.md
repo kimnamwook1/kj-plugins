@@ -52,6 +52,12 @@ history:
 | any other key absent | normal (derived or defaulted) |
 | unknown key present | **warn only — never a hard fail** (protects documents imported from outside, e.g. open-source) |
 
+🔴 **The docs layer has no retired-key *finding*, and that is a decision — not a hole (KJP-89, 2026-08-12).** A deleted key from the table above (`kind`·`title`·`owner`…) lands in the row directly above: warn on stderr, never a finding. Do not "fix" this by promoting the unknown-key warn or by porting the wiki layer's retired-key check down here. Three reasons, each measured:
+
+- **Docs migration is "no longer written", never a forced rewrite.** The wiki layer's retired-key check exists because one bulk sweep had to reach ~560 notes this system authored, and there a *stale* key means the sweep missed a file (`scripts/validate.sh` §wiki retired keys — the comment there also warns that deleting the retired strings deletes the detector). A docs document may be **imported from outside**, so an old key is a legitimate artifact rather than a missed sweep. The boundary is already pinned by fixture: `scripts/validate-selftest.sh` §docs frontmatter v2 carries a legacy `kind`/`title`/`owner` document that must warn on stderr **and** stay out of the findings stream.
+- **Promotion is not proportionate.** Measured on the real vault 2026-08-12: **42 unknown-key warnings across the docs layer, and 0 of them are a retired key.** They are live kind-specific fields (`related_ticket`·`screen_id`·`summary`·`adr_number`·`methodology`…). Promoting the warn turns a 0-true-positive rule into 42 findings, which is how a gate gets ignored.
+- 🔴 **Retired-ness in docs is per-kind, so there is no single list to hold.** The same string is live in one kind and retired in another: the transcript's **feature** template declares `version:` and `species:` as live fields, while its **ADR** template lists both as retired. `title` is sharper still — it is a *finding* on the wiki layer and must **never** be one here. A merged list erases exactly those distinctions.
+
 ### kind ← path matrix
 
 🔴 **This matrix lives here and only here — never replicate it in another document or a script** (a second copy is a second thing to drift).

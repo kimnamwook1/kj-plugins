@@ -64,7 +64,7 @@
 ## MILESTONE — phased delivery plan ("when what")
 
 - **Role**: the roadmap. Sequences already-defined scope across time. Records **when**, never **what/why** (PRD) or **why-we-decided** (ADR).
-- **Boundaries** (owner of overlap — [[doc-catalog]] MILESTONE note): references PRD/feature scope via wikilinks (never restates it); links ADRs for rationale; leaves fluid task/sprint status to the tracker. This doc is the **durable** plan, not a task mirror. Home = `docs/` root ([[doc-catalog]]).
+- **Boundaries** (owner of overlap — [[doc-catalog]] MILESTONE note): references PRD/feature scope via wikilinks (never restates it); links ADRs for rationale; leaves fluid task/sprint status to the tracker. This doc is the **durable** plan, not a task mirror. Home = `docs/business/` — a roadmap is a business-axis document ([[doc-catalog]] §MILESTONE home note · [[vault-tree]] `docs/business/` block).
 - **Frontmatter**: §frontmatter Standard v2 ([[project-docs-convention]]) — singleton, so no `id`. Owner routing = the [[doc-catalog]] MILESTONE row (a routing label, not a frontmatter field).
 
 ```markdown

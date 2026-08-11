@@ -95,6 +95,26 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
     assets/                          # (optional) shared raw images & video
 ```
 
+### This diagram vs the transcript's §트리 — and why no checker compares them (KJP-90)
+
+🔴 **There are two *different* "two trees" problems. Do not merge them.**
+
+| Pair | Relationship | Divergence means |
+|---|---|---|
+| transcript §트리 **vs** transcript «스킬» `skills/init` §4 skeleton | reach-state vs what `init` **creates** — intentionally different | **by design** — situational documents belong in the first and must not be pre-created (KJP-81; the transcript states it at the §4 card) |
+| transcript §트리 **vs** this diagram | canon vs illustration — **not peers** | **omission is legal, contradiction is not** (this section) |
+
+- **Precedence.** The transcript's §트리 is the canonical tree (it says so where it settles document placement). This diagram is declared above as *an example, not a location canon*, so it is deliberately non-exhaustive: **a path missing here is not a defect.** A path that *contradicts* the transcript is.
+- ⚠ **Precedence is not blind, because this file also carries measurements the transcript does not.** Where the two disagree on a point this file backs with a dated measurement, the conflict goes to the PM rather than being auto-resolved in the transcript's favour — see [[project-docs-convention]] §Document Conflict Precedence.
+
+**No machine check compares the two, and that absence is a decision (measured 2026-08-12).** A naive name-set diff of the two trees was built and run before deciding: 44 entries vs 42, 33 shared, **19 reported differences of which 3 are real — an 84% false-positive rate**, the same order that made the docs `_index` line-form rule unenforceable (KJP-82: 85 false positives). The 16 non-findings are of three kinds, none fixable by a better parser:
+
+- **Placeholder vocabulary.** The same entry is spelled `<pp>_YYYYMMDD_<slug>.md` there and `<PREFIX>_YYYYMMDD_<slug>.md` here; `NNN_<slug>/` vs `NNN_<project>/`; `<vault>/` vs `<Vault root>/`. Unifying the spellings to enable a checker would mean editing canon to suit a tool.
+- **Tokenizer artifacts.** `<Vault root>/` contains a space, so extraction splits it and invents an entry `root>/`.
+- 🔴 **Inverted negative markers — the one that makes the whole idea unsafe.** The transcript's tree carries explicit *absence* rows: `✗ legal/ 없음` states that `legal/` **must not exist**. Text extraction reads that as "canon has `legal/`" and reports this file for *missing* it — the checker asserts the exact opposite of what canon says. A gate that inverts canon is worse than no gate.
+
+**What guards this pair instead:** this section. The KJP-83 confusion was never that the trees differed — it was that no reader could tell whether a difference was intentional. That is an epistemic gap, and the fix is the same one KJP-81 used for the other pair: write the relationship down. The 3 real differences that the probe did surface are recorded as findings, not silently patched — see `brain/CHANGELOG.md` 0.2.4 §Changed, the KJP-90 entry.
+
 ## The common layer — topics are free; only `*policies*` is structural
 
 🔴 **Canonical home of the normative-axis identification rule** — every consumer points here, none restates it.

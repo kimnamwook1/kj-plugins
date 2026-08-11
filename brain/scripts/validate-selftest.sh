@@ -584,6 +584,13 @@ assert_match   "docs fm: inline-map session key is caught"   'fm-session.md:5: s
 assert_match   "docs fm: top-level session key is caught"    'fm-session.md:6: session key in docs frontmatter'
 assert_no_match "docs fm: clean v2 frontmatter passes"       'fm-v2.md'
 assert_no_match "docs fm: legacy keys + date-only updated are never findings" 'fm-legacy.md'
+# 🔴 KJP-89 scope boundary: the docs layer has no retired-key FINDING, by decision
+# (project-docs-convention §Absence semantics). This is the assert that fails if someone ports
+# the wiki layer's retired-key check down here, or merges the two vocabularies into one list.
+# Not vacuous: the wiki asserts above prove `retired key` lines exist in this same REPORT — this
+# one proves none of them carries a docs path. `title` is the exact collision: a finding on the
+# wiki layer (retired-keys.md:4 above), never one here (fm-legacy.md carries it).
+assert_no_match "docs fm: KJP-89 — a docs path never yields a retired-key finding" 'docs/.*: retired key'
 
 # docs frontmatter — v2 coverage extension: status · history subkeys · id/next_id · mirror
 assert_match   "docs fm: missing status is caught"           'fm-nostatus.md:1: missing frontmatter key: status'
@@ -630,6 +637,10 @@ assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/
 
 SAVED_REPORT="$REPORT"; REPORT="$WARNS"
 assert_match   "docs fm: unknown key warns on stderr"        'fm-legacy.md:2: unknown docs frontmatter key: kind'
+# The whole deleted-key set reaches the warn stream, not just the first one — `kind` alone could
+# pass while a later key silently fell out of the scan (KJP-89).
+assert_match   "docs fm: deleted title warns on stderr"      'fm-legacy.md:3: unknown docs frontmatter key: title'
+assert_match   "docs fm: deleted owner warns on stderr"      'fm-legacy.md:6: unknown docs frontmatter key: owner'
 assert_no_match "docs fm: session key is never demoted to a warn" 'session key in docs frontmatter'
 assert_match   "docs fm: date-only updated warns on stderr"  'fm-legacy.md:5: date-only updated'
 assert_match   "docs fm: quoted unknown key still warns"     'fm-qsession.md:4: unknown docs frontmatter key: kind'
