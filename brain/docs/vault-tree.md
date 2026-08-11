@@ -50,13 +50,11 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
     _index.md
     NEO-<slug>.md                    #   no numbers · the filename is the identity key · old names kept in aliases:
     dream-logs.md                    #   dreaming's run log — one file, appended to
-    neocortex.base
   <projects_root>/NNN_<project>/     # per project (number = sort order, the identifier is the slug)
     _index.md                        # = project hub; record the project prefix here
     p_memory/                        # project knowledge · recall target
       _index.md
       <pp>_<slug>.md                 #   no numbers · the prefix exists for vault-wide wikilink uniqueness
-      p_memory.base
     docs/                            # official documents
       _index.md
       business/                      # pre-created stub = the 1 below marked ★
@@ -81,7 +79,6 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
           <pp>_<slug>_0000N.md       #   FRD+TDC merged into one document (kind `feature`).
                                      #   Slug = the human-readable axis, the number = the immutable id.
                                      #   Diagrams live in its §Design section.
-          feature.base
           _index.md
       adr/                           #   standalone evidence of hard-to-reverse decisions <PREFIX>-ADR-0000N.md
       resources/                     #   research · meeting records · reference material (free-form · not a recall target)
@@ -95,7 +92,6 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
     _index.md
     <PREFIX>_YYYYMMDD_<slug>.md      # session = one file (episodic). Same day + same slug forbidden.
                                      #   Pre-0.2.0 files keep PROJECT_PREFIX-YYYYMMDD-HHMMSS.md — never renamed.
-    hippocampus.base
     assets/                          # (optional) shared raw images & video
 ```
 

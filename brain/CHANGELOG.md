@@ -3,6 +3,31 @@
 ## 0.2.4 — 2026-08-12
 
 ### Changed
+- 🔴 **`.base` 7종 폐기 — 못 만든 것이 아니라 안 만들기로 했다 (KJP-83).** 사용자 판정 2026-08-12: 「저 base 는 사람이 보기 위함이야. 필요 없으면 그냥 없애자, 어차피 `sl` 로 보면 되니까.」 §트리의 7종(`projects`·`feature`·`adr`·`p_memory`·`neocortex`·`hippocampus`·`tools`)과 **그것에 기대던 근거 문장**을 전서·`vault-tree`·`skills/dreaming` 에서 함께 걷어냈다.
+  - 🔴 **「content spec 부재」는 폐기 사유가 아니다** — 이전 카드 문구를 물려받지 않았다. 포맷은 Obsidian Bases 의 것이라 **발명할 것이 없었고**, 볼트 실물이 동작 형태를 이미 보여주고 있었다. 만들 수 있었는데 **필요 없다고 판정한 것**이다.
+  - **폐기 근거 = 실사용 부재이고, 그 증거가 유일한 실물 자신이다.** 볼트 전체에 `.base` 는 1건(`hippocampus/_sessions_overview.base`, `find` 실측)뿐인데 필터가 0.2.0 에서 개명된 **구 폴더 `sessions`** 를 가리킨다. 그 경로는 지금 존재하지 않아(`ls` → `No such file or directory`) **빈 표를 낸다** — 깨진 채 방치돼 있었다는 사실이 아무도 쓰지 않았다는 증거다.
+  - **삭제 전 원문 보존** — `hippocampus/` 는 gitignore 라 지우면 git 에 사본이 남지 않는다. 전문 10줄(`wc -l` = 10):
+    ```yaml
+    views:
+      - type: table
+        name: 표
+        filters:
+          and:
+            - file.inFolder("sessions")
+        order:
+          - file.name
+          - project
+          - status
+    ```
+    🔴 **볼트 실물 삭제는 이 커밋 범위 밖이다**(레포 축만 처리) — 원문이 위에 남았으므로 삭제해도 복원 가능하다.
+  - 🔴 **딸려 죽는 근거 3곳을 함께 고쳤다 — 줄만 지우면 무근거 주장이 canon 에 남는다.**
+    - **`species` 폐기 판정은 유지하되 이유를 다시 썼다** (`:1052`). 종전 근거가 「`.base` 가 `file.inFolder` 로 필터」라서 **폐기의 근거 자체가 `.base`** 였고, `.base` 가 죽으면 붕 뜬다. 새 근거는 **경로가 곧 종류**라는 것 — `docs/adr/` 와 파일명이 이미 ADR 이라고 말하는데 필드는 같은 사실의 3번째 사본이다. 실측으로 세웠다: 읽는 코드 **0건**(`grep -rn species brain/skills/`), `validate.sh:723` 의 docs 인식 키는 `status|updated|id|source|readonly|synced|history` 뿐이라 **린터조차 이 필드를 모른다**(unknown key 경고 대상), 실볼트 ADR **7건 전부 이 필드가 없다.** `.base` 는 그 사실의 소비자였을 뿐 근거가 아니었다.
+    - **feature frontmatter SSOT 주장은 살아남되 범위가 줄었다** (`:829`·`:854`). 「집계 필드의 유일 SSOT(`feature.base` 원료)」에서 **괄호 안 소비자는 죽었다.** 규칙의 실체는 뷰어에 원료를 대는 것이 아니라 **본문 재진술 금지**(중복 방지)라 뷰어와 무관하게 성립한다. 다만 **기계로 읽히는 축은 `summary` → `_index.md` 하나뿐**임을 명기했다 — `category`·`depth`·`priority`·`devices`·`feasibility` 는 읽는 코드가 없고 실볼트 feature 3파일에서 **전부 빈 값**이다. 필드는 사람이 채우는 기획 축으로 남기되 **기계 집계를 약속하지는 않는다.**
+    - **두 트리 설명은 `.base` 절만 걷어냈다** (`:1323`·`:1355`·`:1366`). 「§트리가 더 넓다」는 설명은 상황적 문서(`MILESTONE`·`COMPLIANCE`·`DESIGN`)만으로 성립한다. `:1366` 의 「content spec 이 없어 대상 아님」은 **판정이 바뀌었으므로** 「폐기돼 트리에서 사라졌으므로 스캐폴드 논의 대상 자체가 아님」으로 교체했다.
+  - **부재 진술에서도 뺐다** (`:954` · `skills/dreaming/SKILL.md:47`). `.base` 가 전역 폐기되면 「`dream-logs` 엔 `.base` 가 없다」는 대비가 무의미해진다 — 폴더·`_index.md` 부재 진술은 그대로 유지.
+  - 🔴 **전서 7종 대 `vault-tree` 4종 불일치가 이미 있었다** — `vault-tree.md` 에는 `adr.base`·`tools.base`·`projects.base` 가 **애초에 없었다**(실측 4줄: `:53`·`:59`·`:84`·`:98`). 폐기가 그 불일치도 함께 닫았다.
+  - **0.2.3 §Changed 의 KJP-85 항목(「설계 전서의 두 트리를 명시」)은 손대지 않았다** — 그 줄의 「상황적 문서·`.base` 포함」은 **당시 §트리가 그랬다는 기록**이다. 기록을 현재에 맞춰 고치는 것은 정합이 아니라 위조다(`vault-tree.md` §Renaming a path term).
+  - 손댄 곳: 전서(`:145`·`:168`·`:170`·`:189`·`:194`·`:201`·`:206`·`:210`·`:216`·`:222`·`:829`·`:854`·`:954`·`:1052`·`:1323`·`:1355`·`:1366`) · `vault-tree`(`:53`·`:59`·`:84`·`:98`) · `skills/dreaming/SKILL.md:47`.
 - 🔴 **Huly 하드코딩 제거 — 벤더가 아니라 `ticket-system` 설정 키를 가리킨다 (KJP-86).** Huly 인스턴스가 2026-08-12 내려갔다. 🔴 **답은 "Plane 으로 치환"이 아니다** — brain 은 어느 프로젝트에나 설치되는 플러그인이라 벤더를 박으면 안 된다. 예외는 이 레포 자신을 말하는 문장뿐.
   - **16건을 `vault-tree.md` §Renaming a path term 5분류로 판정 — 고친 것 12 · 보존한 것 4.** "0건"은 목표가 아니다; 기록을 현재에 맞춰 고치는 것은 정합이 아니라 위조다.
   - **고친 것**: 전서 MILESTONE 템플릿·주석 4곳(`:398`·`:414`·`:422`·`:423`)과 feature `priority` 축 3곳(`:830`·`:848`·`:856`) → **사용자 프로젝트로 나가는 템플릿**이라 "티켓 시스템"으로 일반화 · `skills/init`·`skills/onboard` 크레덴셜 예시 `~/.config/claude/huly.env` → `<system>.env` · `onboard` 질문 선택지 → Plane 추가 + **열린 목록임을 명시**(벤더가 죽을 때마다 쓸어야 하는 유지보수 부채 자체를 제거) · `ROADMAP` 티켓 접점 헤딩 → Plane.
