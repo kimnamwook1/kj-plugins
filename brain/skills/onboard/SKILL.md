@@ -15,7 +15,7 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
 
 **Steps 1–5 = 5 questions — ask them all at once** (use AskUserQuestion). Ask in the user's language:
 
-1. **Do you use an external ticket system?** — Huly · Jira · Linear · GitHub Issues · none
+1. **Do you use an external ticket system?** — e.g. Plane · Jira · Linear · GitHub Issues · Huly · none. 🔴 **The list is illustrative, not a menu to pick from** — take whatever the user names. `ticket-system` records a free identifier, nothing validates it against a vendor list, so this line never needs a sweep when a vendor appears or dies.
 2. **What is the goal?** — what you are building and why
 3. **Is the tech stack decided?** Plus three sub-questions — two delivery-classification ones (they decide `RUNBOOK` §Delivery) and one design-tooling one:
    - **Q1 — Who controls deployment?** *I control* (server · web · GitOps · self-host) or *someone else controls* (store review · shipped binary — mobile app, browser extension, other **client artifacts**).
@@ -36,7 +36,7 @@ The brain config must be present across the two config files: `CLAUDE.md` `## br
    - Rationale: **tools go unused not because the inventory is missing but because it is not recalled** — creation is measurement (this step), recall is the router (the tool-inventory line `/brain:init` put into CLAUDE.local.md), checking is worker discipline (worker).
 
 7. **Answer → application mapping**:
-   - **① Ticket system** → update `ticket-system` in `CLAUDE.md` (brain config; pre-split projects: wherever the key currently lives). **Identifier only** — real credentials go in neither CLAUDE file (separate env, e.g. `~/.config/claude/huly.env`). If there is a system, confirm the project identifier and MCP availability, and record the session `related_ticket` mapping (which system's issue IDs get written) in the brain config. If none, `ticket-system: none` — manage via session To-Dos only.
+   - **① Ticket system** → update `ticket-system` in `CLAUDE.md` (brain config; pre-split projects: wherever the key currently lives). **Identifier only** — real credentials go in neither CLAUDE file (separate env named for the system in use, e.g. `~/.config/claude/<system>.env`). If there is a system, confirm the project identifier and MCP availability, and record the session `related_ticket` mapping (which system's issue IDs get written) in the brain config. If none, `ticket-system: none` — manage via session To-Dos only.
    - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, that goes in **`PRD` §BM** — the only original for pricing · tiers · unit economics (`docs/project-docs-convention.md` §Value Axes). GTM/channel content is **`MARKETING.md`**, which is situational and created on trigger, not here.
    - **③ Stack** → `CODE_CONVENTION` · `ARCHITECTURE` (architecture brief) · **`RUNBOOK` §Delivery** (devops label). Classify from Q1/Q2 and record the bucket in `RUNBOOK` §Delivery:
      - Q1 *I control* + Q2 *SaaS* → **server-SaaS** · Q1 *I control* + Q2 *personal/internal* → **server-personal** · Q1 *someone else controls* → **client** (Q2 skipped).

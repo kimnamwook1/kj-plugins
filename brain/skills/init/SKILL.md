@@ -36,7 +36,7 @@ Sets up the brain harness in a project — **mechanical structure only** (collec
    prefix: <PREFIX>
    ticket-system: TBD   # identifier only — settled in /brain:onboard
    ```
-   🔴 **Identifiers only, never credentials.** `ticket-system` holds a shareable identifier (system name · workspace · project code). **Real credentials (tokens, keys) go in neither CLAUDE file** — they live in a separate env file (e.g. `~/.config/claude/huly.env`).
+   🔴 **Identifiers only, never credentials.** `ticket-system` holds a shareable identifier (system name · workspace · project code). **Real credentials (tokens, keys) go in neither CLAUDE file** — they live in a separate env file named for the system in use (e.g. `~/.config/claude/<system>.env`).
 
    **`## PM role`**
    - Single point of contact — decompose, delegate, aggregate, and report requests.
