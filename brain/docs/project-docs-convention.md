@@ -58,7 +58,7 @@ history:
 
 | Path | kind |
 |---|---|
-| `docs/business/<SINGLETON>.md` | singleton filename mapping: `PRD.md`→`prd` · `BUSINESS.md`→`business` · `MILESTONE.md`→`milestone` · `COMPLIANCE.md`→`compliance` |
+| `docs/business/<SINGLETON>.md` | singleton filename mapping: `PRD.md`→`prd` · `MARKETING.md`→`marketing` · `MILESTONE.md`→`milestone` · `COMPLIANCE.md`→`compliance` |
 | `docs/develop/<SINGLETON>.md` | singleton filename mapping: `ARCHITECTURE.md`→`architecture` · `API_SPEC.md`→`api` · `THREAT_MODEL.md`→`threat-model` · `CODE_CONVENTION.md`→`code-convention` · `RUNBOOK.md`→`runbook` · `DESIGN.md`→`design` · `P_POLICY.md`→`policy` |
 | `docs/develop/feature/<F>/FRD.md` | `frd` |
 | `docs/develop/feature/<F>/TDC.md` | `tdc` |
@@ -94,6 +94,8 @@ history:
 | UI pixels | design tool or component code (DESIGN holds links + rules) |
 
 The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh <vault-root>` reads this table as its SSOT and reports (report-only) literals living outside their home (KJP-58). Semantic duplication — a norm restated in prose — remains this declaration + PM mediation.
+
+> 🔴 **The pricing row is stale and deliberately left that way (KJP-86, 2026-08-12).** `BUSINESS` was retired and §BM now lives in `PRD` ([[doc-catalog]]), so the detector currently prints a hint naming a document that no longer exists. **Editing this one cell is not a one-cell change** — measured: `BUSINESS §BM` → `PRD §BM` widens the detector's own exclusion (126 → 151 docs scanned, 19 → 28 findings, because the `docs/business/` tree exclusion is derived from the home name) **and fails 4 `validate-selftest.sh` assertions that pin `BUSINESS` as the home fixture**. The fix therefore has to land together with `scripts/value-axis-drift.sh` + `scripts/validate-selftest.sh`, in one commit that re-pins the fixtures. Until then the row stays as-is so the self-test keeps passing.
 
 ## stub Pre-creation Rules
 
