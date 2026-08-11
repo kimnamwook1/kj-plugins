@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.4 — 2026-08-12
+
+### Changed
+- 🔴 **정책 모델을 하나로 확정 — `docs/develop/P_POLICY.md` 단일 파일 + `## POL-NNN` 조항 헤딩 (KJP-79).** 전서·`project-docs-convention`·`doc-catalog`·`vault-tree`·`validate.sh` 다섯 곳이 이제 같은 모델을 서술한다. 종전에는 전서가 단일 파일을, 나머지가 `docs/policy/<PREFIX>-POL-0000N` **2티어 폴더형**을 말해 「스텁 6종」을 아무도 정확히 열거할 수 없었다.
+  - 🔴 **전서는 이미 모델 전체를 명세하고 있었다** — 조항 헤딩 계약 · 번호=파일 내 연번(PM 발급) · 단일 기능 규칙은 feature 파일로 · 충돌 서열 + org 승격 · 비대 시 자연 분리. **설계할 것이 없었고 나머지 문서가 못 따라간 것이었다.**
+  - **고친 트리는 §스킬 init 스켈레톤이다 — §트리는 손대지 않았다.** 근거: 스켈레톤 자신이 **2줄 간격으로 모순**이었다. `docs/{business,develop,develop/feature,adr,resources}/` 를 스캐폴드해놓고 바로 다음 줄에서 **자기가 만들지도 않는** `docs/policy` 의 `next_id` 를 규정했다.
+- **`<PREFIX>-POL-0000N` ID 체계 폐지.** ID 는 *파일*을 식별하는 장치인데 정책이 더 이상 파일이 아니다. 불변성 논거도 전제(티어 간 승격 = 파일 이동)가 사라져 보호할 대상이 없다. **ADR 은 파일당 1결정이라 그대로** — `next_id` 는 이제 볼트에서 `docs/adr/` 하나뿐이다.
+- **정책 승격 개념 폐지.** 프로젝트 안에 티어가 하나뿐이라 승격할 사이가 없다. `project-docs-convention` 의 깨진 포인터(`Promotion → knowledge-escalate-convention`)는 **재지정이 아니라 삭제** — 그 문서는 지식 사다리(`hippocampus` → `p_memory` → `neocortex`)이고 정책을 담은 적이 없으며, **스스로 공통층은 승격 티어가 아니라고 명시**한다. org 공통 `policies/` 로의 상향은 PM 판단이라 규약 본문에 직접 서술했다.
+- **`validate.sh` 의 정책 경로 특별취급 제거.** `*/docs/policy/*` 분기가 사라지고 multi-instance `id:`/`next_id:` 규칙은 **ADR 전용**이 됐다. 빨간불(픽스처 선행 변경) → 초록불 관측, 변이 테스트로 두 어서션이 규칙의 존재를 실제로 검출함을 증명.
+- **볼트 `docs/policy/` 10폴더 폐기** — 내용이 `_index.md` 뿐이라 손실 0. 🔴 **9개가 아니라 10개였다** — 기능 티어 1건(`012/docs/develop/feature/status-cascade/policy/`)이 추가로 있었고, 전서상 feature 는 폴더가 아니라 **파일**이라 같은 축으로 함께 폐기했다. 린터 docs 축 −10(삭제 수와 일치), sessions·wiki·entries 불변.
+
+### Docs
+- **`docs-samples/` 에 스냅샷 배너.** 2026-07-25 검토안이고 이후 0.2.0 랜딩이 **세 축에서 지나쳤다**(정책 모델 · `docs/develop/` 경로 중첩 · API_SPEC 생성 주체). 🔴 **고치지 않고 배너만 단다** — 기록을 현재에 맞춰 고치는 것은 정합이 아니라 위조다(`vault-tree.md` §Renaming a path term).
+
 ## 0.2.3 — 2026-08-12
 
 ### Fixed
