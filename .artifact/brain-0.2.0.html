@@ -214,7 +214,8 @@
 
   <h3>◇ 표시 — <code>init</code> 이 만들지 않는 것</h3>
   <p class="sub">위 트리에서 <span class="w">◇</span> 가 붙은 항목은 <b><code>init</code> 스캐폴드 대상이 아니다</b>. 세 부류이고 사유가 각각 다르다.</p>
-  <p class="sub">⚠️ <b>표시 유보 2건 — 이 카드에서 판정하지 않았다.</b> <code>MARKETING.md</code>(규약·doc-catalog 는 <code>BUSINESS.md</code> 한 파일이 §BM·§GTM 을 흡수한다고 본다)와 <code>P_POLICY.md</code>(규약은 <code>docs/policy/&lt;PREFIX&gt;-POL-*</code> 폴더형)는 <b>이름·형태가 규약과 어긋난다</b>. 스텁 6종 목록에 두 이름이 없는 이유가 이것이고, <b>무표시가 "스캐폴드 대상"을 뜻하지 않는다</b>. 별도 카드에서 정리한다.</p>
+  <p class="sub">⚠️ <b>표시 유보 1건 — 이 카드에서 판정하지 않았다.</b> <code>MARKETING.md</code>(규약·doc-catalog 는 <code>BUSINESS.md</code> 한 파일이 §BM·§GTM 을 흡수한다고 본다)는 <b>이름·형태가 규약과 어긋난다</b>. 스텁 6종 목록에 이 이름이 없는 이유가 이것이고, <b>무표시가 "스캐폴드 대상"을 뜻하지 않는다</b>. 별도 카드(<b>KJP-86</b>)에서 정리한다.</p>
+  <p class="sub">✅ <b><code>P_POLICY.md</code> 는 판정 완료 (KJP-79, 2026-08-12).</b> 규약이 서술하던 <code>docs/policy/&lt;PREFIX&gt;-POL-*</code> <b>폴더형은 폐기</b>되고 이 §트리의 <code>develop/P_POLICY.md</code> <b>단일 파일이 정본</b>이다 — 조항 단위는 <code>## POL-NNN</code> 헤딩, 참조는 <code>[[P_POLICY#POL-003]]</code> 앵커(§양식 P_POLICY 계약). <b>상황적 문서라 스텁 6종에 없는 것이 맞고</b>, 규약·<code>doc-catalog</code>·<code>vault-tree</code>·<code>validate.sh</code> 가 같은 커밋에서 이 모델로 정렬됐다.</p>
   <div class="grid">
     <div class="card"><span class="tag">상황적 문서</span><b>트리거가 와야 생긴다</b><code>MILESTONE</code> · <code>COMPLIANCE</code> · <code>DESIGN</code>. 미리 만들면 <b>"결정이 있었다"는 거짓 신호</b>가 남는다 — 빈 ADR 이 해로운 것과 같은 이유(<code>project-docs-convention.md</code> §stub Pre-creation Rules). <b>스텁 6종은 <code>PRD</code>·<code>BUSINESS</code> + <code>ARCHITECTURE</code>·<code>CODE_CONVENTION</code>·<code>RUNBOOK</code>·<code>THREAT_MODEL</code></b> 뿐이다.</div>
     <div class="card"><span class="tag">본문 문서</span><b>폴더만 init, 파일은 나중</b><code>feature/</code>·<code>adr/</code> 폴더는 <code>init</code> 이 만들지만 그 안의 문서는 <b>기능 킥오프·실제 결정 시점</b>에 생긴다. <code>API_SPEC</code> 은 <b>read-only 미러</b>라 API 가 생긴 뒤 동기화 워커가 만든다 — 🔴 <code>dreaming</code> 은 절대 아니다.</div>
@@ -926,7 +927,7 @@ cc_session_ids:
 </div>
 <div id="ed-idx" hidden>
 <h3>_index.md — schema 층</h3>
-<p class="sub">폴더의 노트 목록과 각 노트의 <code>summary</code> 를 담는다. <b>ToC 이므로 frontmatter 가 없다</b>(예외: <code>docs/policy/</code>·<code>docs/adr/</code> 인덱스의 <code>next_id</code> 한 줄). 파일을 만들거나 옮긴 주체가 <b>같은 커밋에서</b> 갱신한다. recall 이 전량 주입하는 유일한 대상.</p>
+<p class="sub">폴더의 노트 목록과 각 노트의 <code>summary</code> 를 담는다. <b>ToC 이므로 frontmatter 가 없다</b>(예외: <code>docs/adr/</code> 인덱스의 <code>next_id</code> 한 줄 — 정책은 단일 파일이라 폴더 카운터가 없다). 파일을 만들거나 옮긴 주체가 <b>같은 커밋에서</b> 갱신한다. recall 이 전량 주입하는 유일한 대상.</p>
 <div class="editbar">
   <button id="idx-save">파일로 저장 (_index.md)</button>
   <button id="idx-reset">기본값 복원</button>
@@ -934,7 +935,7 @@ cc_session_ids:
 </div>
 <textarea id="idx-editor" spellcheck="false">&lt;!-- 폴더 목차(ToC). frontmatter 없음 — recall 이 전량 주입하는 파일이라 메타 한 줄도 예산이고,
      린터도 _index 를 body document 검사에서 제외한다(validate.sh:380 "index/_index are folder meta").
-     ⚠ 예외 하나: docs/policy/ 와 docs/adr/ 의 인덱스만 아래 한 줄을 갖는다(ID 발급 카운터, validate.sh:382).
+     ⚠ 예외 하나: docs/adr/ 의 인덱스만 아래 한 줄을 갖는다(ID 발급 카운터). 정책은 단일 파일(develop/P_POLICY.md)이라 폴더 카운터가 없다.
          ---
          next_id: 2
          ---
@@ -1103,7 +1104,7 @@ description: 범용 작업 워커. PM 이 티켓·브리프를 위임할 때의 
 - **워커 → scribe 직행 금지.** 중첩을 보는 건 PM 뿐이고, 두 scribe 가 같은 파일을 조용히 덮는 것의 유일한 방어다.
 - **쓰기 도구는 `Edit`(기존)·`Write`(신규)만.** `Edit` 의 old_string 이 compare-and-swap 이라 동시 세션 충돌 시 소리 내며 실패한다.
 - **쓸 수 있는 곳**: `hippocampus/` · `<project>/p_memory/` · `neocortex/` · 각 폴더 `_index.md`. 🔴 `org/` 는 **사용자 지시가 브리프에 명시된 때만**.
-- **`_index.md` 는 재생성 산출물이다.** 노트를 만들거나 옮긴 그 커밋에서 같이 갱신한다. 줄 형식 `- [[&lt;basename&gt;]] — &lt;summary&gt;`, 링크 대상은 파일명. frontmatter 없음(`docs/policy/`·`docs/adr/` 의 `next_id` 만 예외).
+- **`_index.md` 는 재생성 산출물이다.** 노트를 만들거나 옮긴 그 커밋에서 같이 갱신한다. 줄 형식 `- [[&lt;basename&gt;]] — &lt;summary&gt;`, 링크 대상은 파일명. frontmatter 없음(`docs/adr/` 의 `next_id` 만 예외).
 - 기록한 경로 전량을 반환한다.
 
 ## Docs draft
@@ -1359,7 +1360,7 @@ neocortex/                          + dream-logs.md
     p_memory/
     docs/{business,develop,develop/feature,adr,resources}/
 hippocampus/
-각 폴더 _index.md                    ← frontmatter 없음. docs/policy·docs/adr 만 next_id
+각 폴더 _index.md                    ← frontmatter 없음. docs/adr 만 next_id
 docs 스텁 6종                        ← status: created
 ```
 - **스텁 6종 = `PRD`·`BUSINESS` + `ARCHITECTURE`·`CODE_CONVENTION`·`RUNBOOK`·`THREAT_MODEL`.** 🔴 **`MILESTONE`·`COMPLIANCE`·`DESIGN` 은 상황적이라 만들지 않고**, `API_SPEC` 은 미러라 동기화 워커 몫, `.base` 6종은 content spec 이 없어 대상 아님(KJP-87).

@@ -10,7 +10,7 @@
 # included; plus, on the wiki layer alone, the canonical line form and the inverse question, notes
 # no index names), session-uid wikilinks on the
 # team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
-# required + vocabulary; v1 history subkeys; policy/adr `id:` and index `next_id:`;
+# required + vocabulary; v1 history subkeys; adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
 # only). Reports as `file:line: message`.
 # Findings alone never fail the run (exit 0); --strict turns any finding into exit 1.
@@ -602,8 +602,9 @@ done < "$LIST" >> "$OUT"
 #   · v1 history subkeys `date:`/`by:` — the top-level key regex cannot see inside a
 #     `- { ... }` inline map or an indented block entry, which is exactly where the
 #     v1 vocabulary hid. v2 entry = { at, change, ticket } only.
-#   · `docs/policy/`·`docs/adr/`: body files without `id:` (multi-instance, PM-issued,
-#     immutable); their index/_index without `next_id:` (the issuance counter).
+#   · `docs/adr/`: body files without `id:` (multi-instance, PM-issued, immutable); its
+#     index/_index without `next_id:` (the issuance counter). ADR is the ONLY multi-instance
+#     kind — `docs/policy/` was the other one until KJP-79 retired the folder model.
 #     ⚠️ Presence only. **Duplicate IDs and gaps in the sequence have no owner** — the audit that
 #     would have caught them was retired with the dreaming feature set (KJP-77), and
 #     project-docs-convention.md §ID Issuance records the hole as a known gap rather than a rule
@@ -630,10 +631,12 @@ done < "$LIST" >> "$OUT"
 # Scope = NNN_*/docs/** recursive (the docs trees only — the wiki layer has its own scan and
 # its dirs are not scanned here). index/_index are folder meta
 # (`next_id`, TOC titles), so they skip the unknown-key warn and the body-document rules
-# (status·id·mirror·updated) but not the session check. Feature-tier policies
-# (`docs/develop/feature/<F>/policy/`) are NOT under the id rule yet — deliberate scope, extend on
-# decision, not by drift. Only the path term moved with the tree (vault-tree.md §트리 — the folder
-# now sits under `develop/`); the exemption itself is untouched and still awaits a decision.
+# (status·id·mirror·updated) but not the session check. The decision that exemption was waiting
+# for landed in KJP-79: there is no policy tier at all any more, at either level. A project rule
+# is a `## POL-NNN` heading inside the `docs/develop/P_POLICY.md` singleton and a single-feature
+# rule lives in that feature's own §Rules, so no policy path is multi-instance and none carries
+# `id:`/`next_id:`. P_POLICY.md is matched by nothing special below — it is an ordinary body
+# document, which is the whole point of collapsing the tiers.
 DDIRS=()
 while IFS= read -r d; do
   [ -d "$d/docs" ] && DDIRS[${#DDIRS[@]}]="$d/docs"
@@ -651,11 +654,11 @@ while IFS= read -r f; do
   case "$(basename "$f")" in index.md|_index.md) meta=1 ;; *) meta=0 ;; esac
   # Path-derived obligations — only the *paths* are matched here; the kind ← path matrix
   # itself stays in project-docs-convention (never replicated):
-  #   docs/policy/ · docs/adr/         body → `id:` required; index/_index → `next_id:` required
+  #   docs/adr/                        body → `id:` required; index/_index → `next_id:` required
   #   docs/develop/API_SPEC.md         repo-spec mirror → `source:` + `readonly: true` required
   idreq=0; nidreq=0; mirror=0
   case "$f" in
-    */docs/policy/*|*/docs/adr/*) if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
+    */docs/adr/*) if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
     */docs/develop/API_SPEC.md) mirror=1 ;;
   esac
   awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE"'
@@ -724,9 +727,9 @@ while IFS= read -r f; do
     END {
       if (meta) {
         # index/_index are folder meta, not body documents — no status/id/mirror duty.
-        # In docs/policy/·docs/adr/ they carry the ID counter instead (§ID Issuance).
+        # In docs/adr/ they carry the ID counter instead (§ID Issuance).
         if (nidreq && !("next_id" in seen))
-          print file ":1: missing next_id: in policy/adr folder index (the ID issuance counter — the PM reads and bumps it)"
+          print file ":1: missing next_id: in the adr folder index (the ID issuance counter — the PM reads and bumps it)"
         exit
       }
       if (!("status" in seen))
@@ -745,7 +748,7 @@ while IFS= read -r f; do
         }
       }
       if (idreq && !("id" in seen))
-        print file ":1: missing id: on a multi-instance document (docs/policy·docs/adr — the PM issues it; required & immutable)"
+        print file ":1: missing id: on a multi-instance document (docs/adr — the PM issues it; required & immutable)"
       if (mirror) {
         if (!("source" in seen))
           print file ":1: missing source: on the API_SPEC mirror (required SSOT pointer to the repo spec)"
