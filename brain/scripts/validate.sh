@@ -5,9 +5,10 @@
 #
 # Checks the vault manifest's `schema_version`, session-note frontmatter (required keys, status
 # vocabulary, retired keys) on the raw layer (`hippocampus/`), `summary:` on the wiki layer
-# (`p_memory/` + `neocortex/` + the common and tools roots), the wiki layer's folder indexes
-# (`_index.md` line form, links that name a file that is not there, and the inverse — notes no
-# index names), session-uid wikilinks on the
+# (`p_memory/` + `neocortex/` + the common and tools roots), folder indexes (`_index.md` links that
+# name a file that is not there — checked on every index recall injects, docs TOCs and project hubs
+# included; plus, on the wiki layer alone, the canonical line form and the inverse question, notes
+# no index names), session-uid wikilinks on the
 # team-shared surface, and docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; policy/adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
@@ -45,7 +46,11 @@ TARGETS="$(mktemp -t brain-validate-targets)" || { echo "validate.sh: mktemp fai
 # notes and the indexes in hand at the same time. NCOVER carries one integer back out of awk.
 NOTES="$(mktemp -t brain-validate-notes)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
 NCOVER="$(mktemp -t brain-validate-ncover)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
-trap 'rm -f "$OUT" "$LIST" "$TARGETS" "$NOTES" "$NCOVER"' EXIT
+# The docs-layer index list is its own file rather than more lines in $LIST: the two lists get
+# different rules (see the scope note at the index scan), and $LIST is consumed by the coverage
+# check afterwards, which must keep seeing the wiki layer alone.
+DOCIDX="$(mktemp -t brain-validate-docidx)" || { echo "validate.sh: mktemp failed" >&2; exit 2; }
+trap 'rm -f "$OUT" "$LIST" "$TARGETS" "$NOTES" "$NCOVER" "$DOCIDX"' EXIT
 
 # ----------------------------------------------------------- the manifest's schema version
 # 🔴 One level above every scan below. `.brain-paths` is what tells a consumer where the tree is;
@@ -252,12 +257,24 @@ done < "$LIST" >> "$OUT"
 # inverse is loud: a note with no summary is reported by the scan above. This one is silent.
 # Line form canon: knowledge-convention.md §summary — `- [[<filename stem>]] — <summary>`.
 #
-# Scope = the wiki layer's TOCs, i.e. the same roots as the note scan above, because that line
-# form is the memory-note canon. Two trees are deliberately outside it, each pinned by a
-# dangling-link fixture in the self-test so the boundary cannot rot into an accident:
-#   · `hippocampus/` — the raw layer, never a recall target (vault-tree.md §Layers)
-#   · `NNN_*/docs/`  — a docs TOC legitimately carries prose and `next_id:`, not memory-note lines
-#     (doc-catalog.md: the project hub is "one-line definition + PREFIX + TOC pointers")
+# 🔴 Two scopes, because the two rules answer to different canons (KJP-82):
+#   · DANGLING — every index recall injects. That is the whole of `$PROJDIR` plus the common layer
+#     and neocortex: `recall.md:13` walks a project folder with an unfiltered
+#     `find "$PROJDIR" -name '_index.md'`, so the docs TOCs and the project hub are injected text
+#     exactly like `p_memory/_index.md`. Measured on the real vault 2026-08-11: 106 indexes
+#     injected by that command, 13 of them linted before this card. A false inventory in the other
+#     93 was unreachable by every check in this file.
+#   · LINE FORM — the wiki layer only. `- [[stem]] — <summary>` is the *memory-note* canon
+#     (knowledge-convention.md §summary), and no canon states it for docs: doc-catalog.md asks a
+#     hub for "TOC pointers" and nothing more. A docs TOC legitimately opens with frontmatter and
+#     prose, carries `next_id:`, names non-note files, and writes a hyphen — measured 2026-08-11,
+#     85 of the real vault's docs index lines would be reported under the wiki form. Enforcing an
+#     unwritten rule at that false-positive rate is how a gate gets ignored, which is precisely
+#     what the pre-KJP-82 blanket exclusion was protecting. That protection is kept; only the
+#     dangling half moved.
+# `hippocampus/` stays outside BOTH — the raw layer is never a recall target (vault-tree.md
+# §Layers). Every boundary here is pinned by a dangling-link fixture in the self-test, so a scope
+# that shrinks kills an assert instead of passing in silence.
 # Both spellings are indexes (`_index.md` canonical, `index.md` its legacy equal), the same pair
 # every other scan excludes as meta.
 #
@@ -280,8 +297,24 @@ fi
 sort -o "$LIST" "$LIST"
 n_index="$(wc -l < "$LIST" | tr -d ' ')"
 
+# The docs-layer list: every index under a project folder that the wiki scan does not already own.
+# The rule is derived from recall's own walk rather than from a folder-name list, so a new sibling
+# of `docs/` is in scope the day it appears instead of the day someone remembers to edit this line.
+# `p_memory/` is excluded whole: the wiki scan owns that layer, and its `-maxdepth 1` is a scope
+# decision (subfolders deliberately out) that reaching in from here would silently reopen.
+# The structural exclusions match the common layer's — an index inside a template folder or an
+# archive is the same class of non-content there as here.
+: > "$DOCIDX"
+while IFS= read -r d; do
+  find "$d" -type f \( -name '_index.md' -o -name 'index.md' \) \
+    ! -path '*/p_memory/*' ! -path '*/_templates/*' ! -path '*/999_Archive/*' \
+    ! -path '*/Archive/*' ! -path '*/_dreaming_logs/*' 2>/dev/null >> "$DOCIDX"
+done < <(brain_projects)
+sort -o "$DOCIDX" "$DOCIDX"
+n_dindex="$(wc -l < "$DOCIDX" | tr -d ' ')"
+
 : > "$TARGETS"
-if [ "$n_index" -gt 0 ]; then
+if [ "$n_index" -gt 0 ] || [ "$n_dindex" -gt 0 ]; then
   # Every target the vault can resolve, in the two spellings a wikilink may use: the vault-relative
   # path (`[[org/machines/clients/x/HARDWARE_SPEC]]`) and the bare filename stem (`[[NEO-foo]]`).
   # Built once for the whole run — one tree walk instead of a stat per link.
@@ -312,36 +345,71 @@ if [ "$n_index" -gt 0 ]; then
   done | LC_ALL=C sort -u > "$TARGETS"
 fi
 
-while IFS= read -r f; do
-  [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
-  awk -v file="$f" -v targets="$TARGETS" '
-    BEGIN {
-      while ((getline t < targets) > 0) T[t] = 1
-      close(targets)
+# `./` and `../` inside a wikilink are addressing relative to the index's own folder. Obsidian
+# follows them, so a link that uses them names a real file and must not read as dangling — a false
+# dangle is the one failure that gets a gate ignored. Every other spelling is returned untouched:
+# a bare stem matches on basename, a rooted path on its vault-relative form, and both are already
+# in the target set. Held as a prelude string, like AWK_PRELUDE above, so the scan body below stays
+# readable in one piece.
+# 🔴 The pattern is a string, not a /literal/: one-true-awk (macOS /usr/bin/awk) cannot parse a `/`
+# inside a bracket class, and `[.]` sidesteps the escaping question outright. Same discipline as
+# the spelled-out digit runs elsewhere in this file — the portable spelling is the one that fails
+# loudly on the wrong awk instead of silently never matching.
+AWK_RESOLVE='
+  function resolve(t, dir,   parts, n, i, out, m, r) {
+    if (t !~ "(^|/)[.][.]?(/|$)") return t
+    n = split(dir "/" t, parts, "/")
+    for (i = 1; i <= n; i++) {
+      if (parts[i] == "" || parts[i] == ".") continue
+      if (parts[i] == "..") { if (m > 0) m--; continue }
+      out[++m] = parts[i]
     }
-    { sub(/\r$/, "") }
-    # A TOC entry is a list line, and only a list line. Headings, the intro sentence that says what
-    # the folder is, and blank lines carry no obligation — an index is allowed to introduce itself.
-    # Any bullet, though, is claiming to be an entry, so `*` and `+` bullets are entries too and
-    # fail the form: recall reads the whole file, and a half-formed line costs a note its summary.
-    /^[ \t]*[-*+][ \t]/ {
-      if (!match($0, /^- \[\[[^]]+\]\] — [^ ]/))
-        print file ":" NR ": malformed _index line (canon: - [[<stem>]] — <summary>): " $0
-      s = $0
-      while (match(s, /\[\[[^]]+\]\]/)) {
-        t = substr(s, RSTART + 2, RLENGTH - 4)
-        s = substr(s, RSTART + RLENGTH)
-        # `|alias` and `#heading` are addressing, not identity — strip both before resolving.
-        p = index(t, "|"); if (p > 0) t = substr(t, 1, p - 1)
-        p = index(t, "#"); if (p > 0) t = substr(t, 1, p - 1)
-        sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t)
-        if (t == "") continue
-        if (!(t in T))
-          print file ":" NR ": dangling _index link: [[" t "]] (recall injects this index and nothing else — a line naming a file that is not there is a false inventory no other check can see)"
+    for (i = 1; i <= m; i++) r = (i == 1) ? out[i] : r "/" out[i]
+    return r
+  }
+'
+
+# One index list, checked for links that name a file that is not there — and, when the second
+# argument is 1, for the wiki layer's canonical line form as well. Two lists share this body so the
+# dangling rule cannot drift into two versions of itself; the scope note above is why only one of
+# them carries the form rule.
+# `dir` is the index's own vault-relative folder, the base that `../` addressing resolves against.
+scan_index_list() {   # scan_index_list <list-file> <check-line-form 0|1>
+  while IFS= read -r f; do
+    [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
+    rel="${f#"$VAULT"}"; rel="${rel#/}"
+    case "$rel" in */*) dir="${rel%/*}" ;; *) dir="" ;; esac
+    awk -v file="$f" -v targets="$TARGETS" -v form="$2" -v dir="$dir" "$AWK_RESOLVE"'
+      BEGIN { while ((getline t < targets) > 0) T[t] = 1; close(targets) }
+      { sub(/\r$/, "") }
+      # A TOC entry is a list line, and only a list line. Headings, the intro sentence that says what
+      # the folder is, and blank lines carry no obligation — an index is allowed to introduce itself.
+      # Any bullet, though, is claiming to be an entry, so `*` and `+` bullets are entries too and
+      # fail the form: recall reads the whole file, and a half-formed line costs a note its summary.
+      /^[ \t]*[-*+][ \t]/ {
+        if (form && !match($0, /^- \[\[[^]]+\]\] — [^ ]/))
+          print file ":" NR ": malformed _index line (canon: - [[<stem>]] — <summary>): " $0
+        s = $0
+        while (match(s, /\[\[[^]]+\]\]/)) {
+          t = substr(s, RSTART + 2, RLENGTH - 4)
+          s = substr(s, RSTART + RLENGTH)
+          # `|alias` and `#heading` are addressing, not identity — strip both before resolving.
+          p = index(t, "|"); if (p > 0) t = substr(t, 1, p - 1)
+          p = index(t, "#"); if (p > 0) t = substr(t, 1, p - 1)
+          sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t)
+          if (t == "") continue
+          # The raw link text is what the message quotes — that is the string a human has to find
+          # and fix in the file, not its resolved form.
+          if (!(resolve(t, dir) in T))
+            print file ":" NR ": dangling _index link: [[" t "]] (recall injects the folder indexes and nothing else — a line naming a file that is not there is a false inventory no other check can see)"
+        }
       }
-    }
-  ' "$f"
-done < "$LIST" >> "$OUT"
+    ' "$f"
+  done < "$1"
+}
+
+scan_index_list "$LIST"   1 >> "$OUT"
+scan_index_list "$DOCIDX" 0 >> "$OUT"
 
 # ------------------------------------------ index coverage (the scan above, read backwards)
 # 🔴 The same relation — index line ↔ note file — and the other direction of failure:
@@ -703,6 +771,11 @@ done < "$LIST" >> "$OUT"
 # folder indexes yielded, i.e. how much evidence the coverage check actually had. It is the only
 # number here that no other implies, and the only one that tells a vault whose notes are all
 # indexed from a run whose indexes were never parsed — both report zero coverage findings.
+# 🔴 `wiki indexes` and `docs indexes` are two numbers, not one, for the same reason: they are two
+# scans under two rules, and a single total could hide either half collapsing to zero. The docs
+# number is also the *only* place a project hub is ever counted — it sits above `docs/` and outside
+# every wiki root, so no other count in this line moves when the hub scan breaks. The older label
+# was a bare `indexes`, which stopped being unambiguous the moment there were two.
 #
 # ponytail: known limits, all judged not worth the weight for a real vault —
 #   · symlinked notes are skipped (`-type f`); use `find -L` if vaults ever use links.
@@ -710,7 +783,7 @@ done < "$LIST" >> "$OUT"
 # The label is `wiki`, not `knowledge`: that is the canon's name for the layer (vault-tree.md
 # §Layers) and the name this file's own header has used since the 0.2.0 pass. The count line was
 # the last place the retired word survived.
-scanned="$n_sessions sessions, $n_wiki wiki, $n_index indexes, $n_cover entries, $n_shared shared, $n_docs docs"
+scanned="$n_sessions sessions, $n_wiki wiki, $n_index wiki indexes, $n_dindex docs indexes, $n_cover entries, $n_shared shared, $n_docs docs"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
   echo "validate.sh: OK — no issues ($scanned) $VAULT"

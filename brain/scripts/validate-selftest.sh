@@ -249,12 +249,69 @@ printf -- '---\nsummary: common root note\n---\ndream report [[20260719-005513]]
 printf -- '---\nstatus: draft\ncc_session_ids: [cc-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
   > "$V/013_selftest/docs/wl-plain.md"
 
-# The docs tree's own TOC — deliberately OUTSIDE the _index scan, whose scope is the wiki layer
-# (the `- [[stem]] — <summary>` line form is the memory-note canon, and a docs/ TOC legitimately
-# carries prose and `next_id:` instead). Its link dangles, so silence here can only mean the scope
-# boundary held; moving the docs trees into the _index scan makes it fire.
-printf -- '- [[ghost-doc]] — dangles, but docs/ TOCs are outside the _index scan\n' \
-  > "$V/013_selftest/docs/_index.md"
+# ------------------------------------------------- docs-layer indexes + the project hub (KJP-82)
+# 🔴 The scope correction this card is, and the measurement that forced it. `recall.md:13` is
+# `find "$PROJDIR" -name '_index.md'` — recursive and unfiltered — so every index under a project
+# folder is injected text, the docs TOCs and the project hub included (real vault 2026-08-11:
+# 106 injected per that command, 13 of them linted). A line naming a file that is not there is the
+# same false inventory the wiki-layer rule exists to catch, and nothing else could see it.
+# What does NOT carry over is the line form, which is why the whole tree was excluded before: a
+# docs TOC legitimately opens with frontmatter and prose, writes a hyphen, names a non-note file,
+# and omits the summary. So the form rule stays on the wiki layer and this fixture is its guard —
+# every bullet below violates that form, and reporting any of them is what would make the new
+# check ignorable. Line numbers are load-bearing for the asserts; new entries only ever append.
+cat > "$V/013_selftest/docs/_index.md" <<'EOF'
+---
+next_id: 7
+---
+
+# docs — 목차
+
+Intro prose, which a docs TOC is allowed to carry.
+
+- [[ghost-doc]] — dangles, and docs TOCs ARE in the dangling scan now
+- [[fm-v2]] - hyphen where the wiki canon writes an em dash
+- [[fm-legacy]]
+- `rdb-schema.sql` — a bullet naming a non-note file
+- [[013_selftest/docs/tech-design/API_SPEC]] — vault-relative form, resolves
+EOF
+
+# The project hub. It sits in no other scan at all — one level above docs/, outside the wiki roots,
+# outside the shared-surface sweep — so the `docs indexes` count is the only number that can show
+# it was read, and this dangling link the only assert that can prove it.
+cat > "$V/013_selftest/_index.md" <<'EOF'
+# selftest — 프로젝트 허브
+
+한 줄 정의 + PREFIX + TOC 포인터 (doc-catalog.md) — prose, not entries.
+
+- [[ghost-hub]] — dangles, and the hub IS scanned
+- [[013_selftest/docs/fm-v2]] — vault-relative form, resolves
+- **[[013_selftest/docs/fm-legacy]]** bold, no em dash — a real hub shape, not a finding
+EOF
+
+# Recursion one folder deep, the KJP-74 locale regression on the docs side, and the `../` form.
+# The two non-ASCII stems exist and must never be called dangling; lines 5 and 7 fire, so neither
+# quiet pair can be the silence of a scan that never reached this folder.
+# Lines 6-7 are the `../` pair: Obsidian resolves relative addressing inside a wikilink, so the
+# one that lands on a real file must stay quiet and the one that lands on nothing must still fire.
+for _k in 문서가 문서나; do
+  printf -- '---\nstatus: draft\n---\nbody\n' > "$V/013_selftest/docs/tech-design/$_k.md"
+done
+cat > "$V/013_selftest/docs/tech-design/_index.md" <<'EOF'
+# tech-design — 목차
+
+- [[문서가]] — non-ASCII stem, exists
+- [[문서나]] — non-ASCII stem, exists
+- [[ghost-nested-doc]] — dangles, one folder deep
+- [[../fm-v2]] — ../ addressing, resolves to the docs root
+- [[../ghost-updir]] — ../ addressing that lands on nothing
+EOF
+
+# p_memory/ subfolders are the wiki layer's own scope decision (-maxdepth 1), and this card does not
+# reopen it: the docs scan excludes the p_memory tree outright rather than reaching in through the
+# back door. The link dangles, so silence can only mean that exclusion held.
+printf -- '- [[ghost-nested-pmem]] — dangles; p_memory/ subfolders are out of both index scans\n' \
+  > "$V/013_selftest/p_memory/nested/_index.md"
 
 # Docs frontmatter v2 (project-docs-convention §frontmatter Standard v2). The session key
 # is banned in docs frontmatter *as a key* — plain uid included — so both YAML shapes are
@@ -393,11 +450,41 @@ assert_no_match "index: non-ASCII stem 나 resolves"              'dangling _ind
 assert_no_match "index: non-ASCII stem 다 resolves"              'dangling _index link: \[\[다\]\]'
 assert_no_match "index: non-ASCII stem 라 resolves"              'dangling _index link: \[\[라\]\]'
 assert_no_match "index: a resolving link is not dangling (neocortex)" 'dangling _index link: \[\[NEO-good\]\]'
-# scope boundaries. Each is pinned by a fixture that WOULD fire if the scope moved: hippocampus/
-# is the raw layer (never a recall target) and docs/ TOCs are not memory-note indexes — both
-# fixtures carry a dangling link, so silence can only mean the boundary held.
+# scope boundary. hippocampus/ is the raw layer and never a recall target; its fixture carries a
+# dangling link, so silence can only mean the boundary held.
 assert_no_match "index: hippocampus/ TOCs are outside the scan"  'ghost-session'
-assert_no_match "index: docs/ TOCs are outside the scan"         'ghost-doc'
+
+# ------------------------------------------------- docs-layer indexes + project hub (KJP-82)
+# Dangling links only. One positive per scanned shape, so dropping any part of the scope kills a
+# specific assert rather than quietly shrinking the net.
+assert_match   "docs index: the docs TOC is scanned for dangling links" 'docs/_index.md:9: dangling _index link: \[\[ghost-doc\]\]'
+assert_match   "docs index: the project hub is scanned"                 '013_selftest/_index.md:5: dangling _index link: \[\[ghost-hub\]\]'
+assert_match   "docs index: the scan recurses into docs subfolders"     'tech-design/_index.md:5: dangling _index link: \[\[ghost-nested-doc\]\]'
+# 🔴 The exclusion this card had to keep alive rather than kill. Every bullet in that docs TOC
+# breaks the wiki line form (hyphen · no summary · no wikilink at all) and the file opens with
+# frontmatter and prose. Measured 2026-08-11: 85 of the real vault's docs index lines would be
+# reported under the wiki form, against a canon that does not exist for this layer
+# (knowledge-convention.md §summary governs memory notes; doc-catalog.md says only "TOC pointers").
+# A check with 85 false positives is a check everyone learns to ignore.
+assert_no_match "docs index: the wiki line form is never applied to a docs TOC" 'docs/_index.md:[0-9]*: malformed'
+assert_no_match "docs index: the hub's prose is never a line-form finding"      '013_selftest/_index.md:[0-9]*: malformed'
+# The quiet half of the dangling rule, one assert per resolution shape, each paired with a firing
+# link in the same file — so silence here cannot be the silence of a scan that never ran.
+assert_no_match "docs index: a resolving bare stem is not dangling"           'dangling _index link: \[\[fm-v2\]\]'
+assert_no_match "docs index: a resolving vault-relative link is not dangling" 'dangling _index link: \[\[013_selftest/'
+# 🔴 Locale regression (KJP-74) on the docs side — one assert per stem, so a partial collapse of
+# the target set still fails. Their firing neighbour ghost-nested-doc keeps the pair honest.
+assert_no_match "docs index: non-ASCII stem 문서가 resolves" 'dangling _index link: \[\[문서가\]\]'
+assert_no_match "docs index: non-ASCII stem 문서나 resolves" 'dangling _index link: \[\[문서나\]\]'
+# Boundaries that this card does NOT move. Both fixtures dangle, so silence can only mean the
+# exclusion held: the raw layer stays out, and p_memory/ subfolders stay the wiki layer's call.
+assert_no_match "docs index: p_memory/ subfolders are in neither index scan" 'ghost-nested-pmem'
+# Relative addressing inside a wikilink. Obsidian follows `../`, so a docs TOC that uses it is
+# legal and must not read as dangling — while a `../` link that genuinely leaves the vault or
+# names nothing must still fire. Measured 2026-08-11: zero instances in the real vault's index
+# list lines today, which is exactly why the pair below is fixture-pinned rather than assumed.
+assert_no_match "docs index: a ../ link that resolves is not dangling" 'dangling _index link: \[\[\.\./fm-v2\]\]'
+assert_match    "docs index: a ../ link that resolves to nothing fires" 'tech-design/_index.md:7: dangling _index link: \[\[\.\./ghost-updir\]\]'
 
 # Index coverage (KJP-82) — the same relation read backwards. A dangling link makes recall believe
 # in a note that is not there; an uncovered note makes recall never learn that a real one exists.
@@ -520,8 +607,14 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 #     + 8 common (3 facts + 2 machines + 1 pattern + 1 policy +
 #     1 common-root note; the two _index files excluded) + 3 neocortex (NEO-no-summary + NEO-good +
 #     wl-neo; _index/dream-logs excluded) + 3 tools (_index.md excluded)
-#   5 indexes — the folder TOCs the note scan just excluded, counted by the scan that owns them:
-#     p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index + org/_index
+#   5 wiki indexes — the folder TOCs the note scan just excluded, counted by the scan that owns
+#     them: p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index + org/_index
+#   5 docs indexes — every index under a project folder that the wiki scan does not own (KJP-82):
+#     013_selftest/_index (the hub) + docs/_index + docs/policy/_index + docs/adr/index (legacy
+#     spelling) + docs/tech-design/_index. 🔴 The hub is in NO other count — it is above docs/ and
+#     outside every wiki root — so this number is the only evidence that half of the scan ran.
+#     p_memory/nested/_index is excluded here and out of scope there, which is what its own
+#     dangling fixture pins.
 #   26 entries — distinct link targets harvested from those 5 TOCs, the coverage rule's evidence
 #     base. 🔴 It is the one number no other count implies, and the one that separates "every note
 #     is indexed" from "the indexes were never parsed": both read as zero findings. 10 from
@@ -529,13 +622,16 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 #     retired-keys — the three repeat [[good]] lines and the link-less bullet add nothing, it is a
 #     set) + 4 neocortex + 4 tools + 5 org/facts (4 stems + 1 vault-relative) + 3 org/_index
 #     (1 stem + 2 vault-relative)
-#   51 shared — 21 docs-tree files (20 under 013 + the 014_mirror API_SPEC; no exclusions on
-#     this surface) + 15 p_memory (recursive here, so _index/0.*/nested all count; includes the
-#     four non-ASCII stems, 마 and orphan) + 10 common (the two _index files count here) +
-#     5 neocortex (whole folder, meta files included)
-#   21 docs — the same docs-tree files counted again by the docs frontmatter scan
-#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index — index/_index counted
-#     here: meta files skip rules, not the scan)
+#   55 shared — 24 docs-tree files (23 under 013 + the 014_mirror API_SPEC; no exclusions on
+#     this surface) + 16 p_memory (recursive here, so _index/0.*/nested all count; includes the
+#     four non-ASCII stems, 마, orphan and nested/_index) + 10 common (the two _index files count
+#     here) + 5 neocortex (whole folder, meta files included). 🔴 The project hub is NOT here:
+#     this sweep takes docs/ and p_memory/, and the hub sits one level above both.
+#   24 docs — the same 24 docs-tree files counted again by the docs frontmatter scan
+#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index · tech-design/_index ·
+#     문서가 · 문서나 — index/_index counted here: meta files skip rules, not the scan).
+#     It tracks the docs-tree half of `shared` exactly, and the hub's absence from both is what
+#     makes `docs indexes` the only place the hub can appear.
 # 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: the tools root
 # raises the wiki count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
@@ -553,7 +649,7 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # verbatim because it records what was measured then, not what this fixture set counts now:
 # every other count was byte-identical before and after (19 sessions, 102 knowledge, 321 shared,
 # 24 issues).
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 25 wiki, 5 indexes, 26 entries, 51 shared, 21 docs)'
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 25 wiki, 5 wiki indexes, 5 docs indexes, 26 entries, 55 shared, 24 docs)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -570,7 +666,7 @@ printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]]\n' \
   > "$W/013_wl/docs/only.md"
 REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
 assert_exit  "wikilink-only vault exits 0 in default mode" 0 "$rc"
-assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 indexes, 0 entries, 1 shared, 1 docs)'
+assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 1 shared, 1 docs)'
 /bin/bash "$VALIDATE" "$W" --strict > /dev/null 2>&1
 assert_exit  "a wikilink finding alone fails --strict" 1 $?
 rm -rf "$W"
@@ -617,7 +713,7 @@ assert_match    "other scans survive the tools override"        'facts/facts-no-
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/hippocampus"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
-assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 indexes, 0 entries, 0 shared, 0 docs)'
+assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 0 shared, 0 docs)'
 # No `.brain-paths` here either: the schema_version rule must stay silent on a vault that never
 # declared a manifest, because every key then resolves to its documented default — a legal vault.
 assert_no_match "empty vault: an absent manifest is legal and silent" 'schema_version'
@@ -682,7 +778,7 @@ assert_match    "restructured: the moved common layer's TOC is scanned" '_compan
 assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-summary.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 indexes, 1 entries, 6 shared, 1 docs)'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 6 shared, 1 docs)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
 printf -- 'schema_version: 2\ncommon_root: nope\n' > "$R/.brain-paths"
@@ -708,7 +804,7 @@ assert_no_match "org vault: _index-only folder is not asked for a summary" 'empt
 assert_match    "org vault: the _index-only folder's TOC is still scanned" 'empty-axis/_index.md:1: dangling _index link: \[\[x\]\]'
 assert_no_match "org vault: absent tools root is silent (legal state)"  '999_tools'
 assert_no_match "org vault: no missing-root warning at all"             'not found'
-assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 indexes, 1 entries, 2 shared, 0 docs)'
+assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 2 shared, 0 docs)'
 rm -rf "$R2"
 
 # usage errors exit 2 (documented separately from the findings exit codes)
