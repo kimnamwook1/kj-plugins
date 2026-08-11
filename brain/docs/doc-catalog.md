@@ -78,7 +78,7 @@
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **POLICY (Project Policy — 프로젝트 공통 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/policy/<PREFIX>-POL-0000N.md` | When a rule applies to **2 or more features** (tier `project` — the path is the tier) — criteria, ID, promotion canon: [[project-docs-convention]] | situational |
+| **P_POLICY (Project Policy — 프로젝트 공통 규칙)** | `policy` | clause number assigned by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/develop/P_POLICY.md` — **one file per project**, one `## POL-NNN` heading per rule, cited as `[[P_POLICY#POL-003]]` | When a rule applies to **2 or more features**. A single-feature rule stays in that feature's own §Rules — there is no policy folder at either tier. Canon: [[project-docs-convention]] §Policy System | situational |
 | **ADR (Architecture Decision Record — 결정 기록)** | `adr` | architecture (ID issued by PM) | `docs/adr/<PREFIX>-ADR-0000N.md` | One per hard-to-reverse code/design decision. 🔴 **Never pre-created** | universal |
 | **resources (folder)** | folder (free-form) | research | `docs/resources/` | When research or benchmarking outputs, meeting records, or reference material appear. Free-form, and **not a recall target** | situational |
 
@@ -88,7 +88,6 @@
 |---|---|---|---|---|---|
 | **FRD (Feature Requirements Doc — 기능 요구사항)** | `frd` | planning | `docs/develop/feature/<F>/` | When expanding one PRD feature into an executable spec (per feature). **The "what"** | universal |
 | **TDC (Technical Design & Concept — 구현 설계)** | `tdc` | **architecture** | `docs/develop/feature/<F>/` | When expanding the FRD into an implementation approach. **The "how".** Absorbs as a **§Diagrams** section the former `DATA_FLOW` · `SEQUENCE` · `STATE_DIAGRAM` files (only diagrams remained there — "prose goes in the TDC" was already the rule). Diagrams only in §Diagrams; prose only in the prose sections; a state diagram 🔴 only for features with a real state machine (login, payment, orders, etc.). **ADR promotion test: if reverting the decision would break payments, data, or an external contract — promote it to an ADR.** Canon: [[project-docs-convention]] §TDC | universal |
-| **POLICY (Feature Policy — 기능 한정 규칙)** | `policy` | ID issued by `pm` · owner assigned by the rule's domain (routing label — not frontmatter) | `docs/feature/<F>/policy/` | When a rule applies **to this feature only** (tier `feature` — the path is the tier) — [[project-docs-convention]] | situational |
 
 **On-demand**
 

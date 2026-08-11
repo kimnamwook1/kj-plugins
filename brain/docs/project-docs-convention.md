@@ -16,8 +16,8 @@
 status: created | draft | approved | deprecated   # the only required key
 updated: YYYY-MM-DDTHH:MM:SS                   # scribe machine-stamp (local time, same basis as session uids — format & legacy rule: [[sessions-note-convention]])
 
-# ── multi-instance extension: POL · ADR ──
-id: <PREFIX>-POL-0000N                         # required & immutable — promotion completes as a file move alone
+# ── multi-instance extension: ADR (the only multi-instance kind) ──
+id: <PREFIX>-ADR-0000N                         # required & immutable — one decision = one file, and links must survive
 
 # ── mirror extension: API_SPEC ──
 source: <repo path|URL>                        # required — SSOT pointer
@@ -37,7 +37,7 @@ history:
 | `title` | H1 |
 | `project` | the project folder — `NNN_<slug>/` under the vault's `projects_root` ([[vault-tree]]) |
 | `owner` | doc-catalog default + PM re-judgment at brief time ([[doc-catalog]] — the sole source) |
-| `scope` / `feature` | the path is the tier — promotion completes as **one** change (the file move) |
+| `scope` / `feature` | the path is the tier. Policy has only one tier per project (`develop/P_POLICY.md`), so there is nothing left for a `scope` field to say |
 | `tags` | no consumer |
 | `description` | first paragraph under the H1 |
 | `history.session` | banned outright (§history & session linkage below) |
@@ -48,7 +48,7 @@ history:
 | Case | Meaning |
 |---|---|
 | `status` absent | illegal |
-| `id` absent on a multi-instance document (POL·ADR) | illegal |
+| `id` absent on a multi-instance document (ADR) | illegal |
 | any other key absent | normal (derived or defaulted) |
 | unknown key present | **warn only — never a hard fail** (protects documents imported from outside, e.g. open-source) |
 
@@ -59,10 +59,9 @@ history:
 | Path | kind |
 |---|---|
 | `docs/business/<SINGLETON>.md` | singleton filename mapping: `PRD.md`→`prd` · `BUSINESS.md`→`business` · `MILESTONE.md`→`milestone` · `COMPLIANCE.md`→`compliance` |
-| `docs/develop/<SINGLETON>.md` | singleton filename mapping: `ARCHITECTURE.md`→`architecture` · `API_SPEC.md`→`api` · `THREAT_MODEL.md`→`threat-model` · `CODE_CONVENTION.md`→`code-convention` · `RUNBOOK.md`→`runbook` · `DESIGN.md`→`design` |
+| `docs/develop/<SINGLETON>.md` | singleton filename mapping: `ARCHITECTURE.md`→`architecture` · `API_SPEC.md`→`api` · `THREAT_MODEL.md`→`threat-model` · `CODE_CONVENTION.md`→`code-convention` · `RUNBOOK.md`→`runbook` · `DESIGN.md`→`design` · `P_POLICY.md`→`policy` |
 | `docs/develop/feature/<F>/FRD.md` | `frd` |
 | `docs/develop/feature/<F>/TDC.md` | `tdc` |
-| `docs/policy/<PREFIX>-POL-*` · `docs/feature/<F>/policy/<PREFIX>-POL-*` | `policy` (scope = the path: `docs/policy/` ⇒ project · `feature/<F>/policy/` ⇒ feature) |
 | `docs/adr/*` | `adr` |
 | `docs/resources/**` | free-form (no kind) |
 
@@ -87,7 +86,7 @@ history:
 | Value kind | The only original |
 |---|---|
 | pricing · tiers · unit economics | BUSINESS §BM |
-| security normative statements | POL (`docs/policy/` or feature policy) |
+| security normative statements | a `## POL-NNN` clause in `docs/develop/P_POLICY.md` |
 | threat · mitigation tables | THREAT_MODEL |
 | logical data model | ARCHITECTURE §데이터 모델 |
 | physical schema | repo `migrations/` / schema |
@@ -100,7 +99,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 
 - **Pre-created = 6** — 2 in `business/` (`PRD` · `BUSINESS`) + 4 in `develop/` (`ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`). **At project onboarding the PM delegates pre-creating all of them as `status: created`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
 - **`API_SPEC` is not pre-created** — it is a read-only repo-spec mirror (§The Only Exception below), generated and re-synced by a **PM-delegated sync worker** once an API exists. 🔴 **Never by `dreaming`** — the unattended cycle writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/`, and `docs/` is written solely by an AI acting on a user instruction ([[vault-tree]] §Write permission). `COMPLIANCE` · `DESIGN` · `MILESTONE` stay situational (created on trigger).
-- **Feature document set = 3** (`FRD` · `TDC` + the `policy/` folder) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be).
+- **Feature document set = 2** (`FRD` · `TDC`) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be). A rule that applies to this feature alone stays in the feature's own §Rules — there is no per-feature `policy/` folder (§Policy System).
 - **ADRs are never pre-created** — one is created only when a meaningful decision actually occurs: **the PM delegates it as a recording brief carrying the `architecture` owner label** (a brief label, not a resident agent — workers never write the vault directly; [[memory-control-convention]] §Governance. ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".
 - The catalog lists more kinds than get pre-created (situational + trigger-generated + the feature set). **Only 6 are pre-created** — do not conflate the two numbers.
 
@@ -114,36 +113,49 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 
 ## Policy System
 
-**The (single) criterion**: *"Does this rule apply to **2 or more features**?"*
+**Home = one file per project: `<project>/docs/develop/P_POLICY.md`.** Situational — created when the first project-wide rule actually exists. It is **not** one of the 6 pre-created stubs.
 
-| Answer | Location | Tier (path-derived — §kind ← path matrix) |
-|---|---|---|
-| **Yes** | `<project>/docs/policy/` | project |
-| **No** | `<project>/docs/feature/<F>/policy/` | feature |
-| (shared across all projects) | the common root's `*policies*` directory | normative-axis identification → [[vault-tree]] §The common layer |
+**The (single) inclusion criterion**: *"Does this rule apply to **2 or more features**?"*
 
-- **ID = `<PREFIX>-POL-0000N`** — **a single per-project sequence. Independent of tier/location, and immutable.**
-- **Never put the feature name in the filename or ID.** Tier is expressed solely by the path (§kind ← path matrix — no `scope` field). (Baking the feature name into the ID means the ID changes on promotion → every reference breaks. ID immutability is the mechanism that lets promotion finish as **a file move alone**.)
-- **FRD·TDC never copy policy values** — reference only via `[[<ID>]]` wikilinks.
-- **Promotion** → [[knowledge-escalate-convention]]
+| Answer | Where it goes |
+|---|---|
+| **Yes** | a `## POL-NNN` clause inside `docs/develop/P_POLICY.md` |
+| **No** | that feature's own document, §Rules — no policy file and no policy folder |
+| (shared across all projects) | the common root's `*policies*` directory — normative-axis identification → [[vault-tree]] §The common layer |
+
+- **One rule = one `## POL-NNN <title>` heading.** `NNN` is a **serial within the file** (read the last heading, add 1), issued by the PM. It is **not** a `<PREFIX>-…` document ID — see §ID Issuance.
+- **Reference = the `[[P_POLICY#POL-003]]` anchor**, which is the citation unit for rank 2 of §Document Conflict Precedence. **FRD·TDC never copy policy values** — they link to the anchor.
+- **No folder, no file-per-policy, no `id:` frontmatter, no `next_id` counter.** The former two-tier folder model (`docs/policy/` + `docs/feature/<F>/policy/`) is **retired — KJP-79, 2026-08-12**. Grounds: the design canon (`.artifact/brain-0.2.0.html` §트리) carries only `develop/P_POLICY.md`, and the vault's 9 project-tier + 1 feature-tier policy folders held **`_index.md` and nothing else** (measured 2026-08-12 — zero body documents, so nothing needed migrating).
+- 🔴 **Escalation, not promotion — and only outward, to the common layer.** When a clause overlaps an org-wide norm, **do not restate it**: raise it into the common root's `*policies*`, or leave a pointer. **This is a PM judgment, never an automatic ladder** — the common layer is a fact record maintained by measurement, *not* a promotion tier, and the unattended cycle (`sc` · `dreaming`) may never write there ([[knowledge-escalate-convention]] §What does not ride this ladder). Within a project there is nothing to promote *between*: one file is the only tier.
+- **Splitting is a size decision, not a tier decision.** When the file grows heavy, split it and the clause heading becomes the filename naturally. Callers cite the `POL-NNN` anchor, so their links survive the split.
 - **No separate policy changelog document** — history lives in `history:` + git.
 
-## ID Issuance (shared by multi-instance documents: POL · ADR …)
+## ID Issuance (multi-instance documents — ADR is the only one)
 
 - **Format `<PREFIX>-<TYPE>-0000N`** (project PREFIX · document TYPE · 5-digit serial).
 - **Issuer = the PM, in advance.** Read the **frontmatter `next_id`** of that type's folder TOC — `_index.md` first; where absent, a legacy `index.md` is recognized as its equal — assign +1, then update `next_id`. Workers never pick their own numbers (collisions under concurrent work).
-- **Verification = `scripts/validate.sh`, presence only** — `id:` required on a POL·ADR body document, `next_id:` required on that folder's index. ⚠️ **Duplicate and gap detection has no owner** — stated as a known gap, not as a rule anyone is following.
+- **Verification = `scripts/validate.sh`, presence only** — `id:` required on an ADR body document, `next_id:` required on `docs/adr/`'s index. ⚠️ **Duplicate and gap detection has no owner** — stated as a known gap, not as a rule anyone is following.
+
 - 🔴 **The unattended cycle (`sc` · `dreaming`) can never be that owner.** It writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/` ([[vault-tree]] §Write permission), and it neither reads nor writes `docs/adr/` at all ([[knowledge-escalate-convention]] §What does not ride this ladder).
-- **`next_id` home = that type's folder `_index.md`** (absent → a legacy `index.md` is its equal — folder-TOC equivalence: [[vault-tree]]) — POL: `<project>/docs/policy/_index.md`, ADR: `<project>/docs/adr/_index.md`.
-- **ADRs are collected in `docs/adr/` — never placed in feature folders.** Why: ① ADRs that **attach to no feature** — stack choices, infra decisions — would have nowhere to go ② when a feature is scrapped, its decision record gets buried with it — an ADR is standalone evidence of "why we decided this" and outlives the feature ③ `docs/policy/` already has the same shape (single per-project sequence + its own folder), so the ID issuance rule stays unified.
+- **`next_id` home = that type's folder `_index.md`** (absent → a legacy `index.md` is its equal — folder-TOC equivalence: [[vault-tree]]) — ADR: `<project>/docs/adr/_index.md`. **That is the only `next_id` in the vault.**
+- **ADRs are collected in `docs/adr/` — never placed in feature folders.** Why: ① ADRs that **attach to no feature** — stack choices, infra decisions — would have nowhere to go ② when a feature is scrapped, its decision record gets buried with it — an ADR is standalone evidence of "why we decided this" and outlives the feature. (A third reason once read "`docs/policy/` has the same shape, so the rule stays unified" — that folder is retired, and the first two reasons carry the rule on their own.)
 - If an ADR relates to a feature, reference it from that feature's `FRD`·`TDC` via a `[[<PREFIX>-ADR-0000N]]` wikilink. **Never move the file into the feature folder.**
+
+#### `<PREFIX>-POL-0000N` is retired (KJP-79, 2026-08-12)
+
+Policy no longer takes a document ID **because it no longer has documents.** A `<PREFIX>-…-0000N` ID identifies a *file*; a policy is now a `## POL-NNN` heading inside `develop/P_POLICY.md` (§Policy System). Recorded so nobody re-derives the old scheme:
+
+- **`NNN` is a file-internal serial, not an issued ID.** Its uniqueness scope is the one file, so the project PREFIX adds nothing — `[[P_POLICY#POL-003]]` is already globally unique through the filename.
+- **The PM still assigns the number** (canon §양식: "번호 = 파일 내 연번, PM 발급"), but reads it from the last heading in the file rather than from a `next_id` counter. No policy folder exists to hold one.
+- **The immutability argument died with its premise.** Immutable POL IDs existed so that *promotion between tiers* could complete as "a file move alone" without breaking references. There are no tiers and no moves left, so the guarantee has nothing to protect.
+- **`validate.sh` no longer treats any policy path as multi-instance.** `docs/adr/` keeps both checks unchanged.
 
 ## Document Conflict Precedence (PM rule)
 
 The pecking order when documents disagree — the higher one wins:
 
 ```
-*policies* (vault-global)  >  docs/policy  >  PRD §비기능 요구(NFR)  >  PRD  >  FRD  >  TDC
+*policies* (vault-global)  >  develop/P_POLICY.md  >  PRD §비기능 요구(NFR)  >  PRD  >  FRD  >  TDC
 ```
 
 - 🔴 **This table is the PM's arbitration tool — not for workers.** Worker instructions carry only one line: "on conflict, don't judge on your own — report to the PM". Hand workers the pecking order and it becomes "I won, so ignore that one", and fixing the losing document never happens.

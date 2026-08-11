@@ -204,8 +204,8 @@ is git-untracked, so even a plain uid is a reference no teammate can resolve, an
 rides the history `ticket:` instead; `status:` absent or outside
 `created|draft|approved|deprecated` (meta files exempt — they are folder TOCs, not body
 documents); the v1 history subkeys `date:`/`by:`, which hid inside `- { … }` entries where the
-top-level key regex could not see them; `docs/policy/`·`docs/adr/` body files without `id:` and
-their folder index without `next_id:`; `API_SPEC.md` without `source:` + `readonly: true`.
+top-level key regex could not see them; `docs/adr/` body files without `id:` and
+its folder index without `next_id:`; `API_SPEC.md` without `source:` + `readonly: true`.
 **Warns** (stderr only, never a finding, never a `--strict` failure): unknown top-level keys, and
 an `updated:` that is not a full datetime. The retired docs status `stub` gets its own migration
 message — a pre-created empty document is `created`.
@@ -249,8 +249,8 @@ the **shape**, with each movable axis written as the manifest key that resolves 
       p_memory/          #   project knowledge (semantic, atomic notes) — recall target
         <pp>_<slug>.md
       docs/              #   official docs — business/ · develop/ · adr/ · resources/ ·
-                         #   policy/ · develop/feature/<F>/ (FRD · TDC — diagrams live in
-                         #   its §Diagrams — · feature policies)
+                         #   develop/P_POLICY.md (project rules, one `## POL-NNN` each) ·
+                         #   develop/feature/<F>/ (FRD · TDC — diagrams live in its §Diagrams)
   <tools_root>/          # machine-global tool inventory — opt-in (onboard step 6) ·
                          # git-untracked, 9xx = reserved band
     tool-{mcp,skill,cli,plugin}.md

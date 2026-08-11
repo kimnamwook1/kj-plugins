@@ -73,14 +73,15 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
         THREAT_MODEL.md              # ★ independent — security/evidence character
         API_SPEC.md                  # NOT pre-created — repo-spec read-only mirror
         DESIGN.md                    # situational — design-system spec + SSOT links
+        P_POLICY.md                  # situational — project rules, one `## POL-NNN` heading each.
+                                     #   Single file at this one tier; a single-feature rule goes in
+                                     #   that feature's §Rules — project-docs-convention §Policy System
         feature/                     # per-feature design (FRD·TDC — diagrams live in TDC §Diagrams)
           <feature>/
             FRD.md
             TDC.md
-            policy/                  # rules that apply to this feature only (path = tier: feature)
       adr/                           #   standalone evidence of hard-to-reverse decisions <PREFIX>-ADR-0000N.md
       resources/                     #   research · meeting records · reference material (free-form · not a recall target)
-      policy/                        # promotion tier for cross-feature product rules — project-docs-convention
   <tools_root>/                      # machine-global tool inventory · opt-in · git-untracked. Reserved band (below)
     _index.md
     tool-mcp.md                      #   MCP server inventory
@@ -152,7 +153,7 @@ So: **judge line by line, read the `git diff` with your eyes, and report what wa
 ## Naming Conventions
 
 - **folders = lowercase**
-  - e.g. `docs/` · `docs/develop/feature/` · `docs/policy/` · `docs/business/`
+  - e.g. `docs/` · `docs/develop/feature/` · `docs/adr/` · `docs/business/`
 - **required document files = uppercase**
   - `PRD.md` · `FRD.md` · `BUSINESS.md` · `RUNBOOK.md`
   - Exception: documents under `resources/` may be lowercase.
