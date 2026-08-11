@@ -1004,18 +1004,32 @@ assert_exit     "drift: --strict exits 1 on findings"             1 $?
 
 # Default canon resolution — script-relative ../docs/, the real project-docs-convention.
 # Pins two things at once: the relative-path seam works from wherever the script lives,
-# and the real canon still carries the pricing row with home BUSINESS §BM.
+# and the real canon still carries the pricing row — home `PRD §BM` since KJP-86 dissolved
+# BUSINESS.md.
+# 🔴 The home moving from BUSINESS to PRD changed the SCOPE, not just the hint, and that is
+# what the MARKETING fixture below pins. The detector excludes the home in two shapes,
+# `<HOME>.md` and the `docs/<home-lowercase>/` tree, because a home may be a file or a folder.
+# `BUSINESS` resolved the second shape onto `docs/business/` — the entire folder — only because
+# that document happened to carry its folder's name, which silently exempted COMPLIANCE,
+# MILESTONE and MARKETING from pricing checks. `PRD` names no folder, so the tree shape is now
+# correctly inert and only PRD.md is exempt. Measured on the real vault 2026-08-12: 126 → 151
+# docs, 19 → 28 findings, and all 9 new ones are price literals in the MARKETING.md the split
+# created. Restoring the old count would mean re-hiding a live violation.
 DV2="$(mktemp -d -t brain-selftest-drift2)"
 mkdir -p "$DV2/014_real/docs/develop" "$DV2/014_real/docs/business" "$DV2/hippocampus"
 printf -- '---\nstatus: draft\n---\n티어별 과금은 월 ₩12,000이다.\n' > "$DV2/014_real/docs/develop/ARCHITECTURE.md"
-printf -- '---\nstatus: draft\n---\n월 ₩12,000 (원본).\n'            > "$DV2/014_real/docs/business/BUSINESS.md"
+printf -- '---\nstatus: draft\n---\n월 ₩12,000 (원본).\n'            > "$DV2/014_real/docs/business/PRD.md"
+printf -- '---\nstatus: draft\n---\n월 ₩12,000 (GTM 사본).\n'        > "$DV2/014_real/docs/business/MARKETING.md"
 REPORT="$(/bin/bash "$DRIFT" "$DV2" 2>/dev/null)"; rc=$?
 assert_exit     "drift: real canon via script-relative default"    0 "$rc"
 assert_match    "drift: real canon row catches the KRW literal"    'ARCHITECTURE.md:4: .*₩12,000'
-assert_match    "drift: hint text for the real home"               '\[\[BUSINESS\]\] §BM'
-assert_no_match "drift: BUSINESS.md itself is never drift"         'BUSINESS.md:'
-assert_no_match "drift: docs/business/ tree is never drift"        'docs/business/'
-assert_match    "drift: real-canon vault counts"                   '1 finding(s) (1 docs)'
+assert_match    "drift: hint text for the real home"               '\[\[PRD\]\] §BM'
+assert_no_match "drift: PRD.md itself is never drift"              'PRD.md:'
+# The inverse of the assert this replaced. A non-home file under docs/business/ is scanned now,
+# and this is the only thing standing between that and a quiet return to the old blanket
+# exemption — which is exactly how the MARKETING price literals stayed invisible.
+assert_match    "drift: a non-home file in docs/business/ is scanned" 'MARKETING.md:4: .*₩12,000'
+assert_match    "drift: real-canon vault counts"                   '2 finding(s) (2 docs)'
 
 # Clean vault — OK line with a visible scan count (a collapsed scan must not look clean).
 DV3="$(mktemp -d -t brain-selftest-drift3)"
