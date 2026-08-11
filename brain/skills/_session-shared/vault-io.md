@@ -9,6 +9,19 @@
 - 🔴 **The reason is `Edit`'s `old_string`, which is a compare-and-swap.** If a concurrent session moved the anchor, the edit **fails loudly** instead of silently swallowing that session's work. `Write` on an existing file has no such check — it discards whatever landed there since you last read it.
 - **The party doing the write is the `scribe` worker.** The PM (main session) does not write vault content directly even though it holds the tool — single-scribe discipline (canon: `docs/memory-control-convention.md` §Governance). Do not bypass; delegate.
 
+### Proving a write landed — the method differs by layer
+
+🔴 **`git diff` cannot verify a raw-layer write.** `hippocampus/` is gitignored by canon (`vault-tree.md` §Layers — raw stays out of git, durability is an OS-level backup concern), so `git diff --numstat` on a session note returns **empty output whether the write succeeded or not**. A brief that asks for a git proof there is asking for something the tree cannot give, and an empty numstat reads exactly like "the insert never happened" — measured 2026-08-12, a scribe nearly reported a successful insert as a failure on that basis.
+
+| Layer | Proof |
+|---|---|
+| wiki · docs · common (tracked) | `git diff --numstat` — additions/deletions, and `-M` for moves |
+| **raw (`hippocampus/`, untracked)** | **line/byte arithmetic**: the inserted block's own byte count must equal the file's byte delta, and any in-place substitution must be length-neutral (or its delta accounted for separately) |
+
+The arithmetic proof is not a weaker substitute — combined with `Edit`'s single-match semantics it pins the same claim: the block went in and nothing else moved. State which layer you are in before choosing the method.
+
+⚠ **The raw layer's untracked status also blinds `git status` to concurrent writes.** Two sessions editing `hippocampus/` will not collide in any git surface; `Edit`'s compare-and-swap is the only defense that exists there.
+
 ## 2. The `obsidian` CLI — `create` is banned, reads are not
 
 **`obsidian create` is forbidden for vault content**, and the precise reason matters because it is narrower than "the CLI is buggy":
