@@ -39,6 +39,7 @@ COMMON=org
 mkdir -p "$V/hippocampus/nested" "$V/013_selftest/p_memory/nested" \
          "$V/013_selftest/docs/policy" "$V/013_selftest/docs/adr" \
          "$V/013_selftest/docs/develop" "$V/014_mirror/docs/develop" \
+         "$V/014_mirror/docs/adr" "$V/015_adrgap/docs/adr" \
          "$V/$COMMON/facts" "$V/$COMMON/facts/machines" \
          "$V/$COMMON/patterns" "$V/$COMMON/policies" \
          "$V/999_tools" "$V/neocortex"
@@ -370,6 +371,41 @@ printf -- '---\ntitle: stray policy toc\n---\n'                > "$V/013_selftes
 printf -- '---\nstatus: draft\n---\n# P_POLICY\n\n## POL-001 a rule\n' > "$V/013_selftest/docs/develop/P_POLICY.md"  # the live model — a plain singleton, no id:
 printf -- '---\nstatus: draft\n---\ndecision\n'                > "$V/013_selftest/docs/adr/KJP-ADR-00001.md"     # missing id
 printf -- '---\ntitle: adr toc\n---\n'                         > "$V/013_selftest/docs/adr/index.md"             # missing next_id (legacy form)
+
+# ---- ADR ID audit (KJP-83): duplicate ids · sequence gaps · next_id coherence ----
+# Three folders, because every rule here is judged PER FOLDER — one counter, one sequence — and a
+# single folder cannot pin that. The id strings deliberately repeat ACROSS folders (013 and 015
+# both carry KJP-ADR-00002 and KJP-ADR-00004): each folder owns its own counter, so the same
+# string in two folders is not a collision, and an audit that grouped by id alone would report
+# two here. Every fixture carries `status:` and `id:` so it fails the audit rule and nothing else.
+#
+# 013_selftest/docs/adr — the sequence gap, plus the filename fallback. Its `KJP-ADR-00001.md`
+# above carries NO `id:` (that file is the missing-id fixture), so the number 00001 exists only
+# as a filename. It must still read as consumed: reporting it as a hole too would say "the record
+# is gone" about a file sitting right there, and the missing-id finding already owns it. That
+# leaves exactly one hole, 00003 — which is what the assert's trailing space pins.
+printf -- '---\nstatus: draft\nid: KJP-ADR-00002\n---\ndecision\n' > "$V/013_selftest/docs/adr/KJP-ADR-00002.md"
+printf -- '---\nstatus: draft\nid: KJP-ADR-00004\n---\ndecision\n' > "$V/013_selftest/docs/adr/KJP-ADR-00004.md"
+
+# 014_mirror/docs/adr — the duplicate, and the counter running behind. 🔴 The two duplicate files
+# carry NON-ASCII names on purpose: the audit's sets are awk subscripts (byte-exact, no collation)
+# rather than `sort -u`, and this pair is what proves it — under a UTF-8 collation locale macOS
+# `sort -u` treats such names as equal and would collapse the pair to one file, turning a
+# 2-file collision into a silent 1 (the KJP-74 hazard, measured 2026-08-05). The existing
+# 가/나/다/라 fixtures cannot stand in: they live in p_memory/ and no ADR scan ever reads them.
+# next_id 2 sits BELOW the highest issued id (3), so the next number the PM hands out is already
+# taken — the one direction of counter drift with no legal reading.
+printf -- '---\nnext_id: 2\n---\n'                                > "$V/014_mirror/docs/adr/_index.md"
+printf -- '---\nstatus: draft\nid: MIR-ADR-00001\n---\ndecision\n' > "$V/014_mirror/docs/adr/MIR-ADR-00001.md"
+printf -- '---\nstatus: draft\nid: MIR-ADR-00002\n---\ndecision\n' > "$V/014_mirror/docs/adr/결정-가.md"
+printf -- '---\nstatus: draft\nid: MIR-ADR-00002\n---\ndecision\n' > "$V/014_mirror/docs/adr/결정-나.md"
+printf -- '---\nstatus: draft\nid: MIR-ADR-00003\n---\ndecision\n' > "$V/014_mirror/docs/adr/MIR-ADR-00003.md"
+
+# 015_adrgap/docs/adr — two holes at once (the list form), and the quiet half of the counter
+# judgment: next_id 5 = highest issued + 1, which is exactly coherent and must stay silent.
+printf -- '---\nnext_id: 5\n---\n'                                > "$V/015_adrgap/docs/adr/_index.md"
+printf -- '---\nstatus: draft\nid: KJP-ADR-00002\n---\ndecision\n' > "$V/015_adrgap/docs/adr/KJP-ADR-00002.md"
+printf -- '---\nstatus: draft\nid: KJP-ADR-00004\n---\ndecision\n' > "$V/015_adrgap/docs/adr/KJP-ADR-00004.md"
 # API_SPEC mirror contract: `source:` + `readonly: true`. PASS and FAIL live in two projects
 # because the singleton filename can exist only once per docs tree.
 printf -- '---\nstatus: draft\nsource: repo/openapi.yaml\nreadonly: true\nsynced: 2026-07-28T10:00:00\n---\nmirror\n' \
@@ -559,6 +595,26 @@ assert_match   "docs fm: quoted session key is caught"       'fm-qsession.md:3: 
 assert_no_match "docs fm: quoted status registers as status" 'fm-qsession.md:1: missing frontmatter key: status'
 assert_match   "adr/: missing id is caught"                  'adr/KJP-ADR-00001.md:1: missing id:'
 assert_match   "adr/: legacy index.md without next_id is caught" 'adr/index.md:1: missing next_id:'
+
+# ADR ID audit (KJP-83) — the three rules land on three different folders, so a change that kills
+# one rule leaves the other two asserts alive and says which half broke.
+assert_match   "adr: duplicate id is caught"                 'duplicate ADR id: MIR-ADR-00002 is carried by 2 files'
+# Two asserts, one per participant, rather than one pattern naming both in order: the file list
+# follows the docs scan's `sort`, whose order for non-ASCII names is the caller's locale. What
+# must hold is that BOTH survive into the message — a collation-collapsing set would drop one.
+assert_match   "adr: the duplicate names its first non-ASCII file"  'duplicate ADR id: MIR-ADR-00002.*결정-가[.]md'
+assert_match   "adr: the duplicate names its second non-ASCII file" 'duplicate ADR id: MIR-ADR-00002.*결정-나[.]md'
+assert_match   "adr: two holes are listed in one finding"    '015_adrgap/docs/adr/KJP-ADR-00004.md:1: gap in the ADR sequence: KJP-ADR-00001, KJP-ADR-00003 '
+# 🔴 The trailing space is the assert: it pins that 00003 is the WHOLE list. Drop the filename
+# fallback and 00001 joins it (`KJP-ADR-00001, KJP-ADR-00003`), and this pattern stops matching —
+# which is the only thing standing between the fallback and a finding that names a file that exists.
+assert_match   "adr: a numbered file with no id: still consumes its number" '013_selftest/docs/adr/KJP-ADR-00004.md:1: gap in the ADR sequence: KJP-ADR-00003 '
+assert_match   "adr: next_id at or below the highest issued id is caught" '014_mirror/docs/adr/_index.md:2: next_id 2 is not ahead of the highest issued id MIR-ADR-00003'
+assert_no_match "adr: next_id at highest + 1 is coherent"    '015_adrgap/docs/adr/_index.md:.*next_id'
+# Folder isolation. Both ids exist twice in this vault — once in 013, once in 015 — and neither is
+# a duplicate, because a counter's scope is its own folder (§ID Issuance). Group by id alone and
+# this fires.
+assert_no_match "adr: the same id under another folder is not a duplicate" 'duplicate ADR id: KJP-ADR-0000[24]'
 # KJP-79 — the retired half. Each of these fired before the folder model was dropped, so together
 # they are the only thing standing between the new rule and a silent regression back to it.
 assert_no_match "policy/: a body file no longer needs id:"   'legacy-rule.md'
@@ -623,9 +679,10 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 #     wl-neo; _index/dream-logs excluded) + 3 tools (_index.md excluded)
 #   5 wiki indexes — the folder TOCs the note scan just excluded, counted by the scan that owns
 #     them: p_memory/_index + neocortex/_index + 999_tools/_index + org/facts/_index + org/_index
-#   5 docs indexes — every index under a project folder that the wiki scan does not own (KJP-82):
+#   7 docs indexes — every index under a project folder that the wiki scan does not own (KJP-82):
 #     013_selftest/_index (the hub) + docs/_index + docs/policy/_index + docs/adr/index (legacy
-#     spelling) + docs/develop/_index. 🔴 The hub is in NO other count — it is above docs/ and
+#     spelling) + docs/develop/_index + the two ADR-audit TOCs (014_mirror/docs/adr/_index +
+#     015_adrgap/docs/adr/_index). 🔴 The hub is in NO other count — it is above docs/ and
 #     outside every wiki root — so this number is the only evidence that half of the scan ran.
 #     p_memory/nested/_index is excluded here and out of scope there, which is what its own
 #     dangling fixture pins.
@@ -636,17 +693,25 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 #     retired-keys — the three repeat [[good]] lines and the link-less bullet add nothing, it is a
 #     set) + 4 neocortex + 4 tools + 5 org/facts (4 stems + 1 vault-relative) + 3 org/_index
 #     (1 stem + 2 vault-relative)
-#   55 shared — 24 docs-tree files (23 under 013 + the 014_mirror API_SPEC; no exclusions on
-#     this surface) + 16 p_memory (recursive here, so _index/0.*/nested all count; includes the
-#     four non-ASCII stems, 마, orphan and nested/_index) + 10 common (the two _index files count
-#     here) + 5 neocortex (whole folder, meta files included). 🔴 The project hub is NOT here:
-#     this sweep takes docs/ and p_memory/, and the hub sits one level above both.
-#   24 docs — the same 24 docs-tree files counted again by the docs frontmatter scan
+#   65 shared — 34 docs-tree files (25 under 013 + 6 under 014_mirror (API_SPEC + the ADR-audit
+#     folder) + 3 under 015_adrgap; no exclusions on this surface) + 16 p_memory (recursive here,
+#     so _index/0.*/nested all count; includes the four non-ASCII stems, 마, orphan and
+#     nested/_index) + 10 common (the two _index files count here) + 5 neocortex (whole folder,
+#     meta files included). 🔴 The project hub is NOT here: this sweep takes docs/ and p_memory/,
+#     and the hub sits one level above both.
+#   34 docs — the same 34 docs-tree files counted again by the docs frontmatter scan
 #     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 2 (the retired-folder guard) · P_POLICY ·
-#     adr/ 2 · docs/_index · develop/_index ·
+#     adr/ 10 (2 presence fixtures + 8 audit fixtures across three folders) · docs/_index ·
+#     develop/_index · the two ADR-audit TOCs ·
 #     문서가 · 문서나 — index/_index counted here: meta files skip rules, not the scan).
 #     It tracks the docs-tree half of `shared` exactly, and the hub's absence from both is what
 #     makes `docs indexes` the only place the hub can appear.
+#   8 adr ids — the ADR audit's evidence base: `id:` values harvested from docs/adr/ body files
+#     (013: 00002 + 00004 · 014: 4 including the duplicated pair · 015: 00002 + 00004). 🔴 Like
+#     `entries` it is a payload count, not a file count, and for the same reason: a folder of
+#     ADRs whose ids never got parsed reports zero duplicates and zero gaps — identical to a
+#     clean vault. 013's `KJP-ADR-00001.md` is NOT in it (no `id:` key), which is exactly why
+#     that file needs the filename fallback to stay out of the gap list.
 # 🔴 The asymmetry is the KJP-44 scope split, and the two numbers pin both halves: the tools root
 # raises the wiki count (recall mirror) and leaves the shared count untouched (gitignored,
 # so not the shared surface). Moving it to the wrong scan breaks whichever number it lands on.
@@ -664,7 +729,7 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # verbatim because it records what was measured then, not what this fixture set counts now:
 # every other count was byte-identical before and after (19 sessions, 102 knowledge, 321 shared,
 # 24 issues).
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 25 wiki, 5 wiki indexes, 5 docs indexes, 26 entries, 55 shared, 24 docs)'
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 25 wiki, 5 wiki indexes, 7 docs indexes, 26 entries, 65 shared, 34 docs, 8 adr ids)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -681,10 +746,32 @@ printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]]\n' \
   > "$W/013_wl/docs/only.md"
 REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
 assert_exit  "wikilink-only vault exits 0 in default mode" 0 "$rc"
-assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 1 shared, 1 docs)'
+assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 1 shared, 1 docs, 0 adr ids)'
 /bin/bash "$VALIDATE" "$W" --strict > /dev/null 2>&1
 assert_exit  "a wikilink finding alone fails --strict" 1 $?
 rm -rf "$W"
+
+# Same isolation for the ADR audit: one folder, one finding, so `--strict` can be traced to this
+# rule alone. Every other ADR obligation is satisfied here (status, id, next_id all present), which
+# is the point — the audit fires on a vault that the presence checks call clean.
+# 🔴 It also carries the QUIET half of the counter judgment, which no assert in the main vault can:
+# `next_id: 3` sits two above the highest issued id (00001), i.e. a number was issued and its file
+# is not written yet. Canon puts the PM's issuance *in advance* (§ID Issuance), so that direction
+# is legal and must stay silent — not even a warn, which is reserved for legacy-legal.
+A="$(mktemp -d -t brain-selftest-adr)"; mkdir -p "$A/hippocampus" "$A/013_adr/docs/adr"
+printf -- '---\nnext_id: 3\n---\n'                          > "$A/013_adr/docs/adr/_index.md"
+printf -- '---\nstatus: draft\nid: X-ADR-00001\n---\nd\n'   > "$A/013_adr/docs/adr/X-ADR-00001.md"
+printf -- '---\nstatus: draft\nid: X-ADR-00001\n---\nd\n'   > "$A/013_adr/docs/adr/X-ADR-00002.md"
+REPORT="$(/bin/bash "$VALIDATE" "$A" 2>/dev/null)"; rc=$?
+assert_exit  "adr-audit-only vault exits 0 in default mode" 0 "$rc"
+assert_match "the duplicate id is the only finding in that vault" 'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 wiki indexes, 1 docs indexes, 0 entries, 3 shared, 3 docs, 2 adr ids)'
+# Anchored to the counter rule's own wording, not the bare word `next_id`: the duplicate message
+# names next_id too (it explains where a collision comes from), so a looser pattern would report
+# the explanation as a violation.
+assert_no_match "adr: issuance in advance (next_id above highest + 1) is silent" 'is not ahead of the highest issued id'
+/bin/bash "$VALIDATE" "$A" --strict > /dev/null 2>&1
+assert_exit  "a duplicate ADR id alone fails --strict" 1 $?
+rm -rf "$A"
 
 # unreadable file becomes a finding rather than a silent stderr warning
 CHMOD_OK=1
@@ -728,7 +815,7 @@ assert_match    "other scans survive the tools override"        'facts/facts-no-
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/hippocampus"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
-assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 0 shared, 0 docs)'
+assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 0 shared, 0 docs, 0 adr ids)'
 # No `.brain-paths` here either: the schema_version rule must stay silent on a vault that never
 # declared a manifest, because every key then resolves to its documented default — a legal vault.
 assert_no_match "empty vault: an absent manifest is legal and silent" 'schema_version'
@@ -759,6 +846,7 @@ rm -rf "$H"
 R="$(mktemp -d -t brain-selftest-restructured)"
 mkdir -p "$R/hippocampus" "$R/_primary/patterns" "$R/_primary/_company/machines" \
          "$R/projects/013_restructured/p_memory" "$R/projects/013_restructured/docs" \
+         "$R/projects/013_restructured/docs/adr" \
          "$R/999_Archive" "$R/_templates/machines" "$R/gear" "$R/neocortex"
 printf -- 'schema_version: 2\ncommon_root: _primary\nprojects_root: projects\ntools_root: gear\n' > "$R/.brain-paths"
 # tools_root moves the tools layer like the other two axes — a no-summary note under gear/
@@ -781,6 +869,12 @@ printf -- '---\nupdated: 2026-07-18\n---\n' > "$R/_templates/machines/hardware.m
 # under projects/<NNN_*>/docs must be found, or the scan silently missed the moved tree.
 printf -- '---\nstatus: draft\nhistory:\n  - { at: 2026-07-28T10:00:00, change: x, session: "RS-20260718-120000" }\n---\n' \
   > "$R/projects/013_restructured/docs/rs-fm-session.md"
+# The ADR audit reads the docs-layer file list rather than a scan root of its own, so a moved
+# projects_root reaches it through that list or not at all. This pair is what pins the reuse: swap
+# the filter for a literal `find "$VAULT"/[0-9][0-9][0-9]_*/docs/adr` and the audit returns zero
+# here — silently, and looking exactly like a vault with no ADRs.
+printf -- '---\nstatus: draft\nid: RS-ADR-00001\n---\nd\n' > "$R/projects/013_restructured/docs/adr/RS-ADR-00001.md"
+printf -- '---\nstatus: draft\nid: RS-ADR-00003\n---\nd\n' > "$R/projects/013_restructured/docs/adr/RS-ADR-00003.md"
 REPORT="$(/bin/bash "$VALIDATE" "$R" 2>&1)"
 assert_match    "restructured: common root under _primary is scanned"   'rs-pattern-no-summary.md'
 assert_match    "restructured: nested common subtree is scanned"        'rs-nested-no-summary.md'
@@ -793,7 +887,8 @@ assert_match    "restructured: the moved common layer's TOC is scanned" '_compan
 assert_no_match "restructured: 999_Archive is excluded"                 'rs-archived-no-summary.md'
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 6 shared, 1 docs)'
+assert_match    "restructured: the ADR audit follows the manifest too"  'RS-ADR-00003.md:1: gap in the ADR sequence: RS-ADR-00002'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 8 shared, 3 docs, 2 adr ids)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
 printf -- 'schema_version: 2\ncommon_root: nope\n' > "$R/.brain-paths"
@@ -819,7 +914,7 @@ assert_no_match "org vault: _index-only folder is not asked for a summary" 'empt
 assert_match    "org vault: the _index-only folder's TOC is still scanned" 'empty-axis/_index.md:1: dangling _index link: \[\[x\]\]'
 assert_no_match "org vault: absent tools root is silent (legal state)"  '999_tools'
 assert_no_match "org vault: no missing-root warning at all"             'not found'
-assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 2 shared, 0 docs)'
+assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 2 shared, 0 docs, 0 adr ids)'
 rm -rf "$R2"
 
 # usage errors exit 2 (documented separately from the findings exit codes)
