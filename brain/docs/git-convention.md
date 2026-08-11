@@ -1,6 +1,6 @@
 # git-convention — 타입 어휘 · 표기 · 브랜치 · 워크트리 · 흐름 · 경계
 
-> 프로젝트 유형(모바일·웹·SaaS·독립형)과 무관한 git 표면 공통 규칙. **flow 선택(GitHub Flow/GitFlow)·브랜치 운용은 각 프로젝트 `docs/tech-design/RUNBOOK.md` §Delivery 소관** — onboard 가 유형을 물어 추천한다.
+> 프로젝트 유형(모바일·웹·SaaS·독립형)과 무관한 git 표면 공통 규칙. **flow 선택(GitHub Flow/GitFlow)·브랜치 운용은 각 프로젝트 `docs/develop/RUNBOOK.md` §Delivery 소관** — onboard 가 유형을 물어 추천한다.
 > 🔴 이 문서가 하네스의 정본이다 (2026-07-28 승격 — 종전 정본이던 개인 `at` 스킬·볼트 미러는 이 문서를 가리킨다). 배포되는 플러그인은 사용자 개인 스킬에 의존할 수 없다.
 > 🔴 **배포 환경은 여기 없다.** 환경 수·티어 = 볼트 공통층 `common_policy.md` §배포 분류 · **브랜치↔환경 매핑**과 게이트 실측값 = 프로젝트 `RUNBOOK.md` §배포 `### 환경`. 여기는 형식만 담는다.
 > 문서 규약 → [[project-docs-convention]] · 트리 → [[vault-tree]]

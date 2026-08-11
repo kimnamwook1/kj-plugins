@@ -248,9 +248,9 @@ the **shape**, with each movable axis written as the manifest key that resolves 
       _index.md          #   project hub — pointer index + project PREFIX
       p_memory/          #   project knowledge (semantic, atomic notes) — recall target
         <pp>_<slug>.md
-      docs/              #   official docs — tech-design/ · adr/ · research/ · business/
-                         #   policy/ · feature/<F>/ (FRD · TDC — diagrams live in its
-                         #   §Diagrams — · feature policies)
+      docs/              #   official docs — business/ · develop/ · adr/ · resources/ ·
+                         #   policy/ · develop/feature/<F>/ (FRD · TDC — diagrams live in
+                         #   its §Diagrams — · feature policies)
   <tools_root>/          # machine-global tool inventory — opt-in (onboard step 6) ·
                          # git-untracked, 9xx = reserved band
     tool-{mcp,skill,cli,plugin}.md
