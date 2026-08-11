@@ -5,6 +5,10 @@ updated: 2026-07-25T12:00:00
 
 # docs-samples — 통합안 검토용 시안 (2026-07-25)
 
+> 🔴 **2026-07-25 시점 스냅샷이다. 현행 canon 이 아니다.** 이 트리는 그날의 검토안을 보존한 기록이고, 이후 0.2.0 랜딩이 최소 세 축에서 그것을 지나쳤다 — **정책**(`docs/policy/<PREFIX>-POL-0000N` 폴더형 → `docs/develop/P_POLICY.md` 단일 파일 + `## POL-NNN` 조항, KJP-79) · **경로 중첩**(`docs/develop/` 계층 신설, KJP-63) · **API_SPEC 생성 주체**(`dreaming` → PM 위임 동기화 워커, KJP-77). 현행 정본은 `brain/docs/` 와 `.artifact/brain-0.2.0.html` 이다.
+>
+> 고치지 않고 배너만 다는 이유 — **기록을 현재에 맞춰 고치는 것은 정합이 아니라 위조**다(`brain/docs/vault-tree.md` §Renaming a path term). 시안으로서의 값을 되살리려면 세 축을 함께 재생성해야 하고 그건 별건이다.
+
 > 커밋·플러그인 반영 전 검토용. 가상 프로젝트 **vidnote**(유튜브 요약 노트 SaaS)로 채워진 모습을 보여준다.
 
 ## 사전 스텁 19 → 6
