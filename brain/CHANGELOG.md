@@ -2,6 +2,11 @@
 
 ## 0.2.4 — 2026-08-12
 
+### Fixed
+- **MILESTONE 홈이 두 문서에서 갈려 있었다 — `doc-templates` 가 틀렸다 (KJP-88).** `doc-templates.md` §MILESTONE §Boundaries 가 홈을 `docs/` 루트라 적고, `doc-catalog.md` §MILESTONE home 노트는 `docs/business/` 라 적고 있었다. **판정은 새로 하지 않았다 — 전서가 이미 답을 갖고 있다**: `.artifact/brain-0.2.0.html` §트리의 `business/` 블록이 `MILESTONE.md` 를 `◇ 상황적` 로 등재한다(`PRD`·`MARKETING`·`COMPLIANCE` 와 같은 블록). `brain/docs/vault-tree.md` `docs/business/` 블록도 같은 자리에 적고 있어 **틀린 쪽은 `doc-templates` 하나**였다.
+  - **볼트 실물이 canon 과 일치한다** — `find` 실측: `projects/013_kj-plugins/docs/business/MILESTONE.md` 1건. 문서만 뒤처져 있었고 볼트 이동은 필요 없다.
+  - 고친 문장은 홈만 바꾸지 않고 **왜**(로드맵은 business 축 문서)와 **대조 포인터 2개**(`doc-catalog` §MILESTONE home 노트 · `vault-tree` `docs/business/` 블록)를 같이 실었다 — 한쪽만 적힌 사실은 다음 스윕에서 또 갈린다.
+
 ### Changed
 - 🔴 **`.base` 7종 폐기 — 못 만든 것이 아니라 안 만들기로 했다 (KJP-83).** 사용자 판정 2026-08-12: 「저 base 는 사람이 보기 위함이야. 필요 없으면 그냥 없애자, 어차피 `sl` 로 보면 되니까.」 §트리의 7종(`projects`·`feature`·`adr`·`p_memory`·`neocortex`·`hippocampus`·`tools`)과 **그것에 기대던 근거 문장**을 전서·`vault-tree`·`skills/dreaming` 에서 함께 걷어냈다.
   - 🔴 **「content spec 부재」는 폐기 사유가 아니다** — 이전 카드 문구를 물려받지 않았다. 포맷은 Obsidian Bases 의 것이라 **발명할 것이 없었고**, 볼트 실물이 동작 형태를 이미 보여주고 있었다. 만들 수 있었는데 **필요 없다고 판정한 것**이다.
