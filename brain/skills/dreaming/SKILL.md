@@ -44,7 +44,7 @@ The biggest risk is bad consolidation polluting memory, and a wrong merge or del
 
 ## dream-log
 
-One file, appended to: `neocortex/dream-logs.md`. No folder, no `_index.md`, no `.base`. Frontmatter is one key; the body is bullets with no headings.
+One file, appended to: `neocortex/dream-logs.md`. No folder, no `_index.md`. Frontmatter is one key; the body is bullets with no headings.
 
 ```markdown
 ---
