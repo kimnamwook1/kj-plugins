@@ -33,6 +33,8 @@ assert_exit() {    # <desc> <expected> <actual>
 # `common_root: org` into `.brain-paths`, and every fixture vault below declares it the same way
 # a real vault does. `neocortex/` and `hippocampus/` take no manifest key — they are root-fixed
 # (vault-paths.sh manifests only the axes that move between vaults).
+# 🔴 `docs/policy` below is a KJP-79 regression guard, NOT a supported layout — the folder model
+# is retired and its two fixtures exist only to pin that it now gets no special treatment.
 COMMON=org
 mkdir -p "$V/hippocampus/nested" "$V/013_selftest/p_memory/nested" \
          "$V/013_selftest/docs/policy" "$V/013_selftest/docs/adr" \
@@ -244,9 +246,11 @@ printf -- '---\nsummary: common root note\n---\ndream report [[20260719-005513]]
 #   · `cc_session_ids:` pins the underscore guard — the session-key rule must not match the
 #     key "session" inside a longer key. It replaces the retired `source_sessions:` here: the
 #     guard needs a live 0.2.0 key, or the fixture pins the rule with a token nobody writes;
-#   · `[[<PREFIX>-ADR-0000N]]` / `[[<ID>]]` are vault-internal doc-to-doc links that
-#     project-docs-convention mandates — they must never be caught by the wikilink rule.
-printf -- '---\nstatus: draft\ncc_session_ids: [cc-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[KJP-POL-00002]]\n' \
+#   · `[[<PREFIX>-ADR-0000N]]` and the anchored `[[P_POLICY#POL-NNN]]` are the two vault-internal
+#     doc-to-doc link forms project-docs-convention mandates — neither may be caught by the
+#     wikilink rule. The anchored form replaced `[[KJP-POL-0000N]]` when the POL document ID was
+#     retired (KJP-79), and it carries a `#` fragment, which no other fixture exercises.
+printf -- '---\nstatus: draft\ncc_session_ids: [cc-20260718-120006]\nhistory:\n  - { at: 2026-07-26T12:00:00, change: one line, ticket: "KJP-41" }\n---\nsee 20260719-005514 plus [[another-note]], [[KJP-ADR-00001]], [[P_POLICY#POL-003]]\n' \
   > "$V/013_selftest/docs/wl-plain.md"
 
 # ------------------------------------------------- docs-layer indexes + the project hub (KJP-82)
@@ -350,13 +354,20 @@ printf -- '---\nstatus: draft\nhistory: [{ at: 2026-07-20T10:00:00, date: 2026-0
   > "$V/013_selftest/docs/fm-flowhist.md"
 printf -- '---\n"status": draft\n"session": KJP-20260718-120000\n"kind": prd\n---\nbody\n' \
   > "$V/013_selftest/docs/fm-qsession.md"
-# docs/policy/ · docs/adr/ — body files need `id:` (multi-instance, PM-issued, immutable);
-# their _index/index carry the folder's `next_id:` counter instead. Both folder forms and
-# both TOC spellings get one fixture each, PASS and FAIL paired — canonical `_index.md`
-# passes, the legacy `index.md` fixture pins that the old spelling is still checked.
-printf -- '---\nstatus: draft\nid: KJP-POL-00001\n---\nrule\n' > "$V/013_selftest/docs/policy/KJP-POL-00001.md"
-printf -- '---\nstatus: draft\n---\nrule\n'                    > "$V/013_selftest/docs/policy/KJP-POL-00002.md"  # missing id
-printf -- '---\nnext_id: 3\n---\n'                             > "$V/013_selftest/docs/policy/_index.md"         # counter present — quiet (canonical form)
+# docs/adr/ — body files need `id:` (multi-instance, PM-issued, immutable); its _index/index
+# carries the folder's `next_id:` counter instead. Both TOC spellings get a fixture — the
+# canonical `_index.md` passes elsewhere, and the legacy `index.md` fixture here pins that the
+# old spelling is still checked.
+#
+# 🔴 `docs/policy/` is the RETIRED half (KJP-79). Policy is now a `## POL-NNN` heading inside the
+# `docs/develop/P_POLICY.md` singleton, so no policy path is multi-instance any more: no `id:` on
+# a body file, no `next_id:` on a folder index. The two fixtures below are kept deliberately as a
+# **regression guard, not as a supported layout** — a vault predating the change can still carry
+# the stray folder, and both files must now pass in silence. Delete them and the rule removal
+# stops being tested by anything (both fired before KJP-79 and neither may fire after).
+printf -- '---\nstatus: draft\n---\nrule\n'                    > "$V/013_selftest/docs/policy/legacy-rule.md"    # no id: — must NOT fire
+printf -- '---\ntitle: stray policy toc\n---\n'                > "$V/013_selftest/docs/policy/_index.md"         # no next_id: — must NOT fire
+printf -- '---\nstatus: draft\n---\n# P_POLICY\n\n## POL-001 a rule\n' > "$V/013_selftest/docs/develop/P_POLICY.md"  # the live model — a plain singleton, no id:
 printf -- '---\nstatus: draft\n---\ndecision\n'                > "$V/013_selftest/docs/adr/KJP-ADR-00001.md"     # missing id
 printf -- '---\ntitle: adr toc\n---\n'                         > "$V/013_selftest/docs/adr/index.md"             # missing next_id (legacy form)
 # API_SPEC mirror contract: `source:` + `readonly: true`. PASS and FAIL live in two projects
@@ -546,11 +557,13 @@ assert_match   "docs fm: v1 history date: in flow style"     'fm-flowhist.md:3: 
 assert_match   "docs fm: quoted by: in flow style"           'fm-flowhist.md:3: v1 history key "by:"'
 assert_match   "docs fm: quoted session key is caught"       'fm-qsession.md:3: session key in docs frontmatter'
 assert_no_match "docs fm: quoted status registers as status" 'fm-qsession.md:1: missing frontmatter key: status'
-assert_match   "policy/: missing id is caught"               'policy/KJP-POL-00002.md:1: missing id:'
 assert_match   "adr/: missing id is caught"                  'adr/KJP-ADR-00001.md:1: missing id:'
-assert_no_match "policy/: id present passes"                 'KJP-POL-00001.md'
 assert_match   "adr/: legacy index.md without next_id is caught" 'adr/index.md:1: missing next_id:'
-assert_no_match "policy/: _index.md with next_id passes"     'policy/_index.md'
+# KJP-79 — the retired half. Each of these fired before the folder model was dropped, so together
+# they are the only thing standing between the new rule and a silent regression back to it.
+assert_no_match "policy/: a body file no longer needs id:"   'legacy-rule.md'
+assert_no_match "policy/: a folder index no longer needs next_id:" 'policy/_index.md'
+assert_no_match "P_POLICY: the singleton is a plain body doc, no id:" 'P_POLICY.md'
 assert_match   "API_SPEC mirror: missing source is caught"   '014_mirror/docs/develop/API_SPEC.md:1: missing source:'
 assert_match   "API_SPEC mirror: missing readonly is caught" '014_mirror/docs/develop/API_SPEC.md:1: API_SPEC mirror without readonly: true'
 assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/develop/API_SPEC.md'
@@ -568,8 +581,9 @@ REPORT="$SAVED_REPORT"
 assert_no_match "plain uid + v2 history: template pass"      'wl-plain.md'
 assert_no_match "non-uid wikilinks are not flagged"          'another-note'
 # Pattern is anchored to the wikilink message — the id/next_id fixtures above legitimately
-# put KJP-ADR/KJP-POL filenames into the findings stream, and must not trip this assert.
-assert_no_match "ADR/policy doc wikilinks are not session uids" 'wikilink on the shared surface: .*KJP-\(ADR\|POL\)'
+# put KJP-ADR filenames into the findings stream, and must not trip this assert.
+assert_no_match "ADR doc wikilinks are not session uids"     'wikilink on the shared surface: .*KJP-ADR'
+assert_no_match "an anchored policy link is not a session uid" 'wikilink on the shared surface: .*P_POLICY'
 assert_no_match "session wikilinks inside hippocampus/ are legal" 'WL-20260718-120014'
 assert_no_match "clean session note produces no finding"     'CLEAN-20260718-120000'
 assert_no_match "parked is a legal session status"           'PARKED-20260718-120012'
@@ -628,7 +642,8 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 #     here) + 5 neocortex (whole folder, meta files included). 🔴 The project hub is NOT here:
 #     this sweep takes docs/ and p_memory/, and the hub sits one level above both.
 #   24 docs — the same 24 docs-tree files counted again by the docs frontmatter scan
-#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 3 · adr/ 2 · docs/_index · develop/_index ·
+#     (3 wl-* · 10 fm-* · 2 API_SPEC · policy/ 2 (the retired-folder guard) · P_POLICY ·
+#     adr/ 2 · docs/_index · develop/_index ·
 #     문서가 · 문서나 — index/_index counted here: meta files skip rules, not the scan).
 #     It tracks the docs-tree half of `shared` exactly, and the hub's absence from both is what
 #     makes `docs indexes` the only place the hub can appear.
