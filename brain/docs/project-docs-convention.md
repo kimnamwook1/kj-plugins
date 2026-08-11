@@ -58,12 +58,13 @@ history:
 
 | Path | kind |
 |---|---|
-| `docs/tech-design/<SINGLETON>.md` | singleton filename mapping: `PRD.md`→`prd` · `ARCHITECTURE.md`→`architecture` · `API_SPEC.md`→`api` · `THREAT_MODEL.md`→`threat-model` · `CODE_CONVENTION.md`→`code-convention` · `RUNBOOK.md`→`runbook` · `COMPLIANCE.md`→`compliance` · `DESIGN.md`→`design` (likewise `docs/business/BUSINESS.md`→`business` · `docs/MILESTONE.md`→`milestone`) |
-| `docs/feature/<F>/FRD.md` | `frd` |
-| `docs/feature/<F>/TDC.md` | `tdc` |
+| `docs/business/<SINGLETON>.md` | singleton filename mapping: `PRD.md`→`prd` · `BUSINESS.md`→`business` · `MILESTONE.md`→`milestone` · `COMPLIANCE.md`→`compliance` |
+| `docs/develop/<SINGLETON>.md` | singleton filename mapping: `ARCHITECTURE.md`→`architecture` · `API_SPEC.md`→`api` · `THREAT_MODEL.md`→`threat-model` · `CODE_CONVENTION.md`→`code-convention` · `RUNBOOK.md`→`runbook` · `DESIGN.md`→`design` |
+| `docs/develop/feature/<F>/FRD.md` | `frd` |
+| `docs/develop/feature/<F>/TDC.md` | `tdc` |
 | `docs/policy/<PREFIX>-POL-*` · `docs/feature/<F>/policy/<PREFIX>-POL-*` | `policy` (scope = the path: `docs/policy/` ⇒ project · `feature/<F>/policy/` ⇒ feature) |
 | `docs/adr/*` | `adr` |
-| `docs/research/**` | free-form (no kind) |
+| `docs/resources/**` | free-form (no kind) |
 
 - **Path vs an explicit field: the path wins.** A leftover `kind:`/`scope:` disagreeing with the path is stale metadata, not a second truth.
 
@@ -97,7 +98,7 @@ The pricing/tier *literal* axis is machine-checked: `scripts/value-axis-drift.sh
 
 ## stub Pre-creation Rules
 
-- **Pre-created = 6** — 5 in `tech-design/` (`PRD` · `ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`) + 1 in `business/` (`BUSINESS`). **At project onboarding the PM delegates pre-creating all of them as `status: created`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
+- **Pre-created = 6** — 2 in `business/` (`PRD` · `BUSINESS`) + 4 in `develop/` (`ARCHITECTURE` · `CODE_CONVENTION` · `RUNBOOK` · `THREAT_MODEL`). **At project onboarding the PM delegates pre-creating all of them as `status: created`.** Former standalone kinds live on as sections of these 6 ([[doc-catalog]] per-row "absorbs" notes) — split a section into its own file only when it actually grows heavy.
 - **`API_SPEC` is not pre-created** — it is a read-only repo-spec mirror (§The Only Exception below), generated and re-synced by a **PM-delegated sync worker** once an API exists. 🔴 **Never by `dreaming`** — the unattended cycle writes only `hippocampus/` · `<project>/p_memory/` · `neocortex/`, and `docs/` is written solely by an AI acting on a user instruction ([[vault-tree]] §Write permission). `COMPLIANCE` · `DESIGN` · `MILESTONE` stay situational (created on trigger).
 - **Feature document set = 3** (`FRD` · `TDC` + the `policy/` folder) — **not pre-created.** Created **at feature kickoff on PM instruction**. Not created at project creation or when onboarding an existing system (you don't yet know what the features will be).
 - **ADRs are never pre-created** — one is created only when a meaningful decision actually occurs: **the PM delegates it as a recording brief carrying the `architecture` owner label** (a brief label, not a resident agent — workers never write the vault directly; [[memory-control-convention]] §Governance. ID issued by the PM). An empty ADR is harmful — a false signal that "a decision happened".
@@ -159,7 +160,7 @@ Only **memory and design documents** live in this vault. Keep the two classes be
 
 ### The Only Exception — the API_SPEC Mirror
 
-**`docs/tech-design/API_SPEC.md` is the sole exception to the "repo = code only" principle.**
+**`docs/develop/API_SPEC.md` is the sole exception to the "repo = code only" principle.**
 
 - **SSOT = the repo's OpenAPI/JSON Schema** (CI-linted). The vault document is a **read-only mirror** — preservation against folder deletion + a wikilink target inside the vault.
 - Mirror frontmatter → §frontmatter Standard v2 mirror extension (`source` · `readonly: true` required, `synced` optional). `readonly` is ⚠️ **informational — hooks do not enforce it**.

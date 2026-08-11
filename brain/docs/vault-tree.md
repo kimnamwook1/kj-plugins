@@ -59,27 +59,28 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
       p_memory.base
     docs/                            # official documents
       _index.md
-      MILESTONE.md                   # NOT pre-created — "when what" phased delivery plan
-      tech-design/                   # pre-created stubs = the 5 below marked ★
+      business/                      # pre-created stubs = the 2 below marked ★
         _index.md
         PRD.md                       # ★ + §비기능 요구(NFR) · §용어(Glossary)
+        BUSINESS.md                  # ★ one file, two sections — §BM · §GTM
+        MILESTONE.md                 # NOT pre-created — "when what" phased delivery plan
+        COMPLIANCE.md                # situational — compliance for this project
+      develop/                       # pre-created stubs = the 4 below marked ★
+        _index.md
         ARCHITECTURE.md              # ★ + §데이터 모델(ERD) · §외부 연동(Integrations)
         CODE_CONVENTION.md           # ★ + §테스트 규율 (project-wide test discipline)
         RUNBOOK.md                   # ★ + §Delivery · §관측(Observability) · §재해 복구(DR) · §마이그레이션
         THREAT_MODEL.md              # ★ independent — security/evidence character
         API_SPEC.md                  # NOT pre-created — repo-spec read-only mirror
-        COMPLIANCE.md                # situational — compliance for this project
         DESIGN.md                    # situational — design-system spec + SSOT links
+        feature/                     # per-feature design (FRD·TDC — diagrams live in TDC §Diagrams)
+          <feature>/
+            FRD.md
+            TDC.md
+            policy/                  # rules that apply to this feature only (path = tier: feature)
       adr/                           #   standalone evidence of hard-to-reverse decisions <PREFIX>-ADR-0000N.md
-      research/                      #   research outputs (free-form)
-      business/
-        BUSINESS.md                  # ★ one file, two sections — §BM · §GTM
+      resources/                     #   research · meeting records · reference material (free-form · not a recall target)
       policy/                        # promotion tier for cross-feature product rules — project-docs-convention
-      feature/                       # per-feature design (FRD·TDC — diagrams live in TDC §Diagrams)
-        <feature>/
-          FRD.md
-          TDC.md
-          policy/                    # rules that apply to this feature only (path = tier: feature)
   <tools_root>/                      # machine-global tool inventory · opt-in · git-untracked. Reserved band (below)
     _index.md
     tool-mcp.md                      #   MCP server inventory
@@ -133,10 +134,10 @@ The bands are a default-layout property. A manifest pointing `common_root`/`tool
 ## Naming Conventions
 
 - **folders = lowercase**
-  - e.g. `docs/` · `docs/feature/` · `docs/policy/` · `docs/business/`
+  - e.g. `docs/` · `docs/develop/feature/` · `docs/policy/` · `docs/business/`
 - **required document files = uppercase**
   - `PRD.md` · `FRD.md` · `BUSINESS.md` · `RUNBOOK.md`
-  - Exception: documents under `research/` may be lowercase.
+  - Exception: documents under `resources/` may be lowercase.
 - **machine notes = `<hostname>.md`, lowercase-kebab**
   - `<common_root>/machines/kj-mac-mini-m4.md` — a fact note, so lowercase; not an uppercase document file (`COMPLIANCE.md`).
   - frontmatter = the note form of [[knowledge-convention]] (`summary` · `updated` · `related` · `aliases`), plus `verified:` for a measured fact.
