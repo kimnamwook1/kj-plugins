@@ -8,7 +8,10 @@
 # (`p_memory/` + `neocortex/` + the common and tools roots), folder indexes (`_index.md` links that
 # name a file that is not there — checked on every index recall injects, docs TOCs and project hubs
 # included; plus, on the wiki layer alone, the canonical line form and the inverse question, notes
-# no index names), unquoted wikilinks in frontmatter (`related: [[a]]` — a nested YAML sequence,
+# no index names), p_memory note filenames (`<pp>_<slug>.md` — the project prefix read from that
+# project's hub `PREFIX:` line, plus a lowercase-kebab slug; a hub declaring no prefix is reported
+# once at the hub and its notes are skipped, since nothing can say what they should be called),
+# unquoted wikilinks in frontmatter (`related: [[a]]` — a nested YAML sequence,
 # never a link; the wiki AND docs layers, since a block that does not parse is a syntax defect
 # rather than a vocabulary one), frontmatter that does not parse at all (a value opening with a
 # YAML indicator, an unclosed flow collection, or an unquoted scalar carrying `: ` — on all three
@@ -405,6 +408,91 @@ while IFS= read -r f; do
     }
   ' "$f"
 done < "$LIST" >> "$OUT"
+
+# -------------------------------------------- p_memory filenames (`<pp>_<slug>.md`)
+# 🔴 The rule entered canon 2026-08-05 (KJP-63) and had no detector, so every note written after
+# it broke it and nothing anywhere said so. Measured 2026-08-12: **0 of 480** p_memory notes carry
+# the prefix, and 146 are whole sentences. A rule that cannot be failed is a rule nobody keeps —
+# which is why this scan lands with the canon rather than after it.
+#
+# Why a filename is this layer's business and not a style opinion: the stem IS the identity key
+# here, and the namespace it must be unique in is the whole vault. Measured the same day, p_memory
+# is addressed almost entirely by BARE stem (`_index.md`: 493 bare / 0 path-qualified; note
+# `related:`: 1352 / 38) while `docs/` is addressed by path (1 / 80) — which is exactly why
+# `ARCHITECTURE.md` may sit in 11 projects at once and a p_memory stem may not. recall injects
+# several projects' `_index.md` into one context, and promotion ② lifts the note into `neocortex/`
+# beside every other project's. Canon: docs/knowledge-convention.md §Filename.
+#
+# Scope is `p_memory/` alone. `neocortex/` holds the same slug rule under a `NEO-` prefix, and the
+# common and tools roots hold neither — one scan per naming authority, so a finding here always
+# names the same fix. The other roots are left to the card that measures them.
+n_pmem=0
+while IFS= read -r pdir; do
+  pmem="$pdir/p_memory"
+  [ -d "$pmem" ] || continue
+  # 🔴 The exclusions are copied from the wiki scan above on purpose, not chosen again. The two
+  # scans must see one set of files, so that every note asked for a `summary:` is also asked for
+  # its name; a private list here is how the two scopes drift apart in silence. `$LIST` is the
+  # shared scratch buffer — the index scan below re-initializes it, as every scan in this file does.
+  : > "$LIST"
+  find "$pmem" -maxdepth 1 -type f -name '*.md' \
+    ! -name 'index.md' ! -name '_index.md' ! -name '0.*' ! -name 'dream-logs.md' 2>/dev/null >> "$LIST"
+  # No notes = nothing to name. A project folder with an empty or absent p_memory needs no PREFIX
+  # for *this* rule, and reporting one would moralize about a folder the scan never read.
+  [ -s "$LIST" ] || continue
+  hub="$pdir/_index.md"
+  if [ ! -f "$hub" ] && [ -f "$pdir/index.md" ]; then hub="$pdir/index.md"; fi
+  # The hub's `PREFIX:` line is the sole source, because it is already the only one a writer is
+  # sent to (skills/ss/SKILL.md §PREFIX). First whitespace-delimited token, so a trailing comment
+  # cannot become part of the prefix. Anchored at line start: a real hub declares `PREFIX: KJP` in
+  # column 1, and hub prose that merely mentions the word is not a declaration.
+  pfx=""
+  if [ -f "$hub" ]; then
+    pfx="$(grep -E '^[[:space:]]*PREFIX:' "$hub" 2>/dev/null | head -1 \
+           | sed 's/^[[:space:]]*PREFIX:[[:space:]]*//' | tr -d '\r' | sed 's/[[:space:]].*$//')"
+  fi
+  # 🔴 One finding at the hub, not N at the notes. Without a PREFIX there is no authority to name
+  # anything, so the linter cannot say what any of these files *should* be called — and the fix is
+  # one line in one file. Reporting each note instead would bury that fix under its own symptoms
+  # and put a number on the report that shrinks only when the hub is repaired anyway.
+  if [ -z "$pfx" ]; then
+    echo "$hub:1: project hub declares no PREFIX: line (it is the only source for the \`<pp>\` in p_memory/<pp>_<slug>.md and for session filenames, so $(wc -l < "$LIST" | tr -d ' ') note name(s) here cannot be checked or issued — knowledge-convention.md §Filename)" >> "$OUT"
+    continue
+  fi
+  n_pmem=$((n_pmem + $(wc -l < "$LIST" | tr -d ' ')))
+  # 🔴 The prefix is compared with substr/==, never spliced into a regex. It is vault data, so a
+  # hub carrying `PREFIX: A.B` would otherwise build a pattern that matches names it should not —
+  # the same class of bite as the `/`-in-a-bracket-class one this file already carries twice. Only
+  # the slug pattern is a regex, and it is a literal owned by this script.
+  # LC_ALL=C: measured 2026-08-12 this changes nothing — `[a-z0-9]` never matched Hangul under
+  # en_US.UTF-8, ko_KR.UTF-8 or C, and one-true-awk counts bytes in all three. Pinned anyway
+  # because a range is a *collation* construct and a locale-aware awk would widen it silently,
+  # which is precisely how the KJP-74 sort hazard arrived.
+  # 🔴 One finding per file, but it names BOTH halves when both are wrong. The two defects are
+  # repaired by one rename, so splitting them into two lines would double the report without
+  # adding an action — and reporting only the first would be worse: 480 of 480 notes are missing
+  # the prefix, so a first-defect-wins message would have said nothing about the 146 sentence-shaped
+  # slugs until a second pass, and a migrator following it literally would produce
+  # `KJP_<the whole sentence>.md` and still be wrong. When the prefix is absent the whole stem is
+  # the candidate slug, which is what makes the two tests independent rather than sequential.
+  LC_ALL=C awk -v pfx="$pfx" '
+    { path = $0
+      base = path; sub(/^.*\//, "", base)
+      stem = base; sub(/[.]md$/, "", stem)
+      if (substr(stem, 1, length(pfx)) == pfx && substr(stem, length(pfx) + 1, 1) == "_") {
+        pre = 1; rest = substr(stem, length(pfx) + 2)
+      } else {
+        pre = 0; rest = stem
+      }
+      keb = (rest ~ /^[a-z0-9]+(-[a-z0-9]+)*$/)
+      if (pre && keb) next
+      if (!pre && !keb) what = "carries no project prefix, and its slug is not lowercase kebab"
+      else if (!pre)    what = "carries no project prefix"
+      else              what = "slug is not lowercase kebab: \"" rest "\""
+      print path ":1: p_memory filename " what " (expected \"" pfx "_<slug>.md\", <slug> = [a-z0-9] words joined by single hyphens — the stem is the identity key on this layer, is linked by bare stem across projects, and a sentence there is a stale copy of summary:; knowledge-convention.md §Filename)"
+    }
+  ' "$LIST" >> "$OUT"
+done < <(brain_projects)
 
 # ----------------------------------------------------- folder indexes (`_index.md`)
 # 🔴 The failure mode this whole layer is built on, and the only one no other check can reach.
@@ -1180,7 +1268,12 @@ n_adr="$(tr -d ' \n' < "$NADR")"
 # The label is `wiki`, not `knowledge`: that is the canon's name for the layer (vault-tree.md
 # §Layers) and the name this file's own header has used since the 0.2.0 pass. The count line was
 # the last place the retired word survived.
-scanned="$n_sessions sessions, $n_wiki wiki, $n_index wiki indexes, $n_dindex docs indexes, $n_cover entries, $n_shared shared, $n_docs docs, $n_adr adr ids"
+# 🔴 `p_memory names` is its own number and not a slice of `wiki`: the name scan is a second,
+# independent walk (per project, so it can resolve that project's PREFIX), and it counts only the
+# notes under a hub that actually declared one. So it moves when `wiki` does not — a project whose
+# hub lost its PREFIX line keeps its notes in `wiki` and drops them from here, which is the one
+# number that distinguishes "checked and clean" from "skipped for want of an authority".
+scanned="$n_sessions sessions, $n_wiki wiki, $n_pmem p_memory names, $n_index wiki indexes, $n_dindex docs indexes, $n_cover entries, $n_shared shared, $n_docs docs, $n_adr adr ids"
 count="$(wc -l < "$OUT" | tr -d ' ')"
 if [ "$count" -eq 0 ]; then
   echo "validate.sh: OK — no issues ($scanned) $VAULT"

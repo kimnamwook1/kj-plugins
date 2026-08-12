@@ -21,11 +21,48 @@ aliases: []                  # append the old basename on rename or on promotion
 ## Why       commands · paths · numbers · versions · error messages. The section dreaming's fact-invariance check reads
 ```
 
-- **Filename is the identity key. No numbers.** The `<pp>` prefix exists for wikilink uniqueness across the vault. Changing tiers is swapping the prefix and moving the file.
+- **Filename is the identity key. No numbers.** Its form is regulated below (§Filename); changing tiers is swapping the prefix and moving the file.
 - **A note points at no session.** raw and wiki do not reference each other ([[vault-tree]] §Layers).
 - **1 note = 1 reusable claim** (atomic). No essays.
 - **update-over-create**: if a similar note exists, add nuance to it rather than creating a second one. **Tooling follows from this** — edit an existing note with `Edit` (its `old_string` is a compare-and-swap, safe against a concurrent session), and reserve `Write` for a note that does not exist yet (`Write` on an existing note silently discards whatever a concurrent edit put there).
 - **Retired keys — do not reintroduce.** `uid` · `type` · `tags` · `dri` · `species` · `source_sessions` · `source_items` · `recalled` · `useful` · `created` · `writer`. `title` was **renamed** to `summary`, not retired. Freshness is derived from `updated:`, never stored as a status field.
+
+## Filename — `<pp>_<slug>.md`, and `<slug>` is the part that was never specified
+
+```
+p_memory   <pp>_<slug>.md      <pp>   = the project prefix, verbatim from the project hub
+neocortex  NEO-<slug>.md       <slug> = lowercase ASCII kebab — [a-z0-9] words joined by single -
+```
+
+- **`<pp>` comes from one place: the `PREFIX:` line in the project hub** `<projects_root>/NNN_<project>/_index.md` (a legacy `index.md` is its equal). That is already the only source any writer is sent to — `skills/ss/SKILL.md` §PREFIX reads the hub and, when the line is missing, asks the user and writes it there rather than inventing one. A hub with no `PREFIX:` line has **no authority to name anything**: the linter reports it once, at the hub, and skips that project's notes rather than repeating one hub defect once per note. (Measured 2026-08-12: all 13 projects declare one, so this is a forward guard — a project folder created before its hub is filled in.)
+- **`<slug>` is lowercase ASCII kebab and nothing else.** No spaces, no uppercase, no non-ASCII, no `. , ( ) = · —`, no `/ * :`. Same rule on both tiers — `NEO-<slug>.md` differs from `<pp>_<slug>.md` only in what precedes the slug, never in the slug. This is the spelling the vault already uses everywhere else a `<slug>` appears: `NNN_<slug>/` (`infra-manage`, `youtube-stts`), the `feature/` document's "uppercase prefix + **lowercase kebab slug** + serial" ([[vault-tree]] §Naming Conventions), and the session filename's kebab reduction of the Goal ([[sessions-note-convention]]).
+
+🔴 **Why the prefix is on this layer and not on `docs/` — measured, not aesthetic.** The two layers are addressed differently, so they need different uniqueness. Counted on this vault 2026-08-12 over every `_index.md` and every `related:` block:
+
+| Layer | linked as `[[bare-stem]]` | linked as `[[path/to/doc]]` |
+|---|---|---|
+| `p_memory/_index.md` | 493 | 0 |
+| `p_memory` note frontmatter (`related:`) | 1352 | 38 |
+| `docs/_index.md` | 1 | 80 |
+| project hub `_index.md` | 0 | 42 |
+
+**p_memory is a flat namespace (98% bare stem); `docs/` is a path namespace (99% qualified).** That is the whole argument: `ARCHITECTURE.md` exists in **11 projects at once** and collides with nothing, because nobody ever writes `[[ARCHITECTURE]]`. A p_memory stem has no such protection — recall injects several projects' `_index.md` into one context, and promotion ② lifts the note into `neocortex/` where it stands beside every other project's. Zero stem collisions today (measured, 480 notes) is the prefix's job being done in advance, not evidence that it is unnecessary.
+
+🔴 **Why the slug may not be a sentence — the filename is a stale copy of `summary:`.** Measured over the 146 sentence-form notes: **123 (84%) are ≥0.95 similar to their own `summary:`, and 119 are byte-identical to it.** The filename is therefore not carrying information; it is carrying a *second, unmaintained* copy of a line that already exists — and the two do not age together:
+
+- **When judgment is revised, `summary:` is rewritten and the filename is not**, because renaming breaks every inbound wikilink. The divergence is largest exactly where it matters most: the single lowest-similarity note in the vault (0.15) is named `Plane 접근은 메인 세션 MCP로 — 별도 Plane CLI 래퍼를 만들지 마라`, and its `summary:` reads `2026-08-11 뒤집힘: … 금지했던 Plane CLI 래퍼를 …`. **The filename is still arguing for a judgment the note itself retracted.**
+- **Nobody reads the filename anyway.** recall injects `_index.md` and nothing else, one line per note, `- [[stem]] — <summary>` (§`summary`). The summary is right there next to the stem, so a sentence-shaped stem buys no legibility and costs a duplicate.
+- 🔴 **Punctuation the OS rewrites turns the stem into a silent lie.** `/ * :` cannot appear in a filename, so the write path substitutes and the note keeps the *original* text in `summary:`. Both live cases, measured:
+
+  | `summary:` says | the filename says |
+  |---|---|
+  | `… raw Sessions/*.md 제외 …` | `… raw Sessions-_.md 제외 …` |
+  | `… 커밋은 handoff/complete 시점만 …` | `… 커밋은 handoff·complete 시점만 …` |
+
+  The first names a glob that does not exist. The second is worse: `·` is *also* this vault's ordinary separator (`시점만·push`), so the substituted slash is now indistinguishable from an intentional one and cannot be recovered from the filename at all.
+- **A sentence runs out of filesystem.** `NAME_MAX` is 255 bytes and Korean costs 3 bytes per character (measured: a 256-byte name fails with `ENAMETOOLONG`). The longest sentence-form name here is **242 bytes — four Korean characters from the ceiling**, and 15 are already past 200. Kebab slugs top out at 78.
+
+Enforced as a **finding** by `scripts/validate.sh` on `p_memory/`, alongside this layer's other findings (retired keys, `related` wire format, index coverage): a stem is this layer's identity key, and an identity defect is not a style opinion. `_index.md` and `0.*` are excluded as meta files, the same exclusion every other wiki scan uses.
 
 ## Frontmatter must parse — quoting is a wire format, not a style
 
