@@ -416,9 +416,9 @@ value in this table is a finding, not a convenience.
 | Agent branch naming (`<type>/<PREFIX>-<number>-<title-slug>` · type from the shared vocabulary) | `agents/coder.md` §First action | `docs/git-convention.md` §Worktree integration order · doc-catalog §Delivery (human prefixes only) |
 | Type vocabulary + surface notation + branch/worktree naming | `docs/git-convention.md` (promoted into the harness 2026-07-28 — a distributed plugin cannot depend on a user's personal `at` skill; that skill and any vault mirror now point here) | `agents/coder.md` · `docs/git-convention.md` · doc-catalog point, none copy |
 | Session lifecycle (start / resume / list / park / complete) | `skills/ss`·`sr`·`sl`·`sh`·`sc` | sessions-note-convention · active-sessions |
-| Doc frontmatter standard (id · status · owner · scope · history) | `docs/project-docs-convention.md` | doc-catalog |
-| Pre-creation rules (the 6 pre-created documents, written as `status: created`) | `docs/project-docs-convention.md` §stub Pre-creation Rules | doc-catalog · `/brain:init` |
-| Policy system (identification · IDs · promotion) | `docs/project-docs-convention.md` | doc-catalog |
+| Doc frontmatter standard (base `status` · `updated`; optional `history`; `id` on ADR only) | `docs/project-docs-convention.md` | doc-catalog |
+| Pre-creation rules (the 5 pre-created documents, written as `status: created`) | `docs/project-docs-convention.md` §stub Pre-creation Rules | doc-catalog · `/brain:init` |
+| Policy system (identification · clause numbering · outward escalation) | `docs/project-docs-convention.md` | doc-catalog |
 | ID minting (`<PREFIX>-<TYPE>-0000N` · next_id · issued by the PM in advance) | `docs/project-docs-convention.md` §ID Issuance | PM role statement · validate (**presence only** — duplicate/gap detection has no owner, stated as a known gap) |
 | API_SPEC mirror rule (sole exception to "repo = code only") | `docs/project-docs-convention.md` | doc-catalog (generated and re-synced by a **PM-delegated sync worker** — 🔴 never `dreaming`, which cannot write `docs/` at all) |
 | Document conflict precedence | `docs/project-docs-convention.md` | PM role statement · all workers |
