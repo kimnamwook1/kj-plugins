@@ -97,6 +97,16 @@ printf -- '---\r\nstatus: frozen\r\nproject: s\r\nupdated: u\r\nrelated_ticket: 
 printf -- '---\nstatus: active\nproject: s\nupdated: u\nrelated_ticket: t\ncc_session_ids: [c]\nuid: RETIRED-20260718-120016\ncreated: 2026-07-18\nwriter: nwkim\n---\n' \
   > "$V/hippocampus/RETIRED-20260718-120016.md"
 
+# The parse rule reaches the session layer too (KJP-97) — one positive fixture, so removing that
+# call site kills this assert instead of passing in silence. All five required keys are present and
+# `status` is valid, so the parse rule is the only one that can speak about this file.
+# 🔴 It doubles as the false-positive guard for the REAL session schema, which is full of colons:
+# `related_ticket: plane:KJP-1` and `updated: …T12:00:00` both carry one and must stay silent
+# (the rule needs colon+SPACE), and `cc_session_ids: [c]` is a closed flow sequence. Only the
+# `goal:` line — an unquoted scalar with `: ` inside it — may fire.
+printf -- '---\nstatus: active\nproject: selftest\nupdated: 2026-07-18T12:00:00\nrelated_ticket: plane:KJP-1\ncc_session_ids: [cc-selftest]\ngoal: ship the linter: with a colon in the value\n---\n' \
+  > "$V/hippocampus/FMPARSE-20260718-120020.md"
+
 # The schema placeholder: deliberately broken three ways (placeholder status, missing
 # related_ticket, missing cc_session_ids) so "silent" can only mean the exclusion held.
 printf -- '---\nstatus: <active|parked|done>\nproject: <project-slug>\nupdated: YYYY-MM-DDTHH:MM:SS\n---\n' \
@@ -145,6 +155,14 @@ Intro prose is not a TOC entry.
 - [[wl-bare-single]] — indexed, so only the wikilink-form rule can speak about it
 - [[wl-bare-item]] — indexed, so only the wikilink-form rule can speak about it
 - [[wl-quoted]] — indexed and canonical, so nothing at all may speak about it
+- [[fmp-indicator]] — indexed, so only the parse rule can speak about it
+- [[fmp-star]] — indexed, so only the parse rule can speak about it
+- [[fmp-bracket]] — indexed, so only the parse rule can speak about it
+- [[fmp-brace]] — indexed, so only the parse rule can speak about it
+- [[fmp-colon]] — indexed, so only the parse rule can speak about it
+- [[fmp-quoted]] — indexed and canonical, so nothing at all may speak about it
+- [[fmp-flow]] — indexed and legal, so nothing at all may speak about it
+- [[fmp-block]] — indexed and legal, so nothing at all may speak about it
 EOF
 # 🔴 Locale regression (KJP-74). Under a UTF-8 collation locale macOS `sort -u` treats these four
 # stems as EQUAL and keeps one — measured 2026-08-05: `가 나 다 라` deduplicates to a single line,
@@ -191,6 +209,53 @@ printf -- '---\nsummary: a block list whose item forgot its quotes\nrelated:\n  
   > "$V/013_selftest/p_memory/wl-bare-item.md"
 printf -- '---\nsummary: the canonical form — a block list of quoted links\nrelated:\n  - "[[phantom-one]]"\n  - "[[phantom-two]]"\naliases: []\n---\nbody\n' \
   > "$V/013_selftest/p_memory/wl-quoted.md"
+# 🔴 Frontmatter that does not parse (KJP-97) — the half the wikilink sweep could not reach.
+# Chosen by what PyYAML does with them, like the wl-* set above, and verified against it
+# 2026-08-12 over the real vault's 660 blocks (11 = 11, same files, same lines):
+#   `summary: ``df`` 만…`         → ScannerError. A backtick is a RESERVED YAML indicator and may
+#                                   never open a plain scalar. 3 real notes.
+#   `summary: *emphasis* …`      → ScannerError. Same class, different character — this fixture is
+#                                   what makes the rule a character CLASS rather than one backtick
+#                                   test, and markdown emphasis is how it realistically appears.
+#   `summary: [결정] …`           → ParserError. `[` opens a flow sequence that never closes.
+#                                   2 real notes. 🔴 NOT "starts with a bracket": 153 vault values
+#                                   legally open with `[` (`aliases: [a, b]`), so the closing test
+#                                   is the entire discriminator and fmp-flow below guards it.
+#   `summary: … 않는다: 시크릿…`   → ScannerError. An unquoted scalar carrying `: `, which YAML reads
+#                                   as a nested mapping. 6 real notes — the largest cause.
+# 🔴 What all four cost, and why this is not a cosmetic rule: the block does not parse, so Obsidian
+# renders it as body text and `summary`/`updated`/`related` do not exist for ANY reader. Fixing
+# `related` alone leaves such a note exactly as invisible as before.
+printf -- '---\nsummary: `df` alone misses unmounted disks\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-indicator.md"
+printf -- '---\nsummary: *emphasis* opening the value, markdown style\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-star.md"
+printf -- '---\nsummary: [decision] the channel strategy, written as prose\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-bracket.md"
+# The brace half of the same branch. No real note carries it (top-level `key: {` is 0 in the
+# vault), but the branch exists and an untested branch is one nobody can refactor safely — the
+# discipline at the top of this file applies to code paths, not only to scan roots.
+printf -- '---\nsummary: {partial mapping opened in prose and never closed\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-brace.md"
+printf -- '---\nsummary: the rule: quote every scalar that carries a colon\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-colon.md"
+# The canonical repair of fmp-colon — the SAME text, quoted. Silence here is what proves the rule
+# is about the wire format and not about the words: a check that cannot tell these two apart would
+# report every summary containing a colon and be turned off within a day.
+printf -- '---\nsummary: "the rule: quote every scalar that carries a colon"\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-quoted.md"
+# 🔴 The two false-positive guards, both for shapes a naive reimplementation gets wrong:
+#   fmp-flow  — a CLOSED flow sequence whose quoted items carry `: `. Legal, and measured on the
+#               real vault: 6 files spell exactly this (`aliases: ["tools: Read 만 보고…", …]`).
+#               A colon test that does not first exempt flow collections flags all six.
+#   fmp-block — a block scalar whose CONTENT carries `: `. Legal, and the reason the rule reads
+#               top-level `key:` lines only: indented lines are content, where every shape the
+#               rule bans is ordinary text. Zero instances in the vault, so this is a forward
+#               guard — the shape is legal YAML and must stay legal if one ever lands.
+printf -- '---\nsummary: a note whose aliases carry a quoted colon\naliases: ["tools: Read only", "beta"]\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-flow.md"
+printf -- '---\nsummary: |\n  a literal block line: carrying a colon\n  and a second line\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/fmp-block.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/facts/facts-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/patterns/patterns-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/policies/policies-no-summary.md"
@@ -396,6 +461,15 @@ printf -- '---\n"status": draft\n"session": KJP-20260718-120000\n"kind": prd\n--
 # ALSO produces an unknown-key warn on stderr. Two rules, two channels, both correct.
 printf -- '---\nstatus: draft\nrelated: [[phantom-one]]\n---\nbody\n' \
   > "$V/013_selftest/docs/fm-barewiki.md"
+# The parse rule on the docs layer (KJP-97), for the reason stated two comments up and on the same
+# axis: KJP-89 made unknown *keys* warn-only because a stale key is legal-but-old, and a block that
+# does not parse is neither. A docs block that fails to parse loses its `status:` — and a folder
+# index its `next_id:` — exactly the way a wiki note loses its `summary:`.
+# Measured 2026-08-12: 0 docs-layer files carry this today, so it is a forward guard rather than a
+# backlog; the 11 live cases are all on the wiki layer. `status:` is valid and `source:` IS a v2
+# key, so no status finding and no unknown-key warn ride along — the parse rule speaks alone.
+printf -- '---\nstatus: draft\nsource: repo/openapi.yaml: the mirror source\n---\nbody\n' \
+  > "$V/013_selftest/docs/fm-parse.md"
 # docs/adr/ — body files need `id:` (multi-instance, PM-issued, immutable); its _index/index
 # carries the folder's `next_id:` counter instead. Both TOC spellings get a fixture — the
 # canonical `_index.md` passes elsewhere, and the legacy `index.md` fixture here pins that the
@@ -490,6 +564,13 @@ assert_match   "raw: retired uid is caught"                  'RETIRED-20260718-1
 assert_match   "raw: retired created is caught"              'RETIRED-20260718-120016.md:8: retired key "created"'
 assert_match   "raw: retired writer is caught"               'RETIRED-20260718-120016.md:9: retired key "writer"'
 
+# The parse rule reaches the raw layer (KJP-97) — the positive that keeps that call site honest.
+assert_match   "raw: unparseable frontmatter is caught here too" 'FMPARSE-20260718-120020.md:7: unquoted frontmatter value "goal" contains a colon+space'
+# 🔴 And the false-positive guard for the session schema itself, which is full of colons: a
+# timestamp, a `<system>:<id>` ticket ref and a flow sequence all sit in this same block and none
+# may fire. Anchored to the file so it cannot be satisfied by some other file's silence.
+assert_no_match "raw: timestamps and ticket refs are not colon findings" 'FMPARSE-20260718-120020.md:[3-6]:'
+
 # retired keys, wiki layer — the ten 0.1.x keys. `title` carries the rename instruction, the
 # other nine the deletion instruction, so both message shapes are pinned.
 assert_match   "wiki: retired uid is caught"                 'retired-keys.md:3: retired key "uid"'
@@ -517,6 +598,29 @@ assert_match   "wiki: an unquoted block list item is caught"        'wl-bare-ite
 # finding", which would make the canon it enforces unimplementable — every conforming note in the
 # vault would report. This is the only fixture proving the check discriminates rather than counts.
 assert_no_match "wiki: the canonical quoted block list stays quiet" 'wl-quoted.md'
+
+# Frontmatter that does not parse (KJP-97). One assert per shape, for the reason the wikilink
+# asserts above give: the shapes fail differently and one pattern could pass while a shape silently
+# fell out. Real-vault scale, measured 2026-08-12 AFTER the KJP-96 wikilink sweep: 11 blocks still
+# unparseable — 6 colon+space, 3 leading backtick, 2 unclosed bracket.
+assert_match   "wiki: a reserved indicator (backtick) opening a value" 'fmp-indicator.md:2: frontmatter value "summary" opens with the YAML indicator `'
+# The same rule, a different character. Pins that the check is a character CLASS: implement it as
+# one backtick comparison and this assert is what dies.
+assert_match   "wiki: the indicator rule is a class, not one char"    'fmp-star.md:2: frontmatter value "summary" opens with the YAML indicator \*'
+assert_match   "wiki: an unclosed flow sequence is caught"            'fmp-bracket.md:2: unclosed flow sequence in frontmatter value "summary"'
+assert_match   "wiki: an unclosed flow mapping is caught"             'fmp-brace.md:2: unclosed flow mapping in frontmatter value "summary"'
+assert_match   "wiki: an unquoted value with colon+space is caught"   'fmp-colon.md:2: unquoted frontmatter value "summary" contains a colon+space'
+# 🔴 The load-bearing negatives, the same argument as wl-quoted above. fmp-quoted is the canonical
+# repair of fmp-colon — the identical text, quoted — so a rule that flagged both would be reporting
+# the words rather than the wire format and would make the canon unimplementable.
+assert_no_match "wiki: the quoted repair of the same text stays quiet" 'fmp-quoted.md'
+# 🔴 The two shapes a naive reimplementation breaks on, and the reason each is here:
+#   fmp-flow  — 153 of the vault's 155 values that open with `[` are legal flow sequences, and 6
+#               carry `: ` inside quoted items. Drop the closing test, or run the colon test before
+#               exempting flow collections, and this fires on healthy files.
+#   fmp-block — a block scalar's indented content is text, where every banned shape is ordinary.
+assert_no_match "wiki: a closed flow seq with a quoted colon stays quiet" 'fmp-flow.md'
+assert_no_match "wiki: a block scalar carrying a colon stays quiet"       'fmp-block.md'
 
 # wiki scope — one positive per directory pins the scope
 assert_match   "project p_memory dir is scanned"             'p_memory/no-summary.md:1: missing frontmatter key: summary'
@@ -687,6 +791,10 @@ assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/
 # left to the wiki asserts: the two layers are separate scans, and a rule added to one of them
 # only would pass every wiki assert above while the docs half never ran.
 assert_match   "docs: bare wikilink in docs frontmatter is a finding" 'fm-barewiki.md:3: unquoted wikilink in frontmatter value "related"'
+# The parse rule on the docs layer (KJP-97) — a FINDING, on the same axis as the line above and
+# for the same reason: KJP-89 made unknown *keys* warn-only because a stale key is legal-but-old,
+# and a block that does not parse is neither. Removing this call site kills this assert.
+assert_match   "docs: unparseable docs frontmatter is a finding" 'fm-parse.md:3: unquoted frontmatter value "source" contains a colon+space'
 
 SAVED_REPORT="$REPORT"; REPORT="$WARNS"
 assert_match   "docs fm: unknown key warns on stderr"        'fm-legacy.md:2: unknown docs frontmatter key: kind'
@@ -697,6 +805,10 @@ assert_match   "docs fm: deleted owner warns on stderr"      'fm-legacy.md:6: un
 assert_no_match "docs fm: session key is never demoted to a warn" 'session key in docs frontmatter'
 assert_match   "docs fm: date-only updated warns on stderr"  'fm-legacy.md:5: date-only updated'
 assert_match   "docs fm: quoted unknown key still warns"     'fm-qsession.md:4: unknown docs frontmatter key: kind'
+# Asserted on the WARN channel, which is the only channel where it means anything: the parse
+# fixture uses `source`, a v2 key, so its finding cannot be riding on an unknown-key warn. The two
+# channels stay independent, which is what makes the KJP-89 finding/warn split testable at all.
+assert_no_match "docs fm: the parse fixture raises no unknown-key warn" 'fm-parse.md.*unknown docs frontmatter key'
 # The KJP-56 finding and the KJP-89 warn are different rules about the same line, and both must
 # still speak. If the new finding ever swallowed the warn, this is what would notice.
 assert_match   "docs fm: the bare-wikilink file still warns on the unknown key" 'fm-barewiki.md:3: unknown docs frontmatter key: related'
@@ -802,7 +914,12 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # 24 issues).
 # KJP-56 moved four of these: +4 wiki notes and +4 of the index entries that cover them, +1 docs
 # file, and +5 shared-surface files (the wikilink scan reads the same five). Nothing else shifted.
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 29 wiki, 5 wiki indexes, 7 docs indexes, 30 entries, 70 shared, 35 docs, 8 adr ids)'
+# KJP-97 moved five: +8 wiki notes (fmp-indicator · fmp-star · fmp-bracket · fmp-brace · fmp-colon
+# · the quoted repair fmp-quoted · the two false-positive guards fmp-flow and fmp-block) and +8
+# index entries covering them, +1 session (FMPARSE-20), +1 docs file (fm-parse), and +9 shared —
+# the 8 p_memory notes plus fm-parse. The session does NOT raise `shared`: hippocampus/ is outside
+# that surface, which is the asymmetry the raw-layer asserts above already pin.
+assert_match   "scanned counts appear in the summary"        '(13 sessions, 37 wiki, 5 wiki indexes, 7 docs indexes, 38 entries, 79 shared, 36 docs, 8 adr ids)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
