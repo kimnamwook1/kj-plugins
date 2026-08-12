@@ -8,7 +8,9 @@
 # (`p_memory/` + `neocortex/` + the common and tools roots), folder indexes (`_index.md` links that
 # name a file that is not there — checked on every index recall injects, docs TOCs and project hubs
 # included; plus, on the wiki layer alone, the canonical line form and the inverse question, notes
-# no index names), session-uid wikilinks on the
+# no index names), unquoted wikilinks in frontmatter (`related: [[a]]` — a nested YAML sequence,
+# never a link; the wiki AND docs layers, since a block that does not parse is a syntax defect
+# rather than a vocabulary one), session-uid wikilinks on the
 # team-shared surface, docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
@@ -93,6 +95,55 @@ AWK_PRELUDE='
     f = substr(s, 1, 1); l = substr(s, length(s), 1)
     if ((f == "\"" && l == "\"") || (f == q && l == q)) return substr(s, 2, length(s) - 2)
     return s
+  }
+'
+
+# 🔴 The unquoted-wikilink rule (KJP-56). One definition, called from the two frontmatter scans
+# below (wiki notes and docs) — held here rather than inlined twice, because a wire-format rule
+# that exists in two copies is the drift this repo keeps paying for.
+#
+# What it is: `[[` opening a YAML value is ALWAYS a nested flow sequence, never a link. The two
+# failures it produces are wildly different in how loud they are, and only one of them was ever
+# noticed by a human — which is the whole argument for a detector. Measured with PyYAML on the
+# real vault 2026-08-12:
+#   `related: [[a]], [[b]]`  302 files  → ParserError. The frontmatter does not parse at all and
+#                                         Obsidian renders the entire block as body text. This is
+#                                         the half a person can see, and it is how the card opened.
+#   `related: [[a]]`          52 files  → parses, to [['a']]. A nested list. Obsidian resolves no
+#                                         link and reports no error; recall sees nothing.
+#                                         🔴 Strictly more dangerous than the loud half: there is
+#                                         no signal of any kind, so it survives every review.
+#   `  - [[a]]`                0 files  → parses, to [[['a']]]. Same silence, one level deeper.
+#                                         Zero today; checked because the canon this enforces tells
+#                                         writers to use a block list, and dropping the quotes off
+#                                         a block item is the next mistake in line.
+# Canon for the correct spelling: docs/knowledge-convention.md §related.
+#
+# Why the pattern takes ANY key rather than a `related|aliases|projects` list: measured on the same
+# vault, `related` is the only key that carries the defect today (aliases/projects hold plain
+# strings — 0 occurrences), so a key list buys no precision now and needs maintenance later. And
+# no key in any of this repo's schemas is a list-of-lists, so a bare `[[` value cannot be correct
+# under any of them.
+# 🔴 No regex metacharacter for `[` appears anywhere below — the bracket test is substr/==, not a
+# pattern. one-true-awk (macOS /usr/bin/awk) is the constraint this file has already been bitten by
+# twice (see the resolve() and spelled-out-digit comments), and a literal comparison cannot be the
+# next bite. `file` is the caller's -v variable, set by both scans.
+# 🔴 The local names are prefixed `fm*` on purpose. awk has no block scope: a function local is
+# spelled as an extra parameter, and the docs program this is concatenated into already owns
+# globals named `k` and `val`. Plain `k`/`v` locals here would shadow them — harmless only for as
+# long as this call stays ahead of their assignment, which is not a property worth depending on.
+AWK_BAREWIKI='
+  function barewiki(fmline, nr,   fmkey, fmval) {
+    if (match(fmline, /^[ \t]*-[ \t]+/)) {
+      if (substr(fmline, RLENGTH + 1, 2) == "[[")
+        print file ":" nr ": unquoted wikilink in a frontmatter list item (YAML reads it as a nested sequence, not a link — quote it: - \"[[stem]]\")"
+      return
+    }
+    if (!match(fmline, /^[A-Za-z_][A-Za-z0-9_]*:[ \t]*/)) return
+    fmval = substr(fmline, RLENGTH + 1)
+    if (substr(fmval, 1, 2) != "[[") return
+    fmkey = substr(fmline, 1, index(fmline, ":") - 1)
+    print file ":" nr ": unquoted wikilink in frontmatter value \"" fmkey "\" (YAML reads it as a nested sequence, not a link — quote each link on its own line: - \"[[stem]]\")"
   }
 '
 
@@ -223,7 +274,7 @@ LC_ALL=C sort "$LIST" > "$NOTES"
 
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
-  awk -v file="$f" '
+  awk -v file="$f" "$AWK_BAREWIKI"'
     BEGIN {
       # 🔴 The migration safety net. These ten are the 0.1.x wiki vocabulary; a 0.2.0 note carries
       # four (summary · updated · related · aliases, plus `projects` on neocortex). Sweeping the
@@ -242,6 +293,10 @@ while IFS= read -r f; do
     # recall injects `_index.md` only, and every line there is `- [[stem]] — <summary>`, so a
     # note without one is invisible to every future session rather than merely untitled.
     fm && /^summary:[ \t]*[^ \t]/ { ok = 1 }
+    # Reported as the line is read, not from END: the rule is about the spelling of one line, so
+    # the finding has to carry that same line number. No apostrophe may appear in this comment —
+    # the awk program is a single-quoted shell string and one would end it (measured, KJP-56).
+    fm { barewiki($0, NR) }
     fm && match($0, /^[A-Za-z_][A-Za-z0-9_]*:/) { at[substr($0, 1, RLENGTH - 1)] = NR }
     END {
       if (!ok) print file ":1: missing frontmatter key: summary"
@@ -667,7 +722,7 @@ while IFS= read -r f; do
     */docs/adr/*) if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
     */docs/develop/API_SPEC.md) mirror=1 ;;
   esac
-  awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE"'
+  awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE$AWK_BAREWIKI"'
     BEGIN {
       # Spelled-out digit runs — one-true-awk has no ERE interval expressions (see the
       # wikilink scan above for why {n} would silently never match).
@@ -689,6 +744,15 @@ while IFS= read -r f; do
     # lines, and the value of the `history:` line itself (flow style).
     # ponytail: value text containing ` date:`/` by:` inside an entry would false-
     # positive — hand-written one-liners, not worth a YAML parser until one appears.
+    # 2026-08-12 (KJP-56), the revisit this line was waiting for, recorded here rather than
+    # replacing it: a case DID appear at scale — 303 of the vault 660 frontmatter blocks do not
+    # parse, 302 of them from a single unquoted-wikilink spelling — and it was still answered
+    # WITHOUT a parser (see AWK_BAREWIKI: two substr tests, no bracket metacharacter). So the
+    # judgment above stands, and now with a measurement behind it instead of a guess.
+    # 🔴 What that costs, stated so the next reader does not have to rediscover it: the remaining
+    # 1 file fails to parse for an unrelated reason (an unquoted `summary:` whose text contains
+    # a colon-space, which YAML reads as a nested mapping). No check in this file sees it. THAT
+    # is the case to weigh a real parser against — not the wikilink one, which is now covered.
     function v1hist(s, nr) {
       if (s ~ V1DATE)
         print file ":" nr ": v1 history key \"date:\" (v2 history entry = { at, change, ticket })"
@@ -699,6 +763,12 @@ while IFS= read -r f; do
     NR == 1 && $0 == "---" { fm = 1; next }
     fm && $0 == "---" { exit }
     fm {
+      # 🔴 Before the `next` below, so the session ban cannot shadow it, and NOT gated on `meta`:
+      # a folder index whose frontmatter fails to parse loses its `next_id` the same way a body
+      # document loses its `status`. This is the one docs-layer rule that is not about vocabulary,
+      # which is why KJP-89 (unknown keys warn, never fail) does not reach it — see the note at
+      # AWK_BAREWIKI and project-docs-convention.md §frontmatter Standard v2.
+      barewiki($0, NR)
       # Matches the key in every YAML shape: top-level `session:`, nested-map
       # `    session:`, inline-map `{ ..., session: ... }`, and the quoted spelling of
       # each (`"session":` — verifier bypass 2026-07-29). The leading class keeps
