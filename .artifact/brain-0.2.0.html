@@ -244,7 +244,7 @@
 
   <h3>공통 규칙</h3>
   <div class="grid">
-    <div class="card"><span class="tag">frontmatter</span><b>5필드가 베이스</b><code>status</code>(<code>created</code>|<code>draft</code>|<code>approved</code>|<code>deprecated</code>) · <code>updated</code> · <code>version</code> · <code>species</code>. <code>id</code> 는 ADR·POL 만, mirror 3키는 API_SPEC 만.</div>
+    <div class="card"><span class="tag">frontmatter</span><b>2필드가 베이스</b><code>status</code>(<code>created</code>|<code>draft</code>|<code>approved</code>|<code>deprecated</code>) · <code>updated</code>. <code>id</code> 는 ADR 만(POL 은 문서 ID 자체가 폐기 — KJP-79), mirror 3키는 API_SPEC 만, <code>history</code> 는 선택. 🔴 <b><code>version</code>·<code>species</code> 를 걷었다 (2026-08-12 실측).</b> 이 카드가 그 둘을 베이스라 부른 유일한 소비자였고 <b>나머지 셋이 반대편</b>이었다 — 규약 <code>project-docs-convention</code> §frontmatter Standard v2 에 두 키가 없고(폐기 10필드 표에도 없다 — 들어온 적이 없다), <code>validate.sh</code> 의 docs 인식 키가 <code>status·updated·id·source·readonly·synced·history</code> 라 둘을 unknown 으로 경고하며, 실볼트 <b>비-feature docs 91/91 이 두 키를 갖지 않는다</b>. 폐기 사유는 이 문서 자신의 것이다: <code>version</code> = 린터 미검사 · <code>species</code> = 경로가 곧 종류다(KJP-83 이 ADR 에서 쓴 논리 그대로). 양식 12종에서 제거. <b><code>feature</code> 만 남겼다</b> — 실볼트 3/3 이 두 키를 갖고 있어 <b>걷는 순간 볼트 마이그레이션이 되므로 별건</b>이다(§feature 카드).</div>
     <div class="card"><span class="tag">헤딩</span><b>제목 = 파일명, 본문은 ## 부터</b>H1 을 본문에 쓰지 않는다. 하위 소제목은 ###. 앵커 대상 헤딩은 약어로 고정하고 개명하지 않는다.</div>
     <div class="card"><span class="tag">파일명</span><b>대문자 = 역할 싱글턴</b><code>docs/</code> 아래 역할 문서는 대문자. 공통층 하위는 소문자-케밥. 폴더 목차는 <code>_index.md</code>.</div>
     <div class="card"><span class="tag">구획</span><b>묶음이 기본값</b>절이 독립 소비자를 갖거나, 그 절만 고치는 커밋이 반복되거나, 문서 과반을 점유할 때 분리한다. 분리는 절→파일 + 원위치 링크 + 앵커 재배선을 같은 커밋에서.</div>
@@ -278,10 +278,8 @@
     <textarea id="prd-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Product Requirements Doc — 제품 요구사항
 ---
-&lt;!-- 제목 = 파일명(PRD.md) = # 레벨 — 본문 헤딩은 ##부터 시작(하위는 ###), H1은 본문에 쓰지 않는다. 풀네임은 species 필드 보유. --&gt;
+&lt;!-- 제목 = 파일명(PRD.md) = # 레벨 — 본문 헤딩은 ##부터 시작(하위는 ###), H1은 본문에 쓰지 않는다. --&gt;
 
 ## 요약
 &lt;!-- 2~3문장 엘리베이터 피치: 무엇을 · 누구에게 · 왜 지금. --&gt;
@@ -347,10 +345,8 @@ species: Product Requirements Doc — 제품 요구사항
     <textarea id="mkt-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Marketing Strategy — 마케팅 전략서
 ---
-&lt;!-- 제목 = 파일명(MARKETING.md) = # 레벨 — 본문 헤딩은 ##부터. version·species = 전 문서 공통 (2026-07-31 개정). --&gt;
+&lt;!-- 제목 = 파일명(MARKETING.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 경계: GTM·마케팅 전략의 정본. 제품·요구사항 = [[PRD]] · 가격·티어 = [[PRD#BM]] 링크만 — 본문에 숫자 가격·유료 티어 조건·단위경제 리터럴 금지 · 날짜·일정 = [[MILESTONE]].
      섹션은 위에서 아래 순서로 채운다 — 포지셔닝 확정 전 채널 선점 금지. --&gt;
 
@@ -402,8 +398,6 @@ species: Marketing Strategy — 마케팅 전략서
     <textarea id="mst-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Milestone — Phase 로드맵 · 일정·날짜의 유일 원본
 ---
 &lt;!-- 제목 = 파일명(MILESTONE.md) = # 레벨 — 본문 헤딩은 ##부터. PRD(판정 기한)·MARKETING(런칭 날짜)이 날짜를 여기로 위임. --&gt;
 &lt;!-- 경계: when만 기록 — what/why = [[PRD]] · 기능 상세 = feature/ · 유동 태스크·스프린트 = 티켓 시스템(정식 작업 큐, 이중 큐 금지 — 어느 시스템인지는 `CLAUDE.md` brain config 의 `ticket-system`).
@@ -447,8 +441,6 @@ species: Milestone — Phase 로드맵 · 일정·날짜의 유일 원본
     <textarea id="cmp-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Compliance — 규제·법규 준수 검토
 ---
 &lt;!-- 제목 = 파일명(COMPLIANCE.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 본문 free-form — 염두할 법안(개인정보보호법·EU AI Act 등)과 대응 상태. 트리거 시 작성.
@@ -465,8 +457,6 @@ species: Compliance — 규제·법규 준수 검토
     <textarea id="tos-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Terms of Service — 서비스 이용약관 (공개 게시 원본)
 effective: YYYY-MM-DD            # 시행일 — 게시·효력 발생일 (legal/ 전용 필드) · approved 전환 시 필수
 ---
 &lt;!-- 제목 = 파일명 = # 레벨 — 본문 헤딩은 ##부터. 게시 시 표기 제목은 게시 채널 규격을 따른다. --&gt;
@@ -495,8 +485,6 @@ effective: YYYY-MM-DD            # 시행일 — 게시·효력 발생일 (legal
     <textarea id="arc-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Architecture — 시스템 설계 (구조·논리 데이터 모델·외부 연동)
 ---
 &lt;!-- 제목 = 파일명(ARCHITECTURE.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 경계: 이 문서는 링크 허브 — 링크 1줄은 라우팅, 재기술 시작이 drift.
@@ -547,8 +535,6 @@ species: Architecture — 시스템 설계 (구조·논리 데이터 모델·외
     <textarea id="cc-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Code Convention — 코드 규약 (스택·스타일·git 네이밍·테스트 규율)
 ---
 &lt;!-- 제목 = 파일명(CODE_CONVENTION.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 정본 원칙: 도구가 강제할 수 있는 것은 도구 설정이 정본(린터·포매터·commitlint) — 여기는 원칙 + 포인터 + 도구가 못 잡는 것만.
@@ -604,8 +590,6 @@ species: Code Convention — 코드 규약 (스택·스타일·git 네이밍·�
     <textarea id="rb-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Runbook — 배포·운영 절차 (Delivery·배포·관측·장애 대응·DR·마이그레이션)
 ---
 &lt;!-- 제목 = 파일명(RUNBOOK.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 정본 원칙: 자동화된 절차는 스크립트·CI가 정본 — 여기는 "무엇을 실행하고 어떻게 검증하는지" 포인터만. 수동 절차는 여기가 정본, 성숙하면 자동화로 승격.
@@ -669,8 +653,6 @@ species: Runbook — 배포·운영 절차 (Delivery·배포·관측·장애 대
     <textarea id="tm-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Threat Model — 위협 모델 (위협·완화 표 · 보안 증적)
 ---
 &lt;!-- 제목 = 파일명(THREAT_MODEL.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 방법론: Shostack 4질문 뼈대 + STRIDE는 표의 열 하나 — STRIDE-per-element 순회 금지, 세션은 30~60분 박스, likelihood 추정 스킵.
@@ -724,8 +706,6 @@ species: Threat Model — 위협 모델 (위협·완화 표 · 보안 증적)
     <textarea id="ds-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Design — 디자인 시스템 (토큰·컴포넌트 계약의 정본)
 ---
 &lt;!-- 제목 = 파일명(DESIGN.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 🔴 값 축 (2026-07-31 전면 전환 — 구 "UI 픽셀 = 코드 정본" 폐기): **디자인 토큰의 정본 = 이 문서**. 코드의 토큰 정의(CSS 변수·테마 파일 등)는 여기서 export된 산출물이며, 값이 어긋나면 코드가 틀린 것.
@@ -785,8 +765,6 @@ species: Design — 디자인 시스템 (토큰·컴포넌트 계약의 정본)
     <textarea id="pp-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 내용이 생기는 즉시 draft
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Project Policy — 프로젝트 내부 규범
 ---
 &lt;!-- 제목 = 파일명(P_POLICY.md) = # 레벨 — 본문 헤딩은 ##부터. --&gt;
 &lt;!-- 조항 단위 계약: 규칙 1건 = `## POL-NNN &lt;제목&gt;` 헤딩(번호 = 파일 내 연번, PM 발급) — 참조·서열 집행은 [[P_POLICY#POL-003]] 앵커로.
@@ -803,8 +781,6 @@ species: Project Policy — 프로젝트 내부 규범
     <textarea id="as-editor" spellcheck="false">---
 status: draft                    # 미러 고정값 — 승인 개념 없음, 인용 근거는 source의 레포 스펙만
 updated: YYYY-MM-DDTHH:MM:SS     # 동기화 시점 갱신
-version: 0.0.0                   # 동기화 시 범프 — 주체 = 동기화 워커 (공통 규칙의 명시적 예외)
-species: API Spec — 레포 스펙 읽기 전용 미러
 source: &lt;레포 스펙 경로&gt;          # 정본 — OpenAPI/proto 등 (미러 3키 ①)
 readonly: true                   # 손편집 금지 — 손편집 = drift (미러 3키 ②)
 synced: YYYY-MM-DDTHH:MM:SS      # 마지막 동기 시각 (미러 3키 ③)
@@ -825,6 +801,7 @@ synced: YYYY-MM-DDTHH:MM:SS      # 마지막 동기 시각 (미러 3키 ③)
       <tr><td><b>스키마 2건 ()</b></td><td>screen_id 목록형(`[]`) — §Screens 다중 화면 정합 · priority 축 정의 명시(기능 기획 중요도 — PRD MoSCoW·티켓 시스템 실행 우선순위와 별개, 상/중/하 어휘는 확정 유지)</td></tr>
       <tr><td><b>출시 후 수명</b></td><td>살아있는 스펙 — 아카이브·이동 금지 (Google "design doc archaeology" · spec-kit 역공학 토큰 비용). H1 본문 금지 유지 — 제목 역할 = summary</td></tr>
       <tr><td><b>보강 리서치 (사용자 지정 3소스 — todaystudying·minery·figma user-flow)</b></td><td><b>확정 양식을 뒤집는 항목 0건 — 역검증 3건</b>: <code>feasibility</code> 3값이 minery 실무 어휘와 문자 그대로 일치(임의 발명 아님) · frontmatter 14필드가 todaystudying 기능명세서 11항목 중 9개 흡수(82%) · userflow ⊥ dataflow 분리가 figma 정의차와 정합. <b>빈칸은 다이어그램 표기 어휘 1층뿐</b> → 채택 5건(전부 주석 지침, 절 신설 0): 도형 어휘 5종 고정 · 흐름당 목표 1개 · 입도 하한선 · 액터 명시(§Rules) · journey 예외 부기. 기각 6건(작업구분·변경여부/내역 = §Log 기각과 동일 축 · 메뉴트리 · 종료점 3유형 등). ⚠ figma 표기법은 원문 예시끼리 색·도형이 불일치 — 우리 정규화이지 외부 표준 인용 아님</td></tr>
+      <tr><td>🔴 <b><code>version</code>·<code>species</code> — 이 양식만 남았다 (2026-08-12, 미결)</b></td><td>양식 12종에서 두 키를 걷을 때 <b>feature 만 제외했다</b>(§공통 규칙 frontmatter 카드). 제외 사유는 «두 키가 살아 있다»가 아니라 <b>작업 종류가 다르다</b>이다 — 비-feature docs 는 실볼트 <b>91/91 이 이미 두 키가 없어</b> 양식이 현실을 따라가는 <b>정정</b>이고, feature 는 실볼트 <b>3/3 이 두 키를 갖고 있어</b> 걷는 순간 <b>볼트 파일 마이그레이션</b>이다. ⚠ <b>존치 근거 자체는 약하다</b>: <code>species</code> 값이 3파일에서 바이트 단위로 동일한 상수라 <b>같은 사실의 사본</b>이고(경로 <code>docs/develop/feature/</code> 와 kind↔path 행렬이 이미 «feature» 라고 말한다 — KJP-83 이 ADR 에서 쓴 논리 그대로), <code>version</code> 은 3/3 이 <code>0.0.0</code> 인데 같은 파일의 <code>updated</code>·<code>status</code> 는 움직였다 — <b>선언돼 있고 아무도 범프하지 않는다</b>. 🔴 <b>걷을 때 같이 정정할 곳</b>: <code>project-docs-convention</code> §frontmatter Standard v2 의 KJP-89 근거 셋째 불릿이 «feature 는 살아있고 ADR 은 폐기» 를 <b>per-kind 폐기의 유일한 사내 사례로 인용</b>한다. 사례가 사라져도 <b>결론(docs 층에 폐기키 finding 없음)은 나머지 두 근거로 선다</b> — 근거만 갈아끼우면 된다. <b>사용자 판정 대기</b></td></tr>
     </table></div>
     <div class="editbar">
       <button id="ft-save">파일로 저장 (feature-draft.md)</button>
@@ -834,8 +811,8 @@ synced: YYYY-MM-DDTHH:MM:SS      # 마지막 동기 시각 (미러 3키 ③)
     <textarea id="ft-editor" spellcheck="false">---
 status: created                  # created | draft | approved | deprecated — 문서 수명 축
 updated: YYYY-MM-DDTHH:MM:SS     # 기계 스탬프
-version: 0.0.0                   # 갱신 시 버전업 — 범프·커밋 주체 = PM 단일 (경계 커밋과 함께)
-species: Feature — 기능 명세 (FRD+TDC 통합)
+version: 0.0.0                   # ⚠ 미결 — 양식 12종에선 폐기됐고 이 양식만 남았다 (§결정표 마지막 행)
+species: Feature — 기능 명세 (FRD+TDC 통합)   # ⚠ 미결 — 상동
 id: &lt;pp&gt;_&lt;slug&gt;_00001            # 기능 ID — 파일명과 일치 · 불변 (슬러그 = 기능 kebab 슬러그)
 screen_id: []                    # opt — 화면 ID 목록
 depth: []                        # 계층 경로 — 예: [회원가입, 간편가입, 카카오] · 첫 원소가 곧 카테고리(구 category 필드 폐기, KJP-91)

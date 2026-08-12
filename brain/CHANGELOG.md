@@ -3,6 +3,14 @@
 ## 0.2.4 — 2026-08-12
 
 ### Fixed
+- 🔴 **전서의 docs `version`·`species` 를 양식 12종에서 걷었다 — 전서가 3:1 로 단독이었다 (KJP-adhoc).** 세 소비자가 이미 반대편에 서 있었고 전서만 두 키를 「베이스 5필드」로 선언하고 있었다. **판정을 새로 한 게 아니라 전서를 나머지에 맞춘 정정이다.**
+  - **3:1 실측 2026-08-12.** ① 규약 — `docs/project-docs-convention.md` §frontmatter Standard v2 의 base 는 `status`·`updated` **2키**이고 두 키는 거기에도, 그 아래 「deleted fields (10)」 표에도 **없다**(폐기된 게 아니라 애초에 들어온 적이 없다). ② 린터 — `scripts/validate.sh` 의 docs 인식 키 정규식이 `status|updated|id|source|readonly|synced|history` 라 둘을 **unknown 으로 경고**한다. ③ 실볼트 — `^version:`/`^species:` 볼트 전량 grep 이 **3건뿐이고 셋 다 feature** 다. 비-feature docs **91/91 이 두 키를 갖지 않는다**.
+  - 🔴 **폐기 사유는 발명하지 않았다 — 전서 자신의 것을 그대로 확장했다.** `adr-editor` 카드가 KJP-83 에서 두 키를 죽이며 적은 사유가 `version` = **린터 미검사** · `species` = **경로가 곧 종류다(같은 사실의 3번째 사본)** 였다. 두 사유 모두 ADR 에만 걸리는 것이 아니다 — `docs/business/PRD.md` 도 경로와 파일명이 이미 PRD 라고 말한다.
+  - **걷은 12종**: `PRD`·`MARKETING`·`MILESTONE`·`COMPLIANCE`·`TERMS_OF_SERVICE`·`ARCHITECTURE`·`CODE_CONVENTION`·`RUNBOOK`·`THREAT_MODEL`·`DESIGN`·`P_POLICY`·`API_SPEC`. 산문 2곳도 같이 — PRD 양식 주석의 「풀네임은 species 필드 보유」와 MARKETING 양식 주석의 「version·species = 전 문서 공통 (2026-07-31 개정)」. **양식에서만 지우고 산문을 남기면 다음 스윕이 그 산문을 근거로 되살린다.**
+  - **`API_SPEC` 의 `version` 은 다른 사유로도 죽는다** — 주석이 「동기화 시 범프 = 공통 규칙의 명시적 예외」였는데, 규약의 미러 3키가 이미 `synced:` 를 갖고 그 정의가 **「freshness 는 이 필드가 아니라 레포로 판정한다」**이다. 범프되는 version 은 신선도의 세 번째 사본이었다.
+  - 🔴 **`feature` 는 남겼다 — 판정 유보가 아니라 작업 종류가 다르다.** 비-feature 는 볼트 91/91 이 이미 두 키가 없어 **양식이 현실을 따라가는 정정**(볼트 변경 0)이지만, feature 는 볼트 3/3 이 두 키를 갖고 있어 걷는 순간 **볼트 파일 마이그레이션**이 된다. ⚠ **존치 근거 자체는 약하다는 것도 같이 적었다**: `species` 값이 3파일에서 **바이트 동일한 상수**라 경로·kind↔path 행렬과 같은 사실의 사본이고, `version` 은 3/3 이 `0.0.0` 인데 같은 파일의 `updated`·`status` 는 움직였다 — **선언돼 있고 아무도 범프하지 않는다.**
+  - 🔴 **걷을 때 같이 갈아끼울 근거를 미리 지목해뒀다.** `project-docs-convention.md` §frontmatter Standard v2 의 **KJP-89 근거 셋째 불릿**이 「feature 는 살아있고 ADR 은 폐기」를 **per-kind 폐기의 유일한 사내 사례로 인용**한다. feature 를 걷으면 그 사례가 사라지지만 **결론(docs 층에 폐기키 finding 을 두지 않는다)은 나머지 두 근거로 선다** — 「결론은 옳고 이유가 틀렸다」패턴이라 근거만 교체하면 된다.
+  - **덤으로 같은 문장의 오류 1건** — 카드가 `id` 를 「ADR·POL 만」이라 적고 있었는데 `<PREFIX>-POL-0000N` 은 **KJP-79 로 폐기**됐고 전서의 `P_POLICY` 양식에도 `id:` 가 없다. `ADR 만` 으로 정정.
 - 🔴 **`hippocampus/assets/` 를 `vault-tree.md` 에서 뺐다 — 죽은 경로였다 (KJP-95).** 이 문서에만 있고 전서 §트리에 없어 KJP-90 기준으로는 「누락」(합법)이었지만, **방향이 반대**라서 — 보통 전서가 넓고 이 문서가 좁은데 이건 거꾸로였다 — 실측으로 갈랐다.
   - 🔴 **실물 0 · 생산자 0 · 소비자 0 (실측 2026-08-12).** `find <vault> -type d -name assets` **0건**, `-path "*assets*"` 로 넓혀도 **0건**. 레포 전수 grep 에도 이 경로를 쓰거나 읽는 skill·script·hook·agent 가 **없다** — 남은 히트는 이 트리 행 하나와 무관한 영문 산문(`doc-catalog.md` 「PR assets」)뿐이다. ⚠ `hippocampus/` 는 gitignore 라 git 이력이 없어 **실측만이 근거다.**
   - 🔴 **행 자신이 이 문서와 모순이었다.** 「shared raw images & video」라고 적혀 있는데 `hippocampus/` 는 §Layers 가 **"Outside git"** 으로 규정하고 볼트 `.gitignore` 가 실제로 무시한다. **공유 표면 밖에 있는 것은 공유될 수 없다** — 전서와의 불일치 이전에 두 화면 위 자기 자신과의 모순이었다.
