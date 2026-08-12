@@ -141,6 +141,10 @@ Intro prose is not a TOC entry.
 - [[empty-summary]] — indexed, so only the summary rule can speak about it
 - [[wl-pmem]] — indexed, so only the wikilink rule can speak about it
 - [[retired-keys]] — indexed, so only the retired-key rule can speak about it
+- [[wl-bare-multi]] — indexed, so only the wikilink-form rule can speak about it
+- [[wl-bare-single]] — indexed, so only the wikilink-form rule can speak about it
+- [[wl-bare-item]] — indexed, so only the wikilink-form rule can speak about it
+- [[wl-quoted]] — indexed and canonical, so nothing at all may speak about it
 EOF
 # 🔴 Locale regression (KJP-74). Under a UTF-8 collation locale macOS `sort -u` treats these four
 # stems as EQUAL and keeps one — measured 2026-08-05: `가 나 다 라` deduplicates to a single line,
@@ -165,6 +169,28 @@ printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/013_selftest/p_memory/nested/d
 # target list kills a specific assert rather than silently shrinking the net.
 printf -- '---\nsummary: a note still carrying 0.1.x keys\nuid: KJP-20260718-120018\ntitle: old title\ntype: gotcha\ntags: [a]\ndri: nwkim\nspecies: lesson\nsource_sessions: [KJP-20260718-120019]\nsource_items: [x]\nrecalled: 3\nuseful: 1\n---\nbody\n' \
   > "$V/013_selftest/p_memory/retired-keys.md"
+# 🔴 Unquoted wikilinks in frontmatter (KJP-56) — three broken spellings and the canonical one.
+# The rule is YAML *wire format*, so the fixtures are chosen by what a parser does with them, not
+# by how they look. Verified with PyYAML 2026-08-12:
+#   `related: [[a]], [[b]]` → ParserError. The frontmatter does not parse AT ALL, so Obsidian
+#                             renders the whole block as body text. Loud, and the form the user hit.
+#   `related: [[a]]`        → parses, to [['a']] — a nested sequence. No link, no error, no signal.
+#                             🔴 The dangerous half: nothing anywhere says this file is broken.
+#   `  - [[a]]`             → parses, to [[['a']]]. Same silent failure one level deeper. Zero
+#                             instances in the real vault — this fixture is the FORWARD guard, for
+#                             the writer who adopts the block list from the canon but drops the
+#                             quotes, which is the likeliest way the defect comes back.
+#   `  - "[[a]]"`           → parses, to '[[a]]' — a string Obsidian resolves. The canon.
+# All four carry a summary and all four are named in _index.md below, so the summary rule and the
+# coverage rule are both silenced: only the wikilink-form rule can speak about any of them.
+printf -- '---\nsummary: bare inline links — the spelling that kills the YAML parse outright\nrelated: [[phantom-one]], [[phantom-two]]\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/wl-bare-multi.md"
+printf -- '---\nsummary: one bare inline link — parses clean and silently is not a link\nrelated: [[phantom-one]]\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/wl-bare-single.md"
+printf -- '---\nsummary: a block list whose item forgot its quotes\nrelated:\n  - [[phantom-one]]\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/wl-bare-item.md"
+printf -- '---\nsummary: the canonical form — a block list of quoted links\nrelated:\n  - "[[phantom-one]]"\n  - "[[phantom-two]]"\naliases: []\n---\nbody\n' \
+  > "$V/013_selftest/p_memory/wl-quoted.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/facts/facts-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/patterns/patterns-no-summary.md"
 printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/$COMMON/policies/policies-no-summary.md"
@@ -359,6 +385,17 @@ printf -- '---\nstatus: draft\nhistory: [{ at: 2026-07-20T10:00:00, date: 2026-0
   > "$V/013_selftest/docs/fm-flowhist.md"
 printf -- '---\n"status": draft\n"session": KJP-20260718-120000\n"kind": prd\n---\nbody\n' \
   > "$V/013_selftest/docs/fm-qsession.md"
+# 🔴 The docs layer gets the wikilink-form rule too, and that is NOT a breach of KJP-89's
+# warn-only decision — it is the other axis. KJP-89 is about *vocabulary*: an unknown or deleted
+# key is legal-but-old and may be an import, so it warns. This file's defect is that its
+# frontmatter does not parse, which no vocabulary decision can forgive and which the docs layer
+# already treats as finding-worthy elsewhere (`session:` ban, bad status, missing id).
+# Measured 2026-08-12: 2 real docs-layer files carry it (004_multi-stt ADR + a resources note),
+# one in each spelling — scope this to the wiki layer and both stay invisible permanently.
+# `status:` is present so the status rule is silent; `related` is not a docs v2 key, so this file
+# ALSO produces an unknown-key warn on stderr. Two rules, two channels, both correct.
+printf -- '---\nstatus: draft\nrelated: [[phantom-one]]\n---\nbody\n' \
+  > "$V/013_selftest/docs/fm-barewiki.md"
 # docs/adr/ — body files need `id:` (multi-instance, PM-issued, immutable); its _index/index
 # carries the folder's `next_id:` counter instead. Both TOC spellings get a fixture — the
 # canonical `_index.md` passes elsewhere, and the legacy `index.md` fixture here pins that the
@@ -468,6 +505,18 @@ assert_match   "wiki: retired useful is caught"              'retired-keys.md:12
 # The note has a summary, so the summary rule cannot be what is speaking above — without this
 # the ten asserts could pass on a note that was simply broken in a different way.
 assert_no_match "wiki: a summarised note is not asked for a summary" 'retired-keys.md:1: missing frontmatter key: summary'
+
+# Unquoted wikilinks in frontmatter (KJP-56). One assert per broken spelling, because the three
+# fail in different ways and a single pattern could pass while one spelling silently fell out.
+# Real-vault scale, measured 2026-08-12: 354 occurrences — 302 that make the frontmatter
+# unparseable and 52 that parse into a nested sequence.
+assert_match   "wiki: bare inline links (hard YAML failure) caught" 'wl-bare-multi.md:3: unquoted wikilink in frontmatter value "related"'
+assert_match   "wiki: one bare inline link (silent misread) caught" 'wl-bare-single.md:3: unquoted wikilink in frontmatter value "related"'
+assert_match   "wiki: an unquoted block list item is caught"        'wl-bare-item.md:4: unquoted wikilink in a frontmatter list item'
+# 🔴 The load-bearing negative. Without it the rule could degrade into "any `related:` line is a
+# finding", which would make the canon it enforces unimplementable — every conforming note in the
+# vault would report. This is the only fixture proving the check discriminates rather than counts.
+assert_no_match "wiki: the canonical quoted block list stays quiet" 'wl-quoted.md'
 
 # wiki scope — one positive per directory pins the scope
 assert_match   "project p_memory dir is scanned"             'p_memory/no-summary.md:1: missing frontmatter key: summary'
@@ -634,6 +683,10 @@ assert_no_match "P_POLICY: the singleton is a plain body doc, no id:" 'P_POLICY.
 assert_match   "API_SPEC mirror: missing source is caught"   '014_mirror/docs/develop/API_SPEC.md:1: missing source:'
 assert_match   "API_SPEC mirror: missing readonly is caught" '014_mirror/docs/develop/API_SPEC.md:1: API_SPEC mirror without readonly: true'
 assert_no_match "API_SPEC mirror: source + readonly pass"    '013_selftest/docs/develop/API_SPEC.md'
+# The wikilink-form rule reaches the docs layer as a FINDING (KJP-56). Pinned here rather than
+# left to the wiki asserts: the two layers are separate scans, and a rule added to one of them
+# only would pass every wiki assert above while the docs half never ran.
+assert_match   "docs: bare wikilink in docs frontmatter is a finding" 'fm-barewiki.md:3: unquoted wikilink in frontmatter value "related"'
 
 SAVED_REPORT="$REPORT"; REPORT="$WARNS"
 assert_match   "docs fm: unknown key warns on stderr"        'fm-legacy.md:2: unknown docs frontmatter key: kind'
@@ -644,6 +697,9 @@ assert_match   "docs fm: deleted owner warns on stderr"      'fm-legacy.md:6: un
 assert_no_match "docs fm: session key is never demoted to a warn" 'session key in docs frontmatter'
 assert_match   "docs fm: date-only updated warns on stderr"  'fm-legacy.md:5: date-only updated'
 assert_match   "docs fm: quoted unknown key still warns"     'fm-qsession.md:4: unknown docs frontmatter key: kind'
+# The KJP-56 finding and the KJP-89 warn are different rules about the same line, and both must
+# still speak. If the new finding ever swallowed the warn, this is what would notice.
+assert_match   "docs fm: the bare-wikilink file still warns on the unknown key" 'fm-barewiki.md:3: unknown docs frontmatter key: related'
 assert_no_match "docs fm: datetime updated never warns"      'fm-v2.md'
 assert_no_match "docs fm: hippocampus/ placeholder is outside the docs scan" 'sample-session.md'
 REPORT="$SAVED_REPORT"
@@ -744,7 +800,9 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # verbatim because it records what was measured then, not what this fixture set counts now:
 # every other count was byte-identical before and after (19 sessions, 102 knowledge, 321 shared,
 # 24 issues).
-assert_match   "scanned counts appear in the summary"        '(12 sessions, 25 wiki, 5 wiki indexes, 7 docs indexes, 26 entries, 65 shared, 34 docs, 8 adr ids)'
+# KJP-56 moved four of these: +4 wiki notes and +4 of the index entries that cover them, +1 docs
+# file, and +5 shared-surface files (the wikilink scan reads the same five). Nothing else shifted.
+assert_match   "scanned counts appear in the summary"        '(12 sessions, 29 wiki, 5 wiki indexes, 7 docs indexes, 30 entries, 70 shared, 35 docs, 8 adr ids)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
