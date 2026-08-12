@@ -25,7 +25,12 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
 | unattended cycle (`sc` promotion ① · `dreaming` promotion ②) | `hippocampus/` · `<project>/p_memory/` · `neocortex/` |
 | an AI acting on a user instruction | anywhere, `<common_root>/` included |
 
-`<common_root>/` is a **fact record kept current by measurement**. The unattended cycle never writes there — the path is refused twice, once before the write and once before the commit (`hooks/org-guard.sh`). The check reads the path from `.brain-paths`; matching a literal would leave a vault whose value is `personal` undefended.
+`<common_root>/` is a **fact record kept current by measurement**. The unattended cycle never writes there — the path is refused twice, once before the write and once before the commit (`skills/dreaming/SKILL.md` §Paths). The path is read from `.brain-paths`; matching a literal would leave a vault whose value is `personal` undefended.
+
+🔴 **That guarantee is prose discipline, and the hard gate for it ships off (measured 2026-08-12, KJP-66).** `hooks/org-guard.sh` is a `PreToolUse` block for the same path, but it is **not registered in this plugin's `hooks.json`** — deliberately, and its own header says so (same stance as `force-delegate.sh`: a hook that can block a write is a policy, and a policy ships off by default). Two consequences, neither of them a defect to repair:
+
+- **It cannot single out the unattended cycle, and does not try.** Once the `writer` key was retired nothing in a payload identifies the caller, so the script enforces the flat rule — *nothing* writes to the common layer through this hook — and is opted into per session (`ORG_GUARD_OFF=1` lifts it for one session).
+- **So registering it globally would block writes the table above permits**: an AI acting on a user instruction may write here, and `onboard`'s machine notes under `<common_root>/machines/` are exactly that. The flat rule is right for a session that must not touch the common layer and wrong as a default.
 
 ## Tree axes — the manifest decides; the diagram is the default
 
