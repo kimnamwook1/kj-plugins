@@ -41,7 +41,11 @@ Keep capture cheap. Deep dedup and tidying are `dreaming`'s batch job — write 
    - **Nothing is written back into the session** — no promotion marker, no backlink, no counter. raw stays raw (`docs/vault-tree.md` §Layers).
    - **scribe returns**: every vault path it wrote (notes · `_index.md`). The calling skill stages exactly those and nothing else. If a return omits a path, ask that scribe — never widen the pathspec to compensate.
 
-3. **`<common_root>/` is never a destination here.** The unattended cycle may not write the fact record at all, and the refusal is enforced by path, twice (`docs/vault-tree.md` §Write permission). An item that reads as an org-wide obligation is still promoted as ordinary project knowledge; turning it into a norm is a user action, not a promotion.
+3. **`<common_root>/` is never a destination *for this step* — and the candidate is not dropped either.** `sc` runs as the unattended cycle, so it may not write the common layer (`docs/vault-tree.md` §Write permission). An item that reads as an org-wide obligation is still promoted as **ordinary project knowledge** — that is where it lives until it is a norm.
+
+   🔴 **Then say so out loud.** The PM names it in the close report as a **`common-policy candidate`**, together with the `p_memory` path it was just promoted to. This is the step whose absence made the rule leak: promoting the item silently and mentioning nothing leaves the user with no moment to decide, and the candidate rots in a session log. Measured 2026-08-12 — **9 such candidates** sat unwritten in `013_kj-plugins/p_memory/0.rejected.md` across five sessions (2026-07-27 → 2026-08-05), each annotated `사용자 서명 대기 · 볼트 공통층 policies/ 미기록`.
+
+   **If the user then says to make it a norm, that write is no longer unattended** — it is an ordinary row-2 write, and it goes to `<common_root>/*policies*/` through a scribe brief like any other. What `sc` may not do is *decide* it alone; writing it under an instruction was never the forbidden part.
 
 ## Forbidden
 
