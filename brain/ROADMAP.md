@@ -38,4 +38,6 @@
 
 ## 서명 대기
 
-- techtainment `learned/` 잔류 1건 — «코드리뷰 봇과 보안스캐너는 다른 카테고리·보완관계» 노트의 org_policies 승격 (승인 시 이동·`learned/` 소멸, 기각 시 프로젝트 지식 `p_memory/` 로 잔류). 🔴 **규범 승격은 사용자 행위** — 무인 사이클은 공통 루트에 쓰지 못한다(`docs/vault-tree.md` §Write permission).
+- ~~techtainment `learned/` 잔류 1건 — «코드리뷰 봇과 보안스캐너는 다른 카테고리·보완관계» 노트의 org_policies 승격 (승인 시 이동·`learned/` 소멸, 기각 시 프로젝트 지식 `p_memory/` 로 잔류).~~ **해소됨 — 실측 2026-08-12.** 볼트 전체에 `learned/` 디렉터리가 **없고**(`find -type d -name learned` 0건), 해당 노트는 `projects/012_plane-new-function/p_memory/PNF_bot-review-rebuttal-with-repo-convention.md` 에 있다 = 프로젝트 지식 잔류 분기. 공통층에는 없다. ⚠ 그것이 명시적 기각이었는지 층 개편의 부수 효과였는지는 **파일 상태로 판별 불가**(`writer` 키 폐기 — `docs/vault-tree.md` §Write permission) — 되살리려면 사용자에게 다시 묻는다.
+- 🔴 **이 절의 전제가 바뀌었다 (2026-08-12).** 「규범 승격은 사용자 행위」의 알맹이는 그대로다 — **무엇이 규범이 되는지는 사용자가 정하고, 무인 사이클은 공통층에서 여전히 제외**다. 바뀐 것은 **쓰기 주체**: 사용자 지시를 받은 AI 가 `<common_root>/*policies*/` 를 직접 쓴다(`docs/vault-tree.md` §Write permission). 따라서 후보가 갈 곳이 없어 이 절에 고이는 상태는 더 이상 정상이 아니다 — 후보는 close 보고에서 `common-policy candidate` 로 제시되고 사용자 답변과 함께 그 자리에서 기록된다(`skills/_session-shared/knowledge-promotion.md` step 3).
+- **미처리 잔고 9건 (실측 2026-08-12).** `013_kj-plugins/p_memory/0.rejected.md` 에 2026-07-27 ~ 2026-08-05 다섯 세션에 걸쳐 `사용자 서명 대기 · 볼트 공통층 policies/ 미기록` 으로 반환된 common-policy 후보가 9건 있다. 새 권한 아래 재제시 대상이며, **볼트 쓰기는 사용자 확인을 받은 세션에서 한다** — 이 문서는 레포 축이라 여기서 처리하지 않는다.
