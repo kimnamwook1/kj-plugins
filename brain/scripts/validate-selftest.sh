@@ -40,6 +40,7 @@ mkdir -p "$V/hippocampus/nested" "$V/013_selftest/p_memory/nested" \
          "$V/013_selftest/docs/policy" "$V/013_selftest/docs/adr" \
          "$V/013_selftest/docs/develop" "$V/014_mirror/docs/develop" \
          "$V/014_mirror/docs/adr" "$V/015_adrgap/docs/adr" \
+         "$V/016_pmemname/p_memory" "$V/017_legacyhub/p_memory" \
          "$V/$COMMON/facts" "$V/$COMMON/facts/machines" \
          "$V/$COMMON/patterns" "$V/$COMMON/policies" \
          "$V/999_tools" "$V/neocortex"
@@ -527,6 +528,60 @@ printf -- '---\nstatus: draft\nsource: repo/openapi.yaml\nreadonly: true\nsynced
   > "$V/013_selftest/docs/develop/API_SPEC.md"
 printf -- '---\nstatus: draft\n---\nmirror\n' > "$V/014_mirror/docs/develop/API_SPEC.md"
 
+# ---- p_memory filenames (KJP-98): `<pp>_<slug>.md`, prefix read from the project hub ----
+# 🔴 Its own project because this rule needs a hub that DECLARES a prefix, and `013_selftest` is
+# the fixture for the opposite case: its hub names none (it only mentions the word in prose, which
+# must not count as a declaration), so its ~30 deliberately ill-named notes are skipped and it
+# yields exactly one finding, at the hub. That split is why the `p_memory names` count is readable
+# at all — it counts only notes under a hub with the authority to name them.
+# Every fixture below carries a `summary:` and is named in the folder index, so the summary rule
+# and the coverage rule are both silenced and only the filename rule can speak about any of them.
+cat > "$V/016_pmemname/_index.md" <<'EOF'
+# pmemname — 프로젝트 허브
+
+PREFIX: PMN
+
+- [[016_pmemname/p_memory/_index]] — 지식 노트
+EOF
+pmemfix() {  # pmemfix <basename-without-.md>
+  printf -- '---\nsummary: a p_memory filename fixture\n---\nbody\n' > "$V/016_pmemname/p_memory/$1.md"
+}
+pmemfix 'PMN_good-slug'          # ✅ canonical — must stay silent
+pmemfix 'PMN_digits-9-ok'        # ✅ digits are slug characters; pins [a-z0-9], not [a-z]
+pmemfix 'plain-kebab-no-prefix'  # kebab slug, no prefix — the shape of all 480 real violations
+pmemfix 'PMN_Upper Case'         # prefix ok, slug carries a space and capitals
+pmemfix 'PMN_'                   # prefix ok, slug empty — the boundary of "one or more words"
+pmemfix 'PMN'                    # the bare prefix: no `_` separator, so the prefix is NOT present
+pmemfix 'XYZ_good-slug'          # 🔴 another project's prefix — pins that the compare is against
+                                 #    THIS hub's value, not merely "some uppercase token"
+pmemfix '한글 문장형 이름이다'      # neither half holds — one finding must name both
+# Excluded meta files. Neither name could ever satisfy the rule, so silence here can only mean the
+# exclusion held; the eight positives above are what prove the folder was scanned at all.
+printf -- '---\nupdated: 2026-07-18\n---\n' > "$V/016_pmemname/p_memory/0.rejected.md"
+# 🔴 The legacy hub spelling. `index.md` is canon's recognised equal of `_index.md`
+# (vault-tree.md §Naming Conventions), so the prefix must be readable from it too — otherwise every
+# project still on the old spelling silently loses its naming authority and its notes stop being
+# checked, which is the quiet direction of this rule. The `LEG_` in the expected-name text is the
+# only thing that can show this hub was the one read.
+printf -- '# legacyhub\n\nPREFIX: LEG\n' > "$V/017_legacyhub/index.md"
+printf -- '---\nsummary: a note under a legacy index.md hub\n---\nbody\n' \
+  > "$V/017_legacyhub/p_memory/bad name here.md"
+printf -- '- [[bad name here]] — indexed, so only the filename rule can speak about it\n' \
+  > "$V/017_legacyhub/p_memory/_index.md"
+
+cat > "$V/016_pmemname/p_memory/_index.md" <<'EOF'
+# pmemname 지식 — 목차
+
+- [[PMN_good-slug]] — canonical
+- [[PMN_digits-9-ok]] — canonical with digits
+- [[plain-kebab-no-prefix]] — no prefix
+- [[PMN_Upper Case]] — bad slug
+- [[PMN_]] — empty slug
+- [[PMN]] — no separator
+- [[XYZ_good-slug]] — wrong prefix
+- [[한글 문장형 이름이다]] — neither half
+EOF
+
 # A session note may wikilink other sessions — hippocampus/ is outside the shared surface
 # and deliberately outside this scan. Otherwise-valid so only the wikilink rule could
 # speak; it must not.
@@ -721,6 +776,49 @@ assert_no_match "coverage: nested p_memory stays out of scope"   'deep-no-summar
 # (every hippocampus/ session, every docs/ document), so silence can only mean the boundary held.
 assert_no_match "coverage: hippocampus/ is outside the coverage scan" 'hippocampus/.*uncovered note'
 assert_no_match "coverage: docs/ is outside the coverage scan"        'docs/.*uncovered note'
+
+# p_memory filenames (KJP-98) — `<pp>_<slug>.md`. The rule reached canon 2026-08-05 with no
+# detector and was then broken by every note written after it (0 of 480 carried a prefix), so the
+# asserts below are what the canon has instead of a promise.
+assert_match "pmem name: a bare kebab stem with no prefix is caught" \
+  'plain-kebab-no-prefix.md:1: p_memory filename carries no project prefix (expected "PMN_<slug>.md"'
+assert_match "pmem name: a slug with a space and capitals is caught" \
+  'PMN_Upper Case.md:1: p_memory filename slug is not lowercase kebab: "Upper Case"'
+assert_match "pmem name: an empty slug is caught" \
+  'PMN_.md:1: p_memory filename slug is not lowercase kebab: ""'
+assert_match "pmem name: the bare prefix has no _ separator, so no prefix" \
+  'p_memory/PMN.md:1: p_memory filename carries no project prefix, and its slug is not lowercase kebab'
+# 🔴 The compare is against THIS hub's PREFIX value, not "any uppercase token" — without that,
+# a note prefixed for another project would pass and the vault-wide uniqueness the prefix exists
+# for would be gone.
+assert_match "pmem name: another project's prefix does not satisfy the rule" \
+  'XYZ_good-slug.md:1: p_memory filename carries no project prefix, and its slug is not lowercase kebab'
+# One finding names BOTH halves. First-defect-wins would have reported only the prefix on all 480
+# real notes and said nothing about the 146 sentence-shaped slugs until a second pass.
+assert_match "pmem name: a Korean sentence filename reports both halves at once" \
+  '한글 문장형 이름이다.md:1: p_memory filename carries no project prefix, and its slug is not lowercase kebab'
+# The quiet half. Paired with the six positives above in the same folder, so silence here cannot
+# be the silence of a scan that never reached it.
+assert_no_match "pmem name: the canonical form is not reported"      'PMN_good-slug.md:1: p_memory filename'
+assert_no_match "pmem name: digits are legal slug characters"        'PMN_digits-9-ok.md:1: p_memory filename'
+assert_no_match "pmem name: the folder index is not a note"          '016_pmemname/p_memory/_index.md:1: p_memory filename'
+assert_no_match "pmem name: 0.* meta files are not notes"            '016_pmemname/p_memory/0.rejected.md:1: p_memory filename'
+# 🔴 The hub with no authority. `013_selftest`'s hub only *mentions* the word PREFIX in prose, so
+# it declares nothing — one finding at the hub, and its ~30 ill-named notes are not reported at all.
+# Reporting them would bury the one-line fix under its own symptoms.
+assert_match "pmem name: a hub declaring no PREFIX is reported once, at the hub" \
+  '013_selftest/_index.md:1: project hub declares no PREFIX: line'
+# The hub finding carries how many notes went unchecked. A non-zero count is what separates
+# "notes were seen and skipped for want of an authority" from "the folder was empty all along" —
+# the two are the same silence everywhere else in the report.
+assert_match "pmem name: the hub finding counts the notes it could not check" \
+  '013_selftest/_index.md:1: project hub declares no PREFIX: line (.*so [1-9][0-9]* note'
+assert_no_match "pmem name: notes under a PREFIX-less hub are not each reported" \
+  '013_selftest/p_memory/.*: p_memory filename'
+assert_match "pmem name: a legacy index.md hub still supplies the prefix" \
+  '017_legacyhub/p_memory/bad name here.md:1: p_memory filename carries no project prefix, and its slug is not lowercase kebab (expected "LEG_<slug>.md"'
+assert_no_match "pmem name: neocortex is not in this scan's scope"   'neocortex/.*: p_memory filename'
+assert_no_match "pmem name: the common layer is not in this scan's scope" "$COMMON/.*: p_memory filename"
 
 # session-uid wikilinks on the shared surface — one positive per scan root
 assert_match   "docs/: bare session wikilink is caught"      'docs/wl-doc.md:4: session uid wikilink on the shared surface: \[\[KJP-20260718-120000\]\]'
@@ -919,7 +1017,7 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # index entries covering them, +1 session (FMPARSE-20), +1 docs file (fm-parse), and +9 shared —
 # the 8 p_memory notes plus fm-parse. The session does NOT raise `shared`: hippocampus/ is outside
 # that surface, which is the asymmetry the raw-layer asserts above already pin.
-assert_match   "scanned counts appear in the summary"        '(13 sessions, 37 wiki, 5 wiki indexes, 7 docs indexes, 38 entries, 79 shared, 36 docs, 8 adr ids)'
+assert_match   "scanned counts appear in the summary"        '(13 sessions, 46 wiki, 9 p_memory names, 7 wiki indexes, 9 docs indexes, 47 entries, 91 shared, 36 docs, 8 adr ids)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?
@@ -936,7 +1034,7 @@ printf -- '---\nstatus: draft\n---\n[[KJP-20260718-120000]]\n' \
   > "$W/013_wl/docs/only.md"
 REPORT="$(/bin/bash "$VALIDATE" "$W")"; rc=$?
 assert_exit  "wikilink-only vault exits 0 in default mode" 0 "$rc"
-assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 1 shared, 1 docs, 0 adr ids)'
+assert_match "wikilink is the only finding in that vault"  'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 p_memory names, 0 wiki indexes, 0 docs indexes, 0 entries, 1 shared, 1 docs, 0 adr ids)'
 /bin/bash "$VALIDATE" "$W" --strict > /dev/null 2>&1
 assert_exit  "a wikilink finding alone fails --strict" 1 $?
 rm -rf "$W"
@@ -954,7 +1052,7 @@ printf -- '---\nstatus: draft\nid: X-ADR-00001\n---\nd\n'   > "$A/013_adr/docs/a
 printf -- '---\nstatus: draft\nid: X-ADR-00001\n---\nd\n'   > "$A/013_adr/docs/adr/X-ADR-00002.md"
 REPORT="$(/bin/bash "$VALIDATE" "$A" 2>/dev/null)"; rc=$?
 assert_exit  "adr-audit-only vault exits 0 in default mode" 0 "$rc"
-assert_match "the duplicate id is the only finding in that vault" 'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 wiki indexes, 1 docs indexes, 0 entries, 3 shared, 3 docs, 2 adr ids)'
+assert_match "the duplicate id is the only finding in that vault" 'validate.sh: 1 issue(s) (0 sessions, 0 wiki, 0 p_memory names, 0 wiki indexes, 1 docs indexes, 0 entries, 3 shared, 3 docs, 2 adr ids)'
 # Anchored to the counter rule's own wording, not the bare word `next_id`: the duplicate message
 # names next_id too (it explains where a collision comes from), so a looser pattern would report
 # the explanation as a violation.
@@ -1005,7 +1103,7 @@ assert_match    "other scans survive the tools override"        'facts/facts-no-
 E="$(mktemp -d -t brain-selftest-empty)"; mkdir -p "$E/hippocampus"
 REPORT="$(/bin/bash "$VALIDATE" "$E" 2>&1)"; rc=$?
 assert_exit  "empty vault exits 0" 0 "$rc"
-assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 wiki indexes, 0 docs indexes, 0 entries, 0 shared, 0 docs, 0 adr ids)'
+assert_match "empty vault reports a zero scan count" '(0 sessions, 0 wiki, 0 p_memory names, 0 wiki indexes, 0 docs indexes, 0 entries, 0 shared, 0 docs, 0 adr ids)'
 # No `.brain-paths` here either: the schema_version rule must stay silent on a vault that never
 # declared a manifest, because every key then resolves to its documented default — a legal vault.
 assert_no_match "empty vault: an absent manifest is legal and silent" 'schema_version'
@@ -1078,7 +1176,7 @@ assert_no_match "restructured: 999_Archive is excluded"                 'rs-arch
 assert_no_match "restructured: _templates skeletons are excluded"       '_templates/machines/hardware.md'
 assert_no_match "restructured: no missing-root warning when it resolves" 'common root not found'
 assert_match    "restructured: the ADR audit follows the manifest too"  'RS-ADR-00003.md:1: gap in the ADR sequence: RS-ADR-00002'
-assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 8 shared, 3 docs, 2 adr ids)'
+assert_match    "restructured: scan is not silently empty"              '(0 sessions, 5 wiki, 0 p_memory names, 1 wiki indexes, 0 docs indexes, 1 entries, 8 shared, 3 docs, 2 adr ids)'
 
 # a manifest pointing at a root that does not exist must say so, not scan zero in silence
 printf -- 'schema_version: 2\ncommon_root: nope\n' > "$R/.brain-paths"
@@ -1104,7 +1202,7 @@ assert_no_match "org vault: _index-only folder is not asked for a summary" 'empt
 assert_match    "org vault: the _index-only folder's TOC is still scanned" 'empty-axis/_index.md:1: dangling _index link: \[\[x\]\]'
 assert_no_match "org vault: absent tools root is silent (legal state)"  '999_tools'
 assert_no_match "org vault: no missing-root warning at all"             'not found'
-assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 1 wiki indexes, 0 docs indexes, 1 entries, 2 shared, 0 docs, 0 adr ids)'
+assert_match    "org vault: counts"                                     '(0 sessions, 1 wiki, 0 p_memory names, 1 wiki indexes, 0 docs indexes, 1 entries, 2 shared, 0 docs, 0 adr ids)'
 rm -rf "$R2"
 
 # usage errors exit 2 (documented separately from the findings exit codes)
