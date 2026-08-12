@@ -113,7 +113,15 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
 - **Tokenizer artifacts.** `<Vault root>/` contains a space, so extraction splits it and invents an entry `root>/`.
 - 🔴 **Inverted negative markers — the one that makes the whole idea unsafe.** The transcript's tree carries explicit *absence* rows: `✗ legal/ 없음` states that `legal/` **must not exist**. Text extraction reads that as "canon has `legal/`" and reports this file for *missing* it — the checker asserts the exact opposite of what canon says. A gate that inverts canon is worse than no gate.
 
-**What guards this pair instead:** this section. The KJP-83 confusion was never that the trees differed — it was that no reader could tell whether a difference was intentional. That is an epistemic gap, and the fix is the same one KJP-81 used for the other pair: write the relationship down. The 3 real differences that the probe did surface are recorded as findings, not silently patched — see `brain/CHANGELOG.md` 0.2.4 §Changed, the KJP-90 entry.
+**What guards this pair instead:** this section. The KJP-83 confusion was never that the trees differed — it was that no reader could tell whether a difference was intentional. That is an epistemic gap, and the fix is the same one KJP-81 used for the other pair: write the relationship down. The 3 real differences that the probe did surface were recorded as findings, not silently patched — see `brain/CHANGELOG.md` 0.2.4 §Changed, the KJP-90 entry — and each was then settled on its own ticket:
+
+| # | Difference | Verdict |
+|---|---|---|
+| ① | ADR filename spelled `<pp>-ADR-0000N.md` in the transcript | **transcript corrected** to `<PREFIX>-` (KJP-90) — 2 canon + the real files were on one side |
+| ② | tools layer: transcript folders `cli/ mcp/ plugins/ skills/` vs this diagram's flat `tool-*.md` | **flat wins, transcript corrected** (KJP-93) — §The tools root below carries the grounds |
+| ③ | `hippocampus/assets/` here, absent from the transcript §트리 | open |
+
+🔴 **② is the worked example of why the ⚠ above is not decorative.** The transcript turned out to be *internally* split — its own `worker.md` draft and its `.brain-paths` section both describe the flat model — and precedence cannot resolve a conflict inside one document. What settled it was a measurement this file's axis supplies: the scanner cannot see the folder model at all.
 
 ## The common layer — topics are free; only `*policies*` is structural
 
@@ -134,6 +142,7 @@ A restructured common layer is legal as-is — e.g. the techtainment vault today
 - **Why it was split out (measured 2026-07-25).** Two vaults on one machine each recorded the same tool surface under their own common layer, and the copies diverged by an order of magnitude (`tool-mcp.md` 31KB vs 3KB). Storing a machine-global fact on a vault-scoped axis makes N vaults into N conflicting inventories, and nothing can arbitrate them — each is "correct" for its own scope.
 - **Git-untracked.** The contents are machine-local, so they never belong on the shared surface (`git-convention.md` §Share scope). A teammate pulling your MCP list gets a fact about *your* laptop. Registered in the vault's `.gitignore` at creation — by whoever creates the layer — **before** the first write populates it, because a gitignore added after the first commit does not un-commit anything.
 - **Populated by measurement only** — `/brain:onboard` step 6, never by hand and never from memory.
+- 🔴 **Flat — one inventory note per kind, never a folder per kind (KJP-93, 2026-08-12).** The four notes in the diagram above are the whole model; a fifth kind would add a fifth *file*. The transcript's §트리 drew `cli/ mcp/ plugins/ skills/` instead and was corrected, because **the scanner cannot see a nested note**: `scripts/validate.sh` scans this root at `-maxdepth 1` (only the common layer recurses, and that is deliberate — its sub-axes differ per vault). Measured on a fixture 2026-08-12: a flat `999_tools/tool-cli.md` missing `summary:` produces 2 findings and counts as `1 wiki`; the same defect at `999_tools/cli/ripgrep.md` produces **none and is not counted**. Under the folder model this root would be a scan root that scans nothing — which contradicts the reason `validate.sh` lists it at all (it carries wiki-layer notes that must hold the wiki schema). **Do not "fix" this by making the scan recurse**: depth is what keeps a project's `p_memory/` subfolders out of scope on the same line.
 
 **Why `machines/` stays in the common layer.** Machine *configuration* is a vault fact (which boxes this vault's work runs on — one note per machine, and a vault legitimately spans several); tool *surface* is machine-global (what is installed on the box you are typing on right now). One is a roster the vault keeps, the other is the state of one machine — different scopes, so different homes.
 
