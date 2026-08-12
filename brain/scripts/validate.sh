@@ -563,11 +563,15 @@ if [ "$n_index" -gt 0 ] || [ "$n_dindex" -gt 0 ]; then
   # Every target the vault can resolve, in the two spellings a wikilink may use: the vault-relative
   # path (`[[org/machines/clients/x/HARDWARE_SPEC]]`) and the bare filename stem (`[[NEO-foo]]`).
   # Built once for the whole run — one tree walk instead of a stat per link.
-  # 🔴 `aliases:` is deliberately NOT harvested. A renamed note keeps its old basename there so
-  # existing links still open, but knowledge-convention.md requires the folder index to be updated
-  # in the *same commit* as the move — so an index line still naming the pre-rename stem is a
-  # finding by canon even though Obsidian would happily follow it. Resolving through aliases here
-  # would forgive exactly the drift this check exists to catch.
+  # 🔴 `aliases:` is deliberately NOT harvested, and the reason is stronger than it used to read
+  # here. This comment claimed a renamed note's old basename in `aliases` keeps existing links
+  # opening, "even though Obsidian would happily follow it". **Both halves are false** — measured
+  # 2026-08-12 (Obsidian 1.13.6): Obsidian's resolver does not consult `aliases` at all, so
+  # `001_rss-proj/_index.md` has carried `aliases: [rss-proj]` since 2026-07-12 while `[[rss-proj]]`
+  # stays unresolved in 14 places. Harvesting them here would make this checker *more* permissive
+  # than the app it is checking, and would forgive exactly the drift it exists to catch:
+  # knowledge-convention.md requires every inbound link — the folder index line included — to be
+  # rewired in the *same commit* as the move, because nothing else rescues it.
   # ponytail: a partial path (`[[p_memory/good]]`) that is neither the full vault-relative path nor
   # the bare stem is reported as dangling, though Obsidian would resolve it when unique. No
   # instance exists in either measured vault; add suffix matching when one does.
