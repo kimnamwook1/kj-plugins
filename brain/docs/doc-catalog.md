@@ -10,7 +10,7 @@
 > - **The owner column feeds the brief's DoD** — the PM writes "update document X" into the DoD of the brief the owner label routes ([[project-docs-convention]] §Rules that outlived their fields).
 > - **kind = a vocabulary label in this table — not a frontmatter field either.** Derivation canon: [[project-docs-convention]] §kind ← path matrix (the sole copy — never restate it here).
 > - **All documents follow the [[project-docs-convention]] frontmatter standard v2** — `status: created|draft|approved|deprecated` (the only required key) + optional `history`. 🔴 **`status: created` means "no information" — never cite as evidence. The moment it gains content, switch to `draft`.**
-> - **ID issuance for multi-instance documents (POL·ADR) = the PM issues in advance** ([[project-docs-convention]]). Workers never pick their own numbers.
+> - **ID issuance for multi-instance documents (ADR — the only one) = the PM issues in advance** ([[project-docs-convention]] §ID Issuance). Workers never pick their own numbers. 🔴 **`<PREFIX>-POL-0000N` is retired (KJP-79)** — a policy is not a file, so it has no document ID; its `## POL-NNN` heading is a serial *within* `P_POLICY.md`, still PM-issued (row below).
 
 ## Selection Table
 
@@ -34,7 +34,7 @@
 | **DESIGN (디자인 시스템 스펙 — 기능 명세급)** | `design` | design | `docs/develop/` | When the product has a UI. **Design-system spec — feature-document-grade** (the depth of one feature spec, not of a one-line pointer): design tokens · component inventory · states · interaction rules. **SSOT rule → [[project-docs-convention]] §Value Axes, "UI pixels" row — the only original, not restated here** (body template → [[doc-templates]]) | situational |
 
 > **RUNBOOK §Delivery (absorbs the former `GIT_STRATEGY` file).** Records this project's delivery bucket (from `/brain:onboard` Q1/Q2) + a git-flow pointer + an exceptions line (default "예외: 없음 — 분류표 준수"), **and the measured values below.**
-> 🔴 **The git flow is decided by the vault's delivery classification note** — a classification table mapping **project type → flow**. There is no single org-default flow; org is only where documents live (one org legitimately runs different flows per project type). The note's **path differs per vault**: a binding vault keeps it in the common layer's `policies/` (e.g. `DELIVERY_STRATEGY.md`); a vault still stabilizing may keep it in the common layer's `facts/` as a non-binding reference and promote it to `policies/` when stable (common-layer location = the vault's `.brain-paths` manifest — [[vault-tree]]). **Never hardcode the path or restate a flow value — refer to "the vault's delivery classification note" and point** (restate → drift).
+> 🔴 **The git flow is decided by the vault's delivery classification note** — a classification table mapping **project type → flow**. There is no single org-default flow; org is only where documents live (one org legitimately runs different flows per project type). The note's **path differs per vault**: a binding vault keeps it in the common layer's **normative tier** (e.g. `DELIVERY_STRATEGY.md`); a vault still stabilizing may keep it in any descriptive topic folder as a non-binding reference and move it into the normative tier when stable (common-layer location = the vault's `.brain-paths` manifest — [[vault-tree]]). 🔴 **The normative tier is a directory segment *containing* `policies` — glob `*/*policies*/*`, never an exact folder name** ([[vault-tree]] §The common layer): `policies` and `org_policies` have both been measured on the same vault and neither is canon. The descriptive tier has no reserved name at all — sub-axes are the vault's own, so there is no `facts/` to point at. **Never hardcode either spelling or restate a flow value — refer to "the vault's delivery classification note" and point** (restate → drift).
 >
 > **§배포 `### 환경` — 브랜치↔환경 매핑은 여기가 정본이다 (2026-08-03 신설).** 환경 **수·티어**는 공통층 배포 분류가 정하지만(서버-SaaS = stage+prod 등), **어느 브랜치가 어느 환경으로 배포되는지는 레포의 배선**이라 어디에도 없었다. 🔴 **브랜치 이름과 환경 이름은 같지 않다** — 실측: `dev` 브랜치가 `stage` 환경으로 배포되는 형태가 실재한다. 이름이 다르면 추론이 불가능하므로 표로 적는다.
 >
@@ -59,13 +59,13 @@
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|
-| **MARKETING (마케팅 전략 — GTM)** | `marketing` | **business** | `docs/business/` | When launch, channel, or positioning decisions are needed. 🔴 **Pricing/tier literals never live here** — the only original is [[PRD]] §BM and this document links to it. Absorbs as sections: **§포지셔닝 · 메시징** — a competitor gets a line, never a chapter · **§홍보 자산 인덱스** — the real copy/social/PR assets are deliverables outside the vault, so this holds the index table only | universal |
+| **MARKETING (마케팅 전략 — GTM)** | `marketing` | **business** | `docs/business/` | When launch, channel, or positioning decisions are needed. 🔴 **Pricing/tier literals never live here** — the only original is [[PRD]] §BM and this document links to it. Absorbs as sections: **§포지셔닝 · 메시징** — a competitor gets a line, never a chapter · **§홍보 자산 인덱스** — the real copy/social/PR assets are deliverables outside the vault, so this holds the index table only | situational |
 
 > **`BUSINESS` is retired (KJP-86, 2026-08-12).** Its two sections went to the separate homes the canonical tree already names: **§BM → [[PRD]] §BM** (pricing · tiers · unit economics — the [[project-docs-convention]] §Value Axes home) and **§GTM → `MARKETING.md`**. One file carrying both was the 0.1.5 model; the 0.2.0 §트리 supersedes it.
 >
 > ✅ **`MARKETING` is not an init scaffold target — settled on the `skills/init` §4 axis (KJP-85, 2026-08-12).** That card decided the document *identity*; this one decided the seat. **`MARKETING` is situational**, created on trigger like `MILESTONE` · `COMPLIANCE` · `DESIGN`, so the pre-created baseline is **5** and `BUSINESS`'s slot stays empty. A market-entry strategy is not something a project has at creation time; a PRD is.
 
-**Planning (roadmap)** — **not pre-created** (created on trigger, not part of the 6-stub baseline)
+**Planning (roadmap)** — **not pre-created** (created on trigger, not part of the 5-stub baseline)
 
 | Document | kind | owner | Location | When (trigger) | Tier |
 |---|---|---|---|---|---|

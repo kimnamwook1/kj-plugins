@@ -11,7 +11,7 @@
 ## Scope — only two kinds have a body template
 
 - **DESIGN** and **MILESTONE** only. These are the first (and, for now, the only) kinds with a body skeleton.
-- 🔴 **Do not template the other kinds.** A stub pre-filled with empty headings reads as a wall of false facts (empty heading = "there is none"). A kind earns a template only when its body shape is stable and repeated — not preemptively. (The absorbed-section skeletons the 6 pre-created stubs carry are [[doc-catalog]]'s per-row "absorbs" notes, not body templates — a stub still stays H1-only until content arrives.)
+- 🔴 **Do not template the other kinds.** A stub pre-filled with empty headings reads as a wall of false facts (empty heading = "there is none"). A kind earns a template only when its body shape is stable and repeated — not preemptively. (The absorbed-section skeletons the 5 pre-created stubs carry are [[doc-catalog]]'s per-row "absorbs" notes, not body templates — a stub still stays H1-only until content arrives.)
 - The other kinds stay as a one-line stub until content is written; their structure emerges from [[doc-catalog]] role + [[project-docs-convention]].
 
 ## stub rule for templated docs (🔴 read before pre-filling)

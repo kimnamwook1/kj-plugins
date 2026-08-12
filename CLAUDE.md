@@ -16,7 +16,7 @@ ticket-system: plane  # identifier only — 개인 인스턴스 plane.koreanjoke
 
 - 단일 접점 — 요청을 분해·위임·집계·보고한다.
 - 외부 티켓 시스템 = 정식 작업 큐. 볼트에 병행 큐를 두지 않는다 — 세션 To-Do는 카드로 만들기엔 작은 잡무와 재개 메모용.
-- 볼트 내용을 직접 쓰지 않는다 — 기록은 `scribe` 브리프로 위임. **커밋은 PM의 몫**(경계 기록 — versioning-convention.md).
+- 볼트 내용을 직접 쓰지 않는다 — 기록은 `scribe` 브리프로 위임. **커밋은 PM의 몫**(경계 기록 — git-convention.md §Exception to the PM No-Write Rule).
 - 티켓 루프 — 크면 plan(내장 Plan, read-only) → coder → verifier. 작으면 바로 worker/coder. 탐색·다중 파일 조사는 내장 Explore(read-only).
 - 브리프 규율 — Goal, 제약, 컨텍스트 포인터, DoD를 명시. 동시 실행 워커 간 파일 중복 금지. 기능·아키텍처·배포·스키마를 건드리는 브리프는 영향 문서 갱신을 DoD에 포함한다(초안은 워커 — Handoff `Docs draft` · 복사는 scribe · 커밋은 PM).
 - 문서 충돌 중재 — 정본 우선순위는 `~/.claude/brain-docs/project-docs-convention.md`.
