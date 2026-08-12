@@ -1023,6 +1023,12 @@ aliases: []                  # 승격 직전 basename(&lt;pp&gt;_&lt;slug&gt;)�
 <div id="ed-adr" hidden>
 <h3>ADR — 결정 1건</h3>
 <p class="sub"><code>docs/adr/&lt;PREFIX&gt;-ADR-0000N.md</code> · <b>사람-승인 산출물</b>. 무인 사이클(sc·dreaming)은 이 파일을 읽지도 쓰지도 않는다.</p>
+<h3 id="history-verdict">§history — ADR 폐기 필드인가 <span class="badge b-ok">✅ 아니다 (KJP-94, 2026-08-12)</span></h3>
+<p class="sub">이 카드의 폐기 필드 목록이 <code>history</code> 를 싣고 있었고, <code>project-docs-convention.md</code> §frontmatter Standard v2 는 같은 필드를 <b>「optional, any document」</b>로 규정한다. <b>실볼트가 규약 쪽을 지지해 규약이 이겼다</b> — ADR 7건 중 <b>6건이 <code>history</code> 를 갖고 있다</b>. 폐기 필드라면 6/7 이 위반이라는 뜻이므로 실물을 전수로 읽어 분류했다.</p>
+<p class="sub">🔴 <b>6파일 8엔트리 전수 분류 — 결정 개정 0건.</b> ① <b>형식 정합 6건</b>: <code>YS-ADR-00002</code>·<code>YS-ADR-00003</code>(status 어휘 + 파일명 <code>0002-*</code>→<code>YS-ADR-00002</code> 정합 + id 백필) · <code>MOSH-ADR-00001</code>·<code>MOSH-ADR-00002</code>(status 어휘 + owner 백필) · <code>KJT-ADR-00001</code>(<code>proposed→draft</code>, 4값 표준) — 다섯 건이 <code>ticket: "KJP-19"</code> 를 단 한 배치다 ② <b>생성 기록 2건</b>: <code>KJT-ADR-00001</code>·<code>PNF-ADR-00001</code> 의 「제안 — …」 엔트리로, <code>at</code> 이 그 파일 <code>updated</code> 와 같은 날짜다(나중 수정이 아니라 탄생). <b>「결정 내용의 개정」은 한 건도 없다 — 불변성은 위반되지 않았다.</b></p>
+<p class="sub">🔴 <b>이 카드가 자기모순이었다.</b> 폐기 목록의 다른 다섯은 전부 괄호에 사유가 붙는다(<code>version</code> 린터 미검사 · <code>species</code> 경로가 곧 종류 · <code>title</code> summary 로 통합 · <code>related</code> dreaming 미독 · <code>aliases</code> 이동·개명 없음). <b><code>history</code> 만 사유 없이 목록 끝에 붙어 있었다.</b> 게다가 <code>species</code> 의 사유 괄호가 <b><code>validate.sh</code> 의 docs 인식 키를 <code>status|updated|id|source|readonly|synced|history</code> 로 인용</b>한다 — 두 줄 뒤에서 폐기할 필드를, 다른 필드가 죽었다는 근거로 <b>살아있는 인식 키로 든 것</b>이다. 실측 확인: <code>validate.sh:793</code> 이 정확히 그 7키 정규식을 갖고, <code>:743-796</code> 에 v1→v2 <code>history</code> 마이그레이션 검사기(블록·인라인맵·플로우·따옴표키 4표기)가 살아 있으며 ADR 을 포함한 docs 층 전체에 돈다.</p>
+<p class="sub"><b>폐기 판정 테스트가 <code>history</code> 에서 정확히 뒤집힌다.</b> <code>species</code> 를 죽인 근거는 「실볼트 ADR 7건 전부 이 필드 없음」이었고 그건 실측으로 맞다(<code>grep</code> 확인 — <code>species</code>·<code>version</code> 0건). 같은 테스트를 <code>history</code> 에 적용하면 <b>6/7 존재</b>다.</p>
+<p class="sub"><b>불변성과 충돌하지도 않는다 — 이 카드가 불변성의 범위를 이미 좁게 적어놨다.</b> 금지된 것은 <b>뒤집힘을 구 파일에 쓰는 것</b>이고(<code>superseded_by 금지</code>), 불변인 것은 <b>결정 기록</b>이다. 결정적으로 <b><code>status</code> 는 이 템플릿의 필수 키이고 KJP-19 는 그 어휘를 마이그레이션했다</b>(<code>Proposed→draft</code> · <code>Accepted→approved</code>) — 필수 키의 어휘가 바뀌면 기존 파일은 <b>고쳐질 수밖에 없다</b>. 그 수정을 기록하는 필드를 폐기하면 <b>수정은 그대로 일어나고 기록만 사라진다.</b> 더구나 <code>session</code> 키는 docs frontmatter 에서 금지라(규약 §history &amp; session linkage) <code>history.ticket</code> 이 <b>ADR 파일 자신이 「나는 KJP-19 에서 마이그레이션됐다」를 말할 수 있는 유일한 채널</b>이다.</p>
 <div class="editbar">
   <button id="adr-save">파일로 저장 (ADR.md)</button>
   <button id="adr-reset">기본값 복원</button>
@@ -1037,6 +1043,10 @@ status: approved             # created | draft | approved | deprecated (정본 =
 updated: YYYY-MM-DD          # 생성 시 1회
 supersedes: []               # 이 결정이 뒤집은 구 ADR id 배열 · 방향은 신규→구 한쪽뿐
                              #   superseded_by 금지 — 구 파일을 고치는 것이므로 불변 제약 위반
+history:                     # 선택 · 어느 문서든 (project-docs-convention §frontmatter Standard v2)
+  - { at: &lt;datetime&gt;, change: &lt;한 줄&gt;, ticket: "KJP-19" }
+                             #   🔴 결정 개정용이 아니다 — 형식 정합(어휘 마이그레이션 · 파일명 정합 · 백필) 전용.
+                             #   결정 뒤집힘은 위 supersedes 로만 표현한다. 판정 근거는 아래 §history
 ---
 &lt;!-- 생성 경로: sc 가 대화에서 결정 후보를 한 줄 목록으로 제시 → 사람이 고른 것만 파일이 된다.
        · 후보 0개면 질문하지 않는다.  · 사람이 안 고르면 그 내용은 p_memory 로만 간다.
@@ -1047,7 +1057,10 @@ supersedes: []               # 이 결정이 뒤집은 구 ADR id 배열 · 방�
      폐기 필드: version(린터 미검사) · species(경로가 곧 종류다 — docs/adr/ 와 파일명이 이미 ADR 이라고 말하는데
               필드는 같은 사실의 3번째 사본이다. 읽는 코드 0(skills 0건 · validate.sh 의 docs 인식 키는
               status|updated|id|source|readonly|synced|history 뿐) · 실볼트 ADR 7건 전부 이 필드 없음) · title(summary 로 통합)
-              · related(dreaming 이 ADR 을 안 읽음) · aliases(이동·개명 없음) · history --&gt;
+              · related(dreaming 이 ADR 을 안 읽음) · aliases(이동·개명 없음)
+     🔴 history 는 폐기 목록에서 뺐다 (KJP-94, 2026-08-12) — 여기 있었던 것이 오류다. 위 목록의 다른 다섯은
+        전부 괄호에 사유가 붙는데 history 만 사유가 없었고, 바로 그 species 괄호가 history 를
+        「validate.sh 가 인식하는 살아있는 docs 키 7개」 중 하나로 인용한다. 판정은 §history 카드. --&gt;
 
 ## Context
 &lt;무엇이 결정을 강요했나 — 당시 제약 · 숫자 · 버전. 뒤집혀도 읽혀야 할 동결 맥락&gt;
