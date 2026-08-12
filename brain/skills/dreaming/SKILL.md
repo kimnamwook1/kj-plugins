@@ -21,7 +21,11 @@ The vault-root comes from the project's `CLAUDE.local.md` (recorded by `/brain:i
 | **Link** | Find related notes and join them with `related`, **one quoted link per line** — `  - "[[stem]]"`. Form canon: [[knowledge-convention]] §related. | 🔴 **No new shortcut between notes already connected.** If A–B and B–C exist, do not add A–C — two hops already reach it, and without this rule links grow quadratically with the note count.<br>🔴 **Never write `related: [[a]], [[b]]` or a bare `[[a]]`.** YAML reads `[[` as a nested sequence: the first spelling makes the note's whole frontmatter unparseable, the second silently produces no link at all. This operation is what wrote **354 such notes** before the rule existed (measured 2026-08-12) — the form is this skill's output contract, not a style preference. |
 | **Promotion ②** | The same knowledge standing in two different projects moves to `neocortex/NEO-<slug>.md`, and the original is removed | **Sameness is judged by content.** Matching filenames or titles only narrow the candidate set. If a number, path, version, or condition disagrees it is different knowledge — link it, do not move it. |
 
-Promotion ② is a **three-line operation** and the file is otherwise byte-identical — `git mv`, append to `aliases`, insert `projects`. The body is not edited. Canon: [[knowledge-escalate-convention]].
+Promotion ② changes **three lines inside the note** and the file is otherwise byte-identical — `git mv`, append to `aliases`, insert `projects`. The body is not edited.
+
+🔴 **The note is not the whole operation. `git mv` is a rename, so the inbound links move with it, in the same commit** — the source project's `p_memory/_index.md` line, the new `neocortex/_index.md` line, and every `related:` that names the old `<pp>_<slug>`. **`aliases:` does not cover this**: Obsidian's resolver does not read the key (measured 2026-08-12 — a moved note with its old basename in `aliases:` stayed unresolved under the old stem), so a promotion that stops at three lines leaves broken links behind and the alias hides none of them. Canon: [[knowledge-escalate-convention]] · evidence and verification method: [[knowledge-convention]] §Filename.
+
+Verify with `obsidian unresolved verbose` and compare the **target list** across the move, not the total — the total counts distinct targets, so one stem with two dozen inbound links moves it by 1 (`skills/_session-shared/vault-io.md` §2).
 
 ## Rules
 

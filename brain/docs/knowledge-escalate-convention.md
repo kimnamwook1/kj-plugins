@@ -23,7 +23,7 @@ At session close, `sc` reads the conversation and extracts two things: **what th
 
 When the same knowledge stands in **two different projects**, it has earned the claim that it does not depend on either. `dreaming` moves it up.
 
-**The whole operation is three lines. Everything else is byte-identical.**
+**Three lines change inside the note. Everything else in it is byte-identical.**
 
 ```
 1. git mv <project>/p_memory/<pp>_<slug>.md   neocortex/NEO-<slug>.md
@@ -31,9 +31,11 @@ When the same knowledge stands in **two different projects**, it has earned the 
 3. insert the projects key (the 2 slugs the judgment was made on)
 ```
 
+🔴 **The note is not the whole operation — step 1 is a rename, and a rename is not finished until its inbound links are rewired.** Everything that named `<pp>_<slug>` now names nothing: the source project's `p_memory/_index.md` line, `neocortex/_index.md`'s new line, and every `related:` entry pointing at the old stem. All of it lands **in the same commit as the move**. `aliases:` does not stand in for that work — Obsidian's resolver, the canonical verdict on link integrity (`skills/_session-shared/vault-io.md` §2), does not read the key at all. Measured 2026-08-12: a note moved with its old basename appended to `aliases:` stayed in `obsidian unresolved` under the old stem, and this vault's `projects/001_rss-proj/_index.md` has advertised `aliases: [rss-proj]` since 2026-07-12 while 14 links to `rss-proj` remain unresolved. Evidence and the verification method: [[knowledge-convention]] §Filename.
+
 - **The body is not edited.** No reformatting, no re-summarizing, no status field.
 - `projects:` is **write-once** — it freezes the evidence used at that moment, not the note's current scope. Never appended to or corrected later.
-- The old name survives in `aliases:`, so links written before the move still resolve.
+- The old name is kept in `aliases:` so a reader who remembers it can still find the note. That is a courtesy to human memory, not link maintenance.
 - Two notes that are related but not the same knowledge get a `related:` link instead of a move.
 
 ## What does not ride this ladder

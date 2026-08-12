@@ -241,7 +241,8 @@ the **shape**, with each movable axis written as the manifest key that resolves 
     machines/            #   one note per machine, filename = lowercase hostname
     policies/            #   binding norms — highest precedence in document conflicts
   neocortex/             # vault-wide knowledge — root-fixed, recall target
-    NEO-<slug>.md        #   no numbers; the filename is the identity, old names go to aliases:
+    NEO-<slug>.md        #   no numbers; the filename is the identity, old names noted in aliases:
+                         #   (a memo — it resolves no link; a rename rewires its inbound links)
     dream-logs.md        #   dreaming's run log — one file, appended to
   <projects_root>/
     NNN_<project>/       # one folder per project (NNN = 001–899 project band, slug = identity)

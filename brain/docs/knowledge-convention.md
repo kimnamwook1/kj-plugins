@@ -15,6 +15,7 @@ updated: YYYY-MM-DD
 related: []                  # sc always writes []. Only dreaming links · no pair already reachable in two hops
                              #   non-empty form → §related (every wikilink is quoted)
 aliases: []                  # append the old basename on rename or on promotion ②
+                             #   a memo for a human who remembers it — it does not resolve links (§Filename)
 ---
 ## Trigger   when this note should come to mind — the opening agent's relevance gate
 ## Insight   the reusable **claim**. It need not be a solution — a corrected fact belongs here too
@@ -64,6 +65,17 @@ neocortex  NEO-<slug>.md       <slug> = lowercase ASCII kebab — [a-z0-9] words
 
 Enforced as a **finding** by `scripts/validate.sh` on `p_memory/`, alongside this layer's other findings (retired keys, `related` wire format, index coverage): a stem is this layer's identity key, and an identity defect is not a style opinion. `_index.md` and `0.*` are excluded as meta files, the same exclusion every other wiki scan uses.
 
+### `aliases:` does not rescue a rename — it is a memo, and the links are still yours to rewire
+
+🔴 **Obsidian's resolver does not consult `aliases:`.** That resolver is the canonical verdict on link integrity and the only thing in this harness that gets a vote (`skills/_session-shared/vault-io.md` §2), so a note carrying its own old basename in `aliases:` is, to every link that still names the old stem, simply gone. Measured 2026-08-12 on Obsidian 1.13.6, two independent ways:
+
+- **Probe.** `git mv` on one note took `obsidian unresolved` from 84 to 85. Appending that note's old basename to its own `aliases:` left the count at **85**, and the old stem stayed in the unresolved target list. The probe was reverted. PyYAML parses both frontmatter blocks and returns the alias, so this is the resolver's behaviour and not a spelling defect.
+- **The live vault, arrived at separately.** `projects/001_rss-proj/_index.md` has carried `aliases: [rss-proj]` since its `updated: 2026-07-12`. A month later `obsidian unresolved verbose` still reports `rss-proj` as an unresolved target with **14 occurrences**, all of them in that project's own notes.
+
+🔴 **So a rename is finished when the inbound links are rewired, not when the alias is appended.** Keep appending it — on a rename, and on promotion ② where it preserves the pre-promotion `<pp>_<slug>` ([[knowledge-escalate-convention]]) — because a reader who remembers the old name should still find the note. That is the whole of what it buys. The rewrite of the inbound links, and of the `_index.md` line naming the note, lands **in the same commit as the move**. Which pointers are in scope is [[vault-tree]] §Renaming a path term: live pointers only, judged line by line — a path quoted as a past measurement is not one. The bullets above already argue this from the other side, where "renaming breaks every inbound wikilink" is the reason a `summary:` gets revised while its filename is left to rot.
+
+🔴 **`unresolved` counts distinct targets, not occurrences, so it under-reports rename damage — verify against `verbose`, never against the number.** One broken stem moves the counter by 1 however many links point at it: measured the same day, the target `actor-tag-domain-model` carries 27 occurrences across 20 files and contributes exactly 1, and vault-wide the two quantities differ by 5.5× (`skills/_session-shared/vault-io.md` §2). A rename that breaks two dozen links can therefore read as a 1-point regression, or as nothing at all if something else was repaired in the same window. Diff the **target list** out of `obsidian unresolved verbose` across the move and confirm the old stem is absent from it. A total that did not move is not evidence that it is.
+
 ## Frontmatter must parse — quoting is a wire format, not a style
 
 **A frontmatter block that YAML cannot parse has no keys at all.** Not wrong keys — *no* keys. Obsidian renders the whole block as body text, and every reader (recall, `_index` regeneration, any script) sees a note with no `summary`, no `updated`, no `related`, no `aliases`. This is one rung above every other rule on this page: the rules below describe what the keys should say, and this one decides whether there are keys.
@@ -105,11 +117,11 @@ projects: []                 # 2+ distinct project slugs that triggered promotio
                              #   ⚠ write-once — recorded once at promotion. Never appended to, deleted from, or updated on rename.
                              #      Not "current scope" but a frozen record of the evidence used at that moment
 related: []
-aliases: []                  # append the pre-promotion basename (<pp>_<slug>)
+aliases: []                  # append the pre-promotion basename (<pp>_<slug>) — a memo, not a link resolver
 ---
 ```
 
-Promotion ② is a three-line operation and nothing else — canon: [[knowledge-escalate-convention]].
+Promotion ② changes three lines inside the note and nothing else. **The note is not the whole operation**: the move renames the file, so the inbound links come with it (§Filename). Canon: [[knowledge-escalate-convention]].
 
 ## `related` — links are the precondition for recall
 
