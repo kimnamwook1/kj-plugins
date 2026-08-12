@@ -128,18 +128,22 @@ AWK_PRELUDE='
 # pattern. one-true-awk (macOS /usr/bin/awk) is the constraint this file has already been bitten by
 # twice (see the resolve() and spelled-out-digit comments), and a literal comparison cannot be the
 # next bite. `file` is the caller's -v variable, set by both scans.
+# 🔴 The local names are prefixed `fm*` on purpose. awk has no block scope: a function local is
+# spelled as an extra parameter, and the docs program this is concatenated into already owns
+# globals named `k` and `val`. Plain `k`/`v` locals here would shadow them — harmless only for as
+# long as this call stays ahead of their assignment, which is not a property worth depending on.
 AWK_BAREWIKI='
-  function barewiki(s, nr,   k, v) {
-    if (match(s, /^[ \t]*-[ \t]+/)) {
-      if (substr(s, RLENGTH + 1, 2) == "[[")
+  function barewiki(fmline, nr,   fmkey, fmval) {
+    if (match(fmline, /^[ \t]*-[ \t]+/)) {
+      if (substr(fmline, RLENGTH + 1, 2) == "[[")
         print file ":" nr ": unquoted wikilink in a frontmatter list item (YAML reads it as a nested sequence, not a link — quote it: - \"[[stem]]\")"
       return
     }
-    if (!match(s, /^[A-Za-z_][A-Za-z0-9_]*:[ \t]*/)) return
-    v = substr(s, RLENGTH + 1)
-    if (substr(v, 1, 2) != "[[") return
-    k = substr(s, 1, index(s, ":") - 1)
-    print file ":" nr ": unquoted wikilink in frontmatter value \"" k "\" (YAML reads it as a nested sequence, not a link — quote each link on its own line: - \"[[stem]]\")"
+    if (!match(fmline, /^[A-Za-z_][A-Za-z0-9_]*:[ \t]*/)) return
+    fmval = substr(fmline, RLENGTH + 1)
+    if (substr(fmval, 1, 2) != "[[") return
+    fmkey = substr(fmline, 1, index(fmline, ":") - 1)
+    print file ":" nr ": unquoted wikilink in frontmatter value \"" fmkey "\" (YAML reads it as a nested sequence, not a link — quote each link on its own line: - \"[[stem]]\")"
   }
 '
 
