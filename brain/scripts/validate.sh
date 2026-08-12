@@ -1072,6 +1072,28 @@ done < "$LIST" >> "$OUT"
 # rather than opening a scan root of its own: one manifest-derived enumeration, so a moved
 # `projects_root` cannot reach one scan and miss the other.
 #
+# 🔴 A folder holding NO ADR at all is silent, and that is a decision, not the hole it looks like
+# (KJP-92, judged 2026-08-12). `report_gaps`/`report_counter` return early when no file in the
+# folder carries an id, so a project that mirrors *some* of its repo's ADRs is caught by the gap
+# rule while one that mirrors *none* says nothing. Three measurements say leave it that way:
+#   · SCOPE — the missing half is not in this script's world. `<vault-root>` is the only root it
+#     ever opens, so "the repo has 4 ADRs and the vault has 0" is a comparison whose left side is
+#     unreachable from here. Nor can the vault supply it: measured 2026-08-12, no project note
+#     carries a `repo:`/`repository:`/`source_repo:` key or any other pointer to a checkout.
+#   · NO SIGNAL — 7 of the 13 ADR folders hold zero files, and that is the *documented* state after
+#     init, not a defect: the folder is created by `init` and a file appears only when a decision
+#     is actually made (project-docs-convention.md §ID Issuance; the transcript's tree marks ADR
+#     "결정이 실제로 날 때만"). Nothing separates "has not decided anything yet" from "decided in a
+#     repo and never mirrored", so a check here would fire on the normal post-init state of more
+#     than half the vault — the same false-positive shape that keeps the docs line-form rule off.
+#   · THE INSTANCE IS GONE — the case that raised the card (006_infra-manage: 4 ADRs in its repo,
+#     an `_index.md` and nothing else in its vault folder) was migration lag. Measured after the
+#     mirroring landed: INFMA-ADR-00001..00004, contiguous, no hole.
+# The early return is also right on its own terms: these two rules audit an *issued sequence*, and
+# with no issued id there is no sequence to audit. Reporting one would be reporting the absence of
+# decisions, which is not a defect any ID canon can speak to. If mirroring completeness ever needs
+# a gate, it belongs to whatever can see both sides — not to a vault-only linter.
+#
 # 🔴 No `sort`/`uniq` anywhere in here, deliberately. Every set is an awk subscript — byte-exact
 # string keys, no collation, no dedup pass — so the KJP-74 hazard (macOS `sort -u` collapsing
 # non-ASCII names that carry no primary collation weight, measured `en_US.UTF-8` → 1 line of 4)
