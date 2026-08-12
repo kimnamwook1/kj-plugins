@@ -41,6 +41,7 @@ mkdir -p "$V/hippocampus/nested" "$V/013_selftest/p_memory/nested" \
          "$V/013_selftest/docs/develop" "$V/014_mirror/docs/develop" \
          "$V/014_mirror/docs/adr" "$V/015_adrgap/docs/adr" \
          "$V/016_pmemname/p_memory" "$V/017_legacyhub/p_memory" \
+         "$V/018_adrkeys/docs/adr" \
          "$V/$COMMON/facts" "$V/$COMMON/facts/machines" \
          "$V/$COMMON/patterns" "$V/$COMMON/policies" \
          "$V/999_tools" "$V/neocortex"
@@ -488,6 +489,34 @@ printf -- '---\nstatus: draft\n---\n# P_POLICY\n\n## POL-001 a rule\n' > "$V/013
 printf -- '---\nstatus: draft\n---\ndecision\n'                > "$V/013_selftest/docs/adr/KJP-ADR-00001.md"     # missing id
 printf -- '---\ntitle: adr toc\n---\n'                         > "$V/013_selftest/docs/adr/index.md"             # missing next_id (legacy form)
 
+# ---- ADR's own two keys, and its own `updated:` format (KJP-adhoc, 2026-08-12) ----
+# The transcript's `adr-editor` template requires `summary:` and `supersedes:` and stamps
+# `updated: YYYY-MM-DD  # 생성 시 1회`. Before this pass the linter knew none of the three, so an
+# ADR that obeyed canon collected three stderr warns and a compliant vault got noisier the more
+# it complied. Its own folder, so the ID audit fixtures above (gaps, duplicates, filename
+# fallback) cannot bleed into these asserts: a complete, hole-free, correctly-countered sequence.
+#
+# 🔴 `adr_number:` is deliberately still unknown, and it is what makes every assert_no_match
+# below non-vacuous — it proves this block was parsed at all. A file that raised NO warn could
+# not tell "summary is recognised" from "this file was never scanned". (It is also a real key:
+# KJP-87 backfilled these ADRs off it, and nothing recognises it.)
+printf -- '---\nnext_id: 3\n---\n'                             > "$V/018_adrkeys/docs/adr/_index.md"
+printf -- '---\nid: KJP-ADR-00001\nsummary: the decision, one line\nstatus: approved\nupdated: 2026-07-18\nsupersedes: []\nadr_number: 1\n---\ndecision\n' \
+  > "$V/018_adrkeys/docs/adr/KJP-ADR-00001.md"
+# The exemption is the date-only BRANCH, not the `updated:` check — an ADR whose stamp is neither
+# a date nor a datetime is still wrong, and exempting the whole key would swallow it silently.
+printf -- '---\nid: KJP-ADR-00002\nsummary: second decision\nstatus: approved\nupdated: last thursday\nsupersedes: [KJP-ADR-00001]\n---\ndecision\n' \
+  > "$V/018_adrkeys/docs/adr/KJP-ADR-00002.md"
+# 🔴 The fixture that pins the SCOPE of both keys: docs-global, not `docs/adr/`-scoped. This file
+# is on no ADR path and carries both keys, so it must raise no unknown-key warn either. Path-scope
+# the recognised set and this assert dies — which is the point, because the recognised set is
+# already a cross-kind union (`source`/`readonly`/`synced` are API_SPEC-only and global) and
+# `summary` is declared by two kinds, ADR and feature (measured 2026-08-12: 7 ADR + 3 feature
+# files carry it). Its date-only `updated:` must STILL warn — that is what pins the `updated:`
+# exemption to `docs/adr/` alone, and it doubles as this file's proof of being scanned.
+printf -- '---\nstatus: draft\nsummary: a docs file outside docs/adr carrying both keys\nsupersedes: []\nupdated: 2026-07-18\n---\nbody\n' \
+  > "$V/013_selftest/docs/fm-crosskind.md"
+
 # ---- ADR ID audit (KJP-83): duplicate ids · sequence gaps · next_id coherence ----
 # Three folders, because every rule here is judged PER FOLDER — one counter, one sequence — and a
 # single folder cannot pin that. The id strings deliberately repeat ACROSS folders (013 and 015
@@ -912,7 +941,30 @@ assert_no_match "docs fm: the parse fixture raises no unknown-key warn" 'fm-pars
 assert_match   "docs fm: the bare-wikilink file still warns on the unknown key" 'fm-barewiki.md:3: unknown docs frontmatter key: related'
 assert_no_match "docs fm: datetime updated never warns"      'fm-v2.md'
 assert_no_match "docs fm: hippocampus/ placeholder is outside the docs scan" 'sample-session.md'
+
+# ---- ADR's own keys and date-only stamp (KJP-adhoc) ----
+# Non-vacuity first: this file DOES warn, on the one key that is still unknown. Every
+# assert_no_match under it is only meaningful because this one passes.
+assert_match   "adr keys: the block is scanned (unknown adr_number still warns)" 'KJP-ADR-00001.md:7: unknown docs frontmatter key: adr_number'
+assert_no_match "adr keys: summary is a recognised docs key"     'unknown docs frontmatter key: summary'
+assert_no_match "adr keys: supersedes is a recognised docs key"  'unknown docs frontmatter key: supersedes'
+# 🔴 The scope assert: `summary`/`supersedes` are recognised on EVERY docs path, not just
+# `docs/adr/`. `fm-crosskind.md` is on no ADR path and carries both — the two asserts above are
+# written without a filename so they cover it too, and this one names it to say so out loud.
+assert_no_match "adr keys: recognition is docs-global, not adr-scoped" 'fm-crosskind.md.*unknown docs frontmatter key'
+# 🔴 date-only is current-legal on ADR (`updated: YYYY-MM-DD  # 생성 시 1회`) — 1 of the 14 docs
+# templates, so the exemption is exactly this wide and no wider.
+assert_no_match "adr updated: date-only is not warned inside docs/adr/" 'KJP-ADR-00001.md.*date-only updated'
+# ...and the three asserts that keep that exemption from growing into "ADR skips `updated:`".
+assert_match   "adr updated: a non-date stamp still warns inside docs/adr/" 'KJP-ADR-00002.md:5: updated: is not YYYY-MM-DDTHH:MM:SS: last thursday'
+assert_match   "adr updated: date-only still warns OUTSIDE docs/adr/"       'fm-crosskind.md:5: date-only updated'
+assert_match   "adr updated: the legacy non-adr doc keeps warning"          'fm-legacy.md:5: date-only updated'
 REPORT="$SAVED_REPORT"
+
+# The ADR fixtures obey canon completely, so the findings stream must be silent about them —
+# no missing id, no gap, no counter collision. Asserted on the FINDINGS channel: the warn asserts
+# above cannot see a finding, so without this a new rule could fire here unnoticed.
+assert_no_match "adr keys: a canon-compliant ADR raises no finding" '018_adrkeys.*'
 
 # quiet cases
 assert_no_match "plain uid + v2 history: template pass"      'wl-plain.md'
@@ -1017,7 +1069,10 @@ assert_no_match "neocortex dream-logs.md is excluded"        'dream-logs.md'
 # index entries covering them, +1 session (FMPARSE-20), +1 docs file (fm-parse), and +9 shared —
 # the 8 p_memory notes plus fm-parse. The session does NOT raise `shared`: hippocampus/ is outside
 # that surface, which is the asymmetry the raw-layer asserts above already pin.
-assert_match   "scanned counts appear in the summary"        '(13 sessions, 46 wiki, 9 p_memory names, 7 wiki indexes, 9 docs indexes, 47 entries, 91 shared, 36 docs, 8 adr ids)'
+# KJP-adhoc moved four: +4 docs files (018_adrkeys' `_index.md` and its two ADRs, plus
+# fm-crosskind), +4 shared (the same four — all sit under a project `docs/`), +1 docs index (that
+# `_index.md`), and +2 adr ids (the two `id:` values; the counter fixture carries none).
+assert_match   "scanned counts appear in the summary"        '(13 sessions, 46 wiki, 9 p_memory names, 7 wiki indexes, 10 docs indexes, 47 entries, 95 shared, 40 docs, 10 adr ids)'
 
 # --strict blocks
 /bin/bash "$VALIDATE" "$V" --strict > /dev/null 2>&1; rc=$?

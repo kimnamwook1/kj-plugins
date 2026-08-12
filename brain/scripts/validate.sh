@@ -517,6 +517,35 @@ done < <(brain_projects)
 #     unwritten rule at that false-positive rate is how a gate gets ignored, which is precisely
 #     what the pre-KJP-82 blanket exclusion was protecting. That protection is kept; only the
 #     dangling half moved.
+#
+# 🔴 `docs/adr/_index.md` gets NO trailing-`(<status>)` check either, and that is a judgment, not
+# an omission (KJP-adhoc, judged 2026-08-12). The proposal was to require the ADR index form
+# `- [[<id>]] — <summary> (<status>)` and report the lines that break it. Four measurements, taken
+# over all 12 ADR index lines in the real vault, say do not build it:
+#   · NO CANON STATES THE FORM. Grepped 2026-08-12 across `brain/docs/`, `brain/skills/`,
+#     `brain/agents/` and the transcript: zero hits declaring a `(<status>)` component anywhere.
+#     The canonical line — knowledge-convention.md §summary — is `- [[<stem>]] — <summary>`, with
+#     no status at all, and it is a WIKI-layer rule by that file's own words. The 7-of-12 lines
+#     that do end in a status are a habit; the bullet above is the rule, and it says docs TOCs are
+#     checked for dangling links and nothing else.
+#   · IT WOULD INVERT CANON. The `adr-editor` card says a superseded ADR gets `(→ <new id>)`
+#     appended to the END of its index line. That is the one line-tail annotation canon actually
+#     describes, and it is not a status — so an "ends with `(<status>)`" rule would report
+#     canon-mandated content as a violation (vault-tree.md §checkers: a gate that inverts canon is
+#     worse than no gate).
+#   · 4 OF THE 5 "VIOLATIONS" ARE FALSE POSITIVES. Three are ordinary prose parentheticals
+#     (`(seed/personal + shadow 병합)`, `(async provider …, MOSH-4)`, `(포크 085d19a…)`) and one
+#     ends in a ticket ref `[PNF-2]`. Exactly one is a real defect: a `(proposed)` whose file says
+#     `draft` — dead vocabulary KJP-19 migrated. An 80% false-positive rate to catch one content
+#     error is the same shape KJP-82 rejected at 85 lines.
+#   · THE DISCRIMINATION IS NOT AVAILABLE. `YS-ADR-00001`'s line carries `NAS(NFS 20TB)` inside its
+#     summary AND a trailing `(approved)`, so only the LAST group can be tested; but
+#     `MSTT-ADR-00001`'s trailing group is a prose parenthetical. No lexical signal separates them
+#     — the only one left is "the content is one of the 4 status words", which reduces the check to
+#     restating the vocabulary it started from and still rests on the unwritten form.
+# The one real defect is a content fix in one file, not a rule. If the form is ever WRITTEN into
+# canon, this becomes a different question and should be re-asked then — against the ADR index
+# lines as they stand at that time, not against this note.
 # `hippocampus/` stays outside BOTH — the raw layer is never a recall target (vault-tree.md
 # §Layers). Every boundary here is pinned by a dangling-link fixture in the self-test, so a scope
 # that shrinks kills an assert instead of passing in silence.
@@ -865,6 +894,23 @@ done < "$LIST" >> "$OUT"
 #     vocabulary only; the kind ← path derivation matrix stays in project-docs-convention.
 #   · `updated:` not YYYY-MM-DDTHH:MM:SS — date-only values are legacy-legal
 #     (sessions-note-convention.md), absence is normal (only `status:` is required).
+#     🔴 EXCEPT under `docs/adr/`, where date-only is current-legal by template and therefore
+#     silent — grounds at the check itself (KJP-adhoc).
+#
+# 🔴 The recognised set is a UNION ACROSS KINDS, never per-kind (KJP-adhoc, 2026-08-12). It reads
+# as a flat list because that is what it is: `source`/`readonly`/`synced` are declared by exactly
+# one of the 14 docs templates (API_SPEC) and are recognised on every docs path; `id` is declared
+# by two (ADR, feature). `summary` and `supersedes` joined on the same terms — before this pass an
+# ADR that obeyed its own template collected two unknown-key warns plus a date-only warn, so the
+# linter got noisier the more a vault complied. Measured 2026-08-12: `summary` is carried by 7 ADR
+# and 3 feature files (two kinds — scoping it to `docs/adr/` would fix 7 of 10 and call it done),
+# `supersedes` by 7 ADR files.
+# Do NOT "tighten" this by branching the set on path. Three reasons: the line directly above
+# forbids replicating the kind ← path matrix here; this channel is warn-only, so a key in the
+# wrong kind costs one un-emitted warn and can never move `--strict`; and the per-key branch would
+# be a second copy of the matrix, free to drift from the one in project-docs-convention.
+# Pinned by fixture: `validate-selftest.sh` §ADR keys carries a NON-adr docs file holding both
+# keys, so path-scoping the set kills a named assert instead of passing quietly.
 # Declared UNCOVERED here, by choice: value-axis duplication (a price outside BUSINESS §BM, a
 # schema copied out of migrations/ — project-docs-convention §Value Axes). Judging "this
 # token is a price" is semantics, not schema, so it stays out of this linter — but the
@@ -903,13 +949,14 @@ while IFS= read -r f; do
   # Path-derived obligations — only the *paths* are matched here; the kind ← path matrix
   # itself stays in project-docs-convention (never replicated):
   #   docs/adr/                        body → `id:` required; index/_index → `next_id:` required
+  #                                    body → `updated:` is date-only by template (see `adr` below)
   #   docs/develop/API_SPEC.md         repo-spec mirror → `source:` + `readonly: true` required
-  idreq=0; nidreq=0; mirror=0
+  idreq=0; nidreq=0; mirror=0; adr=0
   case "$f" in
-    */docs/adr/*) if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
+    */docs/adr/*) adr=1; if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
     */docs/develop/API_SPEC.md) mirror=1 ;;
   esac
-  awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE$AWK_BAREWIKI$AWK_FMPARSE"'
+  awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" -v adr="$adr" "$AWK_PRELUDE$AWK_BAREWIKI$AWK_FMPARSE"'
     BEGIN {
       # Spelled-out digit runs — one-true-awk has no ERE interval expressions (see the
       # wikilink scan above for why {n} would silently never match).
@@ -997,7 +1044,7 @@ while IFS= read -r f; do
         # the v1 check runs on the value here too (verifier bypass 2026-07-29).
         if (inhist && v != "")
           v1hist(v, NR)
-        if (!meta && k !~ /^(status|updated|id|source|readonly|synced|history)$/)
+        if (!meta && k !~ /^(status|updated|id|summary|supersedes|source|readonly|synced|history)$/)
           print file ":" NR ": unknown docs frontmatter key: " k " (warn only — never a finding)" > "/dev/stderr"
       } else if (inhist) {
         # history entry lines (inline map or indented block) — invisible to the top-level
@@ -1041,9 +1088,20 @@ while IFS= read -r f; do
       if ("updated" in seen) {
         u = val["updated"]
         if (u !~ DATETIME) {
-          if (u ~ DATEONLY)
-            print file ":" ln["updated"] ": date-only updated: (legacy-legal, warn only — new writes use YYYY-MM-DDTHH:MM:SS)" > "/dev/stderr"
-          else
+          # 🔴 Date-only is CURRENT-legal on ADR, not legacy — so it is silent here, not warned
+          # (KJP-adhoc, 2026-08-12). The transcript stamps `updated: YYYY-MM-DD  # 생성 시 1회` in
+          # its `adr-editor` template: an ADR is written once and its date is a human fact, not a
+          # machine stamp. Measured over the 14 docs templates, 13 declare YYYY-MM-DDTHH:MM:SS and
+          # exactly one — ADR — declares the date, so the exemption is this wide and no wider.
+          # The same rule report_counter states below decides it: warns are for legacy-legal
+          # spellings, and a gate that fires on correct behaviour is a gate that gets ignored.
+          # ⚠️ The BRANCH is exempt, never the key: a value that is neither a date nor a datetime
+          # still warns on an ADR (the else arm), and date-only on every other docs path still
+          # warns. Both halves are pinned by fixture — `validate-selftest.sh` §ADR keys.
+          if (u ~ DATEONLY) {
+            if (!adr)
+              print file ":" ln["updated"] ": date-only updated: (legacy-legal, warn only — new writes use YYYY-MM-DDTHH:MM:SS)" > "/dev/stderr"
+          } else
             print file ":" ln["updated"] ": updated: is not YYYY-MM-DDTHH:MM:SS: " u " (warn only)" > "/dev/stderr"
         }
       }
