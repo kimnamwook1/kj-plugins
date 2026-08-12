@@ -3,6 +3,11 @@
 ## 0.2.4 — 2026-08-12
 
 ### Fixed
+- 🔴 **`hippocampus/assets/` 를 `vault-tree.md` 에서 뺐다 — 죽은 경로였다 (KJP-95).** 이 문서에만 있고 전서 §트리에 없어 KJP-90 기준으로는 「누락」(합법)이었지만, **방향이 반대**라서 — 보통 전서가 넓고 이 문서가 좁은데 이건 거꾸로였다 — 실측으로 갈랐다.
+  - 🔴 **실물 0 · 생산자 0 · 소비자 0 (실측 2026-08-12).** `find <vault> -type d -name assets` **0건**, `-path "*assets*"` 로 넓혀도 **0건**. 레포 전수 grep 에도 이 경로를 쓰거나 읽는 skill·script·hook·agent 가 **없다** — 남은 히트는 이 트리 행 하나와 무관한 영문 산문(`doc-catalog.md` 「PR assets」)뿐이다. ⚠ `hippocampus/` 는 gitignore 라 git 이력이 없어 **실측만이 근거다.**
+  - 🔴 **행 자신이 이 문서와 모순이었다.** 「shared raw images & video」라고 적혀 있는데 `hippocampus/` 는 §Layers 가 **"Outside git"** 으로 규정하고 볼트 `.gitignore` 가 실제로 무시한다. **공유 표면 밖에 있는 것은 공유될 수 없다** — 전서와의 불일치 이전에 두 화면 위 자기 자신과의 모순이었다.
+  - 🔴 **전서에 `assets/` 가 없는 게 아니다 — 다른 층의 다른 것이다.** `.artifact/brain-0.2.0.html:511`(§양식 `ARCHITECTURE` §구조) · `:483`: draw.io **편집 원본**을 `![[<이름>.drawio.svg]]` 로 임베드하고 「파일은 **소유 문서 옆 `assets/`** · 수명 공유」. 즉 **docs 층의 문서-인접 폴더**다. 「방향이 반대」로 보였던 것은 전서의 누락이 아니라, 이 문서가 **전서가 이미 쓰고 있는 이름을 엉뚱한 층에 놓은 것**이었다. 행을 남겨두면 한 이름이 두 가지를 가리키고 그중 하나는 실재하지 않는다.
+  - 삭제 자리에 **왜 없는지와 진짜 `assets/` 가 어디인지**를 적었다 — 조용한 삭제는 다음 스윕에서 그대로 되살아난다. §This diagram vs the transcript's §트리 의 차이 표 ③행도 판정으로 닫혔다(이로써 프로토타입이 잡은 진짜 차이 3건이 전부 판정 완료).
 - 🔴 **`history` 는 ADR 폐기 필드가 아니다 — 규약이 이기고 전서 `adr-editor` 카드를 고쳤다 (KJP-94).** 전서 카드의 폐기 필드 목록이 `history` 를 실었고 `project-docs-convention.md` §frontmatter Standard v2 는 같은 필드를 **「optional, any document」**로 규정했다. **실볼트가 전서를 반증한다** — ADR 7건 중 6건이 `history` 를 갖고 있어, 폐기 필드라면 6/7 이 위반이 된다.
   - 🔴 **6파일 8엔트리 전수 분류 — 「결정 내용의 개정」 0건.** ① **형식 정합 6건**: `YS-ADR-00002`·`YS-ADR-00003`(status 어휘 + 파일명 `0002-*`→`YS-ADR-00002` 정합 + id 백필) · `MOSH-ADR-00001`·`MOSH-ADR-00002`(status 어휘 + owner 백필) · `KJT-ADR-00001`(`proposed→draft`, 4값 표준) — 다섯 건이 `ticket: "KJP-19"` 를 단 한 배치다 ② **생성 기록 2건**: `KJT-ADR-00001`·`PNF-ADR-00001` 의 「제안 — …」 엔트리로 `at` 이 그 파일 `updated` 와 동일 날짜다(나중 수정이 아니라 탄생). **불변성 위반 0건 — 전서가 폐기 근거로 삼았을 법한 긴장이 실물에서 실현되지 않았다.**
   - 🔴 **전서 카드가 자기모순이었다.** 폐기 목록의 다른 다섯은 전부 괄호에 사유가 붙는데(`version` 린터 미검사 · `species` 경로가 곧 종류 · `title` summary 로 통합 · `related` dreaming 미독 · `aliases` 이동·개명 없음) **`history` 만 사유 없이 목록 끝에 붙어 있었다.** 더 결정적으로 `species` 의 사유 괄호가 **`validate.sh` 의 docs 인식 키를 `status|updated|id|source|readonly|synced|history` 로 인용**한다 — 두 줄 뒤에서 폐기할 필드를 **다른 필드가 죽었다는 근거로 「살아있는 인식 키」로 든 것**이다.

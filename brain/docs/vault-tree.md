@@ -92,8 +92,9 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
     _index.md
     <PREFIX>_YYYYMMDD_<slug>.md      # session = one file (episodic). Same day + same slug forbidden.
                                      #   Pre-0.2.0 files keep PROJECT_PREFIX-YYYYMMDD-HHMMSS.md — never renamed.
-    assets/                          # (optional) shared raw images & video
 ```
+
+🔴 **There is no `hippocampus/assets/`, and the row that used to claim one was removed (KJP-95, 2026-08-12).** It described "shared raw images & video" — but `hippocampus/` is outside git (§Layers above), so nothing in it can be *shared*; the row contradicted this file two screens up. Measured 2026-08-12: **zero `assets/` directories anywhere in the reference vault**, and repo-wide grep finds no skill, script, hook, or agent that writes or reads such a path — no instances, no producer, no consumer. **`assets/` does mean something in this system, just not here**: the transcript's `ARCHITECTURE` §구조 template puts draw.io editable sources (`![[<name>.drawio.svg]]`) in an `assets/` folder **beside the owning document**, sharing that document's lifetime — a docs-layer path. Leaving the raw-layer row in place kept one name pointing at two things, one of which never existed.
 
 ### This diagram vs the transcript's §트리 — and why no checker compares them (KJP-90)
 
@@ -119,7 +120,7 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
 |---|---|---|
 | ① | ADR filename spelled `<pp>-ADR-0000N.md` in the transcript | **transcript corrected** to `<PREFIX>-` (KJP-90) — 2 canon + the real files were on one side |
 | ② | tools layer: transcript folders `cli/ mcp/ plugins/ skills/` vs this diagram's flat `tool-*.md` | **flat wins, transcript corrected** (KJP-93) — §The tools root below carries the grounds |
-| ③ | `hippocampus/assets/` here, absent from the transcript §트리 | open |
+| ③ | `hippocampus/assets/` here, absent from the transcript §트리 | **this diagram corrected — row deleted** (KJP-95); it was never a real path, and the transcript's `assets/` is a *docs-layer* one (§hippocampus note above) |
 
 🔴 **② is the worked example of why the ⚠ above is not decorative.** The transcript turned out to be *internally* split — its own `worker.md` draft and its `.brain-paths` section both describe the flat model — and precedence cannot resolve a conflict inside one document. What settled it was a measurement this file's axis supplies: the scanner cannot see the folder model at all.
 
