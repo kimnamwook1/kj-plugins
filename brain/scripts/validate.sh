@@ -10,7 +10,9 @@
 # included; plus, on the wiki layer alone, the canonical line form and the inverse question, notes
 # no index names), unquoted wikilinks in frontmatter (`related: [[a]]` — a nested YAML sequence,
 # never a link; the wiki AND docs layers, since a block that does not parse is a syntax defect
-# rather than a vocabulary one), session-uid wikilinks on the
+# rather than a vocabulary one), frontmatter that does not parse at all (a value opening with a
+# YAML indicator, an unclosed flow collection, or an unquoted scalar carrying `: ` — on all three
+# layers, since YAML syntax is layer-independent), session-uid wikilinks on the
 # team-shared surface, docs frontmatter v2 (`session:` key = violation; `status:`
 # required + vocabulary; v1 history subkeys; adr `id:` and index `next_id:`;
 # API_SPEC mirror keys; unknown keys and legacy `updated:` formats = stderr warn
@@ -147,6 +149,86 @@ AWK_BAREWIKI='
   }
 '
 
+# 🔴 The frontmatter PARSE check (KJP-97) — the case the ponytail note in the docs scan below was
+# explicitly waiting for, and the reason that note is updated rather than replaced.
+#
+# What it is for: `barewiki` above closed ONE spelling of "this block does not parse". After the
+# KJP-96 sweep fixed 354 wikilinks, 11 blocks still failed to parse — all of them for reasons that
+# have nothing to do with wikilinks. Measured with PyYAML on the real vault 2026-08-12, over the
+# 660 frontmatter blocks, by cause:
+#   colon+space in an unquoted scalar   6  `summary: …취급하지 않는다: 시크릿…`
+#   value opens with a backtick         3  `summary: ``df`` 만 보고…`
+#   value opens an unclosed `[`         2  `summary: [결정] sns 게시 문안 …`
+# 🔴 Why this is worth its own rule rather than more `related` policing: for those 11 notes
+# `summary`, `updated` and `related` do not exist for ANY reader. A block that does not parse is
+# rendered by Obsidian as body text in its entirety, so fixing the `related` spelling alone leaves
+# the note exactly as invisible as before. Canon: docs/knowledge-convention.md §frontmatter must
+# parse — this enforces that section, and §related is one instance of it.
+#
+# 🔴 Why this is still not a YAML parser — three tests, no state, no lookahead. Each fires only on
+# a shape that CANNOT be legal, so the vault decides nothing by luck:
+#   1. the value opens with an indicator that may never open a plain scalar (`@%,]}* and a backtick)
+#   2. the value opens a flow collection that does not close on the same line
+#   3. the value is an unquoted plain scalar carrying `: ` or ending in `:` — YAML reads the second
+#      colon as a nested mapping, which is the "mapping values are not allowed here" error
+#
+# 🔴 The exclusions are measured, not assumed, and are what keep this from false-positiving:
+#   · `[` and `{` are NOT flagged on sight. 155 vault values open with `[` and 153 of them are
+#     legal flow sequences (`aliases: [a, b]`, `related: []`); only the 2 unclosed ones are the
+#     defect. The closing test is the whole discriminator, and dropping it flags 153 healthy files.
+#   · A value inside a closed flow collection is left alone even when it carries `: ` — 6 vault
+#     files spell `aliases: ["tools: Read 만 보고…", …]`, which parses fine.
+#   · `& ! | >` are NOT flagged: anchors, tags and block scalars are legal YAML and PyYAML accepts
+#     all four (measured — `summary: |` + an indented `a: b` line parses). A checker that reports
+#     legal YAML is the false-positive rate that gets a gate ignored. Zero instances in the vault.
+#   · `#` at value position is not flagged either: it parses, to a null value. Silent data loss is
+#     a real defect but a DIFFERENT axis (the wiki scan's `summary:` rule already speaks for the
+#     one key where it matters), and this rule answers exactly one question — does the block parse.
+#   · Only top-level `key:` lines are examined. Indented lines are a block scalar's content or a
+#     nested map's body, where every shape above is legal text; skipping them is what makes the
+#     block-scalar case correct for free rather than by a second rule.
+# ponytail: a legal YAML alias (`summary: *anchor`, requiring an `&anchor` earlier in the same
+# block) would false-positive under test 1. Measured 0 anchors and 0 aliases across all 660 blocks,
+# and `*` is kept in the set because `summary: *강조* …` — markdown emphasis — is the realistic
+# way it appears. Revisit if a real anchor ever lands in frontmatter.
+# 🔴 No regex metacharacter for `[`, `]`, `{` or `}` appears below: every test is index()/substr()
+# on literal strings, the same discipline barewiki states above, because one-true-awk (macOS
+# /usr/bin/awk) is what this file has already been bitten by twice.
+# 🔴 Locals are `fm*`-prefixed for the reason barewiki gives: awk has no block scope, and the docs
+# program this is concatenated into owns globals named `k`, `v`, `s` and `val`. `fmnr` in
+# particular must not be spelled `nr` — the SESSION program owns a global by that name.
+AWK_FMPARSE='
+  function fmparse(fmline, fmnr,   fmv, fmc, fmz, fmq, fmkey) {
+    if (!match(fmline, /^[A-Za-z_][A-Za-z0-9_]*:[ \t]*/)) return
+    fmv = substr(fmline, RLENGTH + 1)
+    sub(/[ \t]+$/, "", fmv)
+    if (fmv == "") return
+    fmkey = substr(fmline, 1, index(fmline, ":") - 1)
+    fmq = sprintf("%c", 39)
+    fmc = substr(fmv, 1, 1)
+    fmz = substr(fmv, length(fmv), 1)
+    # A quoted scalar is the canonical way to carry any shape below — always legal, always silent.
+    if (length(fmv) > 1 && (fmc == "\"" || fmc == fmq) && fmz == fmc) return
+    if (index("`@%,]}*", fmc) > 0) {
+      print file ":" fmnr ": frontmatter value \"" fmkey "\" opens with the YAML indicator " fmc " (a plain scalar may not start with it, so the whole block fails to parse and every key in it — summary, updated, related — ceases to exist for any reader while Obsidian renders the block as body text; quote the value)"
+      return
+    }
+    if (fmc == "[" && fmz != "]") {
+      print file ":" fmnr ": unclosed flow sequence in frontmatter value \"" fmkey "\" ([ opens a YAML sequence that must close on the same line; as written the whole block fails to parse and every key in it is invisible to any reader — quote the value if the bracket is prose)"
+      return
+    }
+    if (fmc == "{" && fmz != "}") {
+      print file ":" fmnr ": unclosed flow mapping in frontmatter value \"" fmkey "\" ({ opens a YAML mapping that must close on the same line; as written the whole block fails to parse and every key in it is invisible to any reader — quote the value if the brace is prose)"
+      return
+    }
+    # Closed flow collections and the legal indicators fall out here, before the colon test: the
+    # text inside them is already quoted or already structured, and `aliases: ["a: b"]` is correct.
+    if (index("[{&!|>#", fmc) > 0) return
+    if (index(fmv, ": ") > 0 || fmz == ":")
+      print file ":" fmnr ": unquoted frontmatter value \"" fmkey "\" contains a colon+space (YAML reads the second colon as a nested mapping, so the whole block fails to parse and every key in it is invisible to any reader while Obsidian renders the block as body text; quote the value)"
+  }
+'
+
 # ---------------------------------------------------------------- session notes
 # Excluded alongside index.md because none is a session: index.md/_index.md are the folder TOC
 # (one rule, two spellings — same pair every scan excludes), and sample-session.md is the schema
@@ -160,10 +242,19 @@ n_sessions="$(wc -l < "$LIST" | tr -d ' ')"
 
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
-  awk -v file="$f" "$AWK_PRELUDE"'
+  awk -v file="$f" "$AWK_PRELUDE$AWK_FMPARSE"'
     { sub(/\r$/, "") }
     NR == 1 && $0 == "---" { fm = 1; next }
     fm && $0 == "---" { fm = 0; fmend = 1; next }
+    # 🔴 The parse check reaches this layer too (KJP-97). Not because the session TOOLING breaks —
+    # measured, it does not: `sl`/`sr` read `status:` with grep, never a YAML parser
+    # (skills/_session-shared/active-sessions.md), so a session whose block fails to parse still
+    # lists and still resumes. It is here because the defect is YAML syntax, which is
+    # layer-independent by construction, and because Obsidian renders an unparseable block as body
+    # text on every layer alike. Scoping a syntax rule to the layer where it happened to be found
+    # is exactly what produced KJP-97: KJP-56 wrote the rule to `related` instead of to scalars,
+    # and 11 blocks on another key survived the sweep. Measured cost today: 0 findings here.
+    fm { fmparse($0, NR) }
     # ponytail: duplicate keys are last-wins (`status: frozen` then `status: active` passes).
     # A real parser would reject the duplicate; not worth the weight for hand-written frontmatter.
     fm && match($0, /^[A-Za-z_][A-Za-z0-9_]*:/) {
@@ -274,7 +365,7 @@ LC_ALL=C sort "$LIST" > "$NOTES"
 
 while IFS= read -r f; do
   [ -r "$f" ] || { echo "$f:1: cannot read file (permission or broken link)"; continue; }
-  awk -v file="$f" "$AWK_BAREWIKI"'
+  awk -v file="$f" "$AWK_BAREWIKI$AWK_FMPARSE"'
     BEGIN {
       # 🔴 The migration safety net. These ten are the 0.1.x wiki vocabulary; a 0.2.0 note carries
       # four (summary · updated · related · aliases, plus `projects` on neocortex). Sweeping the
@@ -297,6 +388,10 @@ while IFS= read -r f; do
     # the finding has to carry that same line number. No apostrophe may appear in this comment —
     # the awk program is a single-quoted shell string and one would end it (measured, KJP-56).
     fm { barewiki($0, NR) }
+    # The 11 blocks the wikilink sweep could not reach — all of them on this layer, all of them on
+    # `summary:` (KJP-97). Reported per line for the same reason barewiki is: the rule is about the
+    # spelling of one line, so the finding must carry that line number.
+    fm { fmparse($0, NR) }
     fm && match($0, /^[A-Za-z_][A-Za-z0-9_]*:/) { at[substr($0, 1, RLENGTH - 1)] = NR }
     END {
       if (!ok) print file ":1: missing frontmatter key: summary"
@@ -722,7 +817,7 @@ while IFS= read -r f; do
     */docs/adr/*) if [ "$meta" -eq 1 ]; then nidreq=1; else idreq=1; fi ;;
     */docs/develop/API_SPEC.md) mirror=1 ;;
   esac
-  awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE$AWK_BAREWIKI"'
+  awk -v file="$f" -v meta="$meta" -v idreq="$idreq" -v nidreq="$nidreq" -v mirror="$mirror" "$AWK_PRELUDE$AWK_BAREWIKI$AWK_FMPARSE"'
     BEGIN {
       # Spelled-out digit runs — one-true-awk has no ERE interval expressions (see the
       # wikilink scan above for why {n} would silently never match).
@@ -753,6 +848,21 @@ while IFS= read -r f; do
     # 1 file fails to parse for an unrelated reason (an unquoted `summary:` whose text contains
     # a colon-space, which YAML reads as a nested mapping). No check in this file sees it. THAT
     # is the case to weigh a real parser against — not the wikilink one, which is now covered.
+    # 2026-08-12 (KJP-97), the case the line above named, weighed and answered — appended rather
+    # than replacing either judgment, because a decision whose history is deleted gets re-argued
+    # from scratch. The "1 file" estimate was low: re-measured after the KJP-96 sweep landed,
+    # **11** blocks fail to parse for non-wikilink reasons (6 colon+space · 3 leading backtick ·
+    # 2 unclosed `[`). It was still answered WITHOUT a parser — AWK_FMPARSE above is three
+    # index()/substr() tests — and the answer was checked the only way that means anything: its
+    # output was diffed against PyYAML over all 660 blocks and agreed on **file AND line, 11 = 11,
+    # zero false positives and zero misses**, plus 32/32 on a synthetic set carrying the shapes the
+    # vault does not have (block scalars, anchors, tags, nested maps, quoted colons).
+    # 🔴 So the standing judgment is now twice-tested and still holds: no parser. What remains
+    # genuinely uncovered is narrower than before and stated here so it is not rediscovered as a
+    # surprise — duplicate keys (last-wins, above), a value that parses to null (`key: #text`), and
+    # the ` date:`/` by:` false positive this very note is about. None is a parse failure; each is
+    # a block that parses into something other than what its author meant, which is a different
+    # axis from the one KJP-97 closed and would need a different rule, not a bigger one.
     function v1hist(s, nr) {
       if (s ~ V1DATE)
         print file ":" nr ": v1 history key \"date:\" (v2 history entry = { at, change, ticket })"
@@ -769,6 +879,11 @@ while IFS= read -r f; do
       # which is why KJP-89 (unknown keys warn, never fail) does not reach it — see the note at
       # AWK_BAREWIKI and project-docs-convention.md §frontmatter Standard v2.
       barewiki($0, NR)
+      # Same seat, same argument, one axis wider (KJP-97): a docs block that fails to parse loses
+      # its `status:` — and a folder index its `next_id:` — exactly the way a wiki note loses its
+      # `summary:`. Measured 2026-08-12: 0 docs-layer files carry it today, so this is a forward
+      # guard here rather than a backlog; the 11 live cases are all on the wiki layer.
+      fmparse($0, NR)
       # Matches the key in every YAML shape: top-level `session:`, nested-map
       # `    session:`, inline-map `{ ..., session: ... }`, and the quoted spelling of
       # each (`"session":` — verifier bypass 2026-07-29). The leading class keeps
