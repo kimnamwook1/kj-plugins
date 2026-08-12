@@ -48,7 +48,7 @@ Fast, lossy capture; periodic consolidation. Capture that is expensive does not 
       _index.md
   neocortex/                         # vault-wide knowledge · recall target
     _index.md
-    NEO-<slug>.md                    #   no numbers · the filename is the identity key · old names kept in aliases:
+    NEO-<slug>.md                    #   no numbers · the filename is the identity key · old names noted in aliases: (a memo — it resolves no link)
     dream-logs.md                    #   dreaming's run log — one file, appended to
   <projects_root>/NNN_<project>/     # per project (number = sort order, the identifier is the slug)
     _index.md                        # = project hub; record the project prefix here
@@ -193,5 +193,5 @@ So: **judge line by line, read the `git diff` with your eyes, and report what wa
   - this canon gap is why two vaults stored one machine under divergent case/schema.
 - **multi-word filenames = `UPPER_SNAKE`**
   - `THREAT_MODEL.md` · `CODE_CONVENTION.md` · `API_SPEC.md`
-- **memory notes carry no number** — `p_memory` is `<pp>_<slug>.md`, `neocortex` is `NEO-<slug>.md`. Changing tiers swaps the prefix and moves the file; the old name goes to `aliases:` so existing links still open ([[knowledge-convention]]).
+- **memory notes carry no number** — `p_memory` is `<pp>_<slug>.md`, `neocortex` is `NEO-<slug>.md`. Changing tiers swaps the prefix and moves the file. The old name goes to `aliases:` as a memo for a reader who remembers it — 🔴 **it resolves nothing**, so the inbound links are rewired in the same commit as the move, under §Renaming a path term above ([[knowledge-convention]] §Filename carries the measurement).
 - **folder index = `_index.md`** — a legacy `index.md` is recognized as its equal (never both in one folder)

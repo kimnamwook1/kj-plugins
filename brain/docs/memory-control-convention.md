@@ -24,7 +24,7 @@ Done / Mistake / Learned / Outputs / Risks / Next / Ask   (+ optional: Docs draf
 Keep realtime cheap; batch the hard parts. Triggered by `sc` at session close. Inputs are `p_memory` and `neocortex` only — it neither reads nor writes sessions.
 - **refine** — conform notes to the form and fold duplicates together, without changing a single fact.
 - **link** — join related notes with `related`, never a shortcut between notes already two hops apart.
-- **promotion ②** — the same knowledge standing in two projects moves to `neocortex/`, a three-line operation ([[knowledge-escalate-convention]]).
+- **promotion ②** — the same knowledge standing in two projects moves to `neocortex/`. Three lines change inside the note, and because the move is a rename its inbound links are rewired in the same commit ([[knowledge-escalate-convention]]).
 
 **Guardrails (violate these and memory gets polluted)**:
 - **Incremental** — not the whole vault every time; only what changed or aged since the last dream.
