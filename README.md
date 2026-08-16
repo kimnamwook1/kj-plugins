@@ -18,16 +18,20 @@ koreanjoker's Claude Code plugin marketplace.
 ### brain — quick tour
 
 ```
-/brain:init       # once per project — writes CLAUDE.local.md, scaffolds the vault
-/brain:onboard    # once per project — 5-question interview fills the stub docs
+/brain:init       # once per project — AGENTS.md + CLAUDE.md marker block, CLAUDE.local.md
+                  # (vault-root), vault scaffold (sessions/ + memory/ + _index.md)
+/brain:onboard    # once per project — grill-style interview: one question at a time,
+                  # measured answers, documents created lazily in repo docs/
 
 /brain:ss         # start a NEW session (creates only — never resumes, never scans)
 /brain:sr         # resume a parked session — the only path back into one; status → active
 /brain:sl         # list open sessions (parked + active) — read-only
-/brain:sh         # park it — knowledge promotion + a Progress entry, status → parked
-/brain:sc         # close it out
+/brain:sh         # park it — Progress entry, status → parked (no promotion; that is sc's)
+/brain:sc         # close it out — status → done, knowledge promoted to memory/,
+                  # then a one-line dreaming suggestion
 
-/brain:dreaming   # batch consolidation: staleness flags, index repair, cross-project promotion
+/brain:dreaming   # batch consolidation — refine + cross-project scope promotion;
+                  # destructive changes are proposal-only
 ```
 
 Full documentation, design rationale, and the vault conventions live in
@@ -40,22 +44,26 @@ Full documentation, design rationale, and the vault conventions live in
 brain/                            # the plugin
   .claude-plugin/plugin.json
   skills/                         # ss · sr · sl · sh · sc · init · onboard · dreaming
-  agents/                         # worker · coder · verifier profiles
-  docs/                           # vault conventions (the canon)
-  scripts/                        # validate.sh — vault schema checker
-  hooks/
+  agents/                         # worker · coder · verifier · researcher
+  docs/                           # the canon: memory.md · project-docs.md · git-convention.md
+                                  #   (+ security-audit.md, annex)
+  docs-samples/                   # sample repo docs/ tree (fictional project vidnote) — not canon
+  scripts/                        # brain-check.sh · brain-validate.sh · brain-recall
+  hooks/                          # SessionStart · PostToolUse (config/agent files only)
 ```
 
-## Vault schema check
+## Schema check
 
-`brain` ships a dependency-free checker for the vault it writes to:
+`brain` ships dependency-free checkers (bash 3.2 + POSIX):
 
 ```
-brain/scripts/validate.sh <vault-root>            # warn report, exit 0
-brain/scripts/validate.sh <vault-root> --strict   # exit 1 on any finding
+brain/scripts/brain-check.sh                       # marker-block / KERNEL byte comparison
+brain/scripts/brain-validate.sh <vault-root>       # vault mode — session/memory schema lint
+brain/scripts/brain-validate.sh <repo-root> --repo # repo mode — docs frontmatter · ADR IDs ·
+                                                   #   COMPLIANCE §Legal Sources
 ```
 
-Details in [`brain/README.md`](./brain/README.md#schema-check).
+Details in [`brain/README.md`](./brain/README.md).
 
 ## License
 

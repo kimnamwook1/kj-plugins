@@ -1,70 +1,44 @@
 ---
 name: sr
-description: Resume a parked work session — find this project's open sessions (`status: parked` or `active`), let the user pick one, adopt it as the current session with status restored to active, and re-present its goal, latest progress, and recall priming. Creates nothing. Use when the user says "sr", "재개", "resume", "이어서", "세션 이어", "하던 거 계속". To start a brand-new session use ss; to only see what is open without adopting anything use sl.
-argument-hint: "[project]"
+description: 파킹된 세션 재개 — 현재 프로젝트의 열린 세션(status parked|active)을 스캔해 요약을 제시하고, 사용자가 고른 세션을 채택. 쓰기는 frontmatter 3줄만 PM 직접 Edit(status→active·updated·cc_session_ids), 주입은 Goal+미완 To-Do+최신 Progress 1개. 세션 신규 생성 금지. "sr", "재개", "resume", "이어서", "하던 거 계속"에 사용. 새 세션은 ss, 목록만은 sl.
+argument-hint: ""
 ---
 
-# sr — Session Resume
+# sr — 세션 재개
 
-Adopts an existing parked session as the current work session. **Never creates a session file** — if the user wants a new one, that is `ss`.
+- 하는 일: 스캔 → 요약 제시 → 사용자 채택 → frontmatter 3줄 Edit + recall 화면 출력.
+- 세션 파일 신규 생성 절대 금지 — 새 세션을 원하면 `ss` 안내 후 중단.
+- 실행 주체 = PM 직접 — 위임 없음.
 
-> **One verb, one skill.** `ss` = create only · **`sr` = resume** · `sl` = list only · `sh` = park · `sc` = close. `ss` no longer asks about resuming, so **this skill is the only path back into a parked session** — and `sl`/`sr` are the only places the open-session scan lives.
+## 공통 규율
 
-> **Executor = PM (main session), vault content writes = the `scribe` worker.** The PM does **reading, detection, judgment** — session discovery (`find`/`grep`) · user Q&A · performing recall (read) · **deciding what to record**. The one write this skill produces (a frontmatter touch-up) is **delegated to `scribe` via a writing brief** (`Agent` tool — "what · to which path · with what content"). `scribe` is not a resident agent but a subagent handed a writing brief. Governance canon: `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`.
+- 양식 정본 = `${CLAUDE_SKILL_DIR}/../../docs/memory.md` — 쓰기 전 Read. 본 문서에 양식 사본 없음(포인터만).
+- 볼트 쓰기 = Write/Edit만 · Edit old_string = CAS · CLI 쓰기 금지.
+- `VAULT` = CLAUDE.local.md `vault-root:` — 없으면 질문 + `/brain:init` 안내. vault-root 밖 쓰기 금지.
+- `project` = AGENTS.md brain config 명시 선언 — 경로 파생 금지.
+- fail-visible — 계수 상시 보고, 0도 0.
 
-## Resolving Vault·Project
+## 절차
 
-1. **Resolve VAULT** — `VAULT` = the `vault-root` value defined in the project's `CLAUDE.local.md`. **If missing, ask the user for the vault root and point them to `/brain:init` onboarding** — never read or write an arbitrary path.
-2. **Resolve project** — a first argument is the project override. Otherwise Read `${CLAUDE_SKILL_DIR}/../_session-shared/project-inference.md` and resolve by its rules (config `project:` first, then cwd). If inference fails, do not guess — ask the user.
-3. **Verify the vault exists** — check that `VAULT` is a directory. If not, stop and tell the user to run `/brain:init`. **This skill creates no folders** — a session to resume implies the project folder already exists.
-4. **Locate `PROJDIR`** (read-only, needed by recall in step 4):
-   ```bash
-   # Project location comes from the vault's `.brain-paths` (projects_root), not a literal — same resolver and
-   # same reason as `ss` §Ensure the project folder. brain_project_dir also excludes the reserved `9xx` infra
-   # band (vault-tree.md §Reserved number bands) — a project slugged `tools` otherwise resolves to `999_tools/`.
-   . "${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh"
-   PROJDIR=$(brain_project_dir "<project>")
-   ```
-   If it comes back empty, continue anyway but say so — recall's project index scan will be empty.
+1. **해석** — `VAULT`·`project` 확정.
+2. **스캔** — `${CLAUDE_SKILL_DIR}/../_shared/scan.md` §1 실행(`PROJ_RE=<project>`). 스니펫 사본 금지 — `|| :` 종결자·첫 `status:` 줄만 읽기 등 검증 기법은 그 문서가 정본.
+   - 0건 → "열린 세션 0건 — 새 세션은 `ss`" 1줄 보고 후 중단. 생성으로 빠지지 않는다.
+3. **후보 제시** — scan.md §2 awk 추출 · §3 렌더(상태 마커 필수 · `updated` 내림차순 · 번호는 `sl`과 동일 규칙).
+   - `[active]` 후보도 목록에 유지 — `sh` 없이 끊긴 세션의 유일한 복구 경로가 여기다.
+   - 정확히 1건이어도 제시 후 예/아니오 확인. 사용자가 번호로 채택 → 4단계. 거절 → 중단.
+4. **채택 — frontmatter 3줄만 PM 직접 Edit** (old_string = CAS):
+   - `status:` → `active` — frontmatter **첫** `status:` 줄만(본문 Progress에도 `status:` 문자열 존재 가능). 이미 `active`면 값 유지.
+   - `updated:` → 오늘(`YYYY-MM-DD`).
+   - `cc_session_ids:` — 현재 CC 세션 id 획득 가능 시 리스트 맨 앞 prepend. 없으면 미접촉.
+   - 그 외 frontmatter·본문 일절 미접촉 — Progress 엔트리 추가 없음.
+   - Progress `(resumed)` 엔트리 기록 없음(확정 2026-08-15) — `cc_session_ids` prepend가 재개 증거. 헤딩 어휘의 `resumed`는 사람 수동 기록용.
+5. **주입(화면 출력)** — 3요소 한정: **Goal + 미완 To-Do(`- [ ]`)만 + 최신 Progress 엔트리 1개** — 3단계 awk 추출 재사용, 파일 재Read 금지. 그 외 절대 미주입 — 과거 엔트리는 필요 시 on-demand Read.
+   - 추가 주입: `memory/_index.md` 현재 프로젝트 scope 행(하드 상한 8KiB 공유 — memory.md §recall). org·타 프로젝트는 "N건 — 요청 시" 1줄.
+6. **보고** — 채택 경로 · 최종 status 값 · 주입 계수(세션 요약 바이트 · 인덱스 N건·바이트·절단 M건).
 
-## Steps
+## 금지
 
-1. **Scan for open sessions** — Read `${CLAUDE_SKILL_DIR}/../_session-shared/active-sessions.md` and run its **§1 scan** with `PROJ_RE=<project>`. It returns both `parked` and `active` sessions. Do not inline your own copy of the loop; the `|| :` loop terminator there is load-bearing (KJP-41).
-
-   **0 matches** → stop with one line: "No open sessions in `<project>`. Start a new one with `ss`." **Do not create anything, and do not fall through to session creation.**
-
-2. **Present the candidates and ask** — extract each with **§2 of the shared document (`awk`) — never `Read` a session file whole.** Render per **§3**, which carries the required `[parked]`/`[active]` state marker and fixes the ordering (`updated:` descending) so a number means the same session here as it did in `sl`:
-   > `<project>` has N open sessions:
-   > 1. [parked] `<goal one-liner>` (`<filename>`, updated `<updated>`) — <newest Progress one-liner>
-   >
-   > Which do you want to resume? (number, or `ss` to start a new session instead)
-
-   - **Keep the `[active]` ones in the list, and do not editorialize.** An `active` candidate is a session that was never parked — usually one interrupted without `sh`. Resuming it is exactly the recovery path, and it is `sr`'s job.
-
-   - **Exactly 1 match** → still show the line, but the question collapses to a yes/no: "Resume this one?"
-   - **User picks a number** → step 3.
-   - **User declines** → stop. Say `ss` starts a new session. Do not start one from here.
-
-3. **Adopt the chosen session** — it becomes the current work session. No new file. Summarize its `## Goal` + **latest Progress entry** + `## To-Do-List` **from the step-2 `awk` extract — do not Read the file again** — and announce "resuming from here".
-   - **PM (read)** — collect the current CC session id **if obtainable** (if the harness exposes no value, treat it as absent).
-   - **Delegate the frontmatter update to `scribe`** — writing brief:
-     - Target: the adopted `<VAULT>/hippocampus/<session-file>.md`.
-     - **Set `status:` to `active`** — the resume transition `parked` → `active` (KJP-48). Replace **only the `status:` line inside the frontmatter block** (the body Progress also contains the string `status:`). If the session was already `active`, the value is unchanged — write it idempotently rather than branching.
-     - Prepend the current CC session id **to the top of** the `cc_session_ids:` list (entries formatted `- <id>`). **If there is no id, do not touch this field.** (Preserves CC session history that vanishes on every resume.)
-     - Update `updated:` to the current local datetime (`YYYY-MM-DDTHH:MM:SS` — canon: `${CLAUDE_SKILL_DIR}/../../docs/sessions-note-convention.md` §updated).
-     - All other fields and the entire body unchanged — **`sr` adds no Progress entry**; the next `sh`/`sc` writes that.
-     - **Return requirement**: the recorded path + the final `status` value.
-
-4. **★ Recall injection — required, screen-output only.** The **PM directly performs** `${CLAUDE_SKILL_DIR}/../_session-shared/recall.md` via Read (a read); `VAULT` and `<project>` are already set from the section above. Present the folder indexes **alongside the resume summary** — live priming. **Report the file count and total bytes**, 0 included.
-   - **Do not overwrite the session note's `## Recall`. No vault write, no `scribe` delegation for this step.**
-   - **Skip recall and priming at resumption is zero** — that is the entire reason this step exists.
-
-5. **Report** — the adopted session path (`<VAULT>/hippocampus/<session-file>.md`) · project · vault · the recall file count and byte total.
-
-## Hard rules
-
-- **Resume only. Never create a session file here** — no filename minting, no `Write` into `hippocampus/`. If the user turns out to want a new session, hand off to `ss`.
-- **`active` is the only status this skill writes.** Resuming restores `parked` → `active` (KJP-48) — that transition is the point of the skill, since a resumed session is running again and `sh` must have something to flip back. **Never write `done`** — closure is `sc`'s job alone, and `cancel` no longer exists.
-- **Read sessions with the shared `awk` extract, never whole** — a 90 KB session file read in full is the failure mode this skill was split out to avoid.
-- **The `parked` → `active` frontmatter update is an `Edit`, never a CLI write** — canon: `${CLAUDE_SKILL_DIR}/../_session-shared/vault-io.md` §1 (why `Edit` and not `Write` is the whole point there; this file is the concurrent-session case it protects). Performed by `scribe` — the PM never writes vault **content** directly (canon: memory-control-convention §Governance).
-- **Write only under the `vault-root` in `CLAUDE.local.md`** — any other path or other vault is off-limits.
+- 세션 신규 생성 — 파일명 mint·`Write` 진입 자체가 금지.
+- `active` 외 status 쓰기 — `done`은 sc · `parked`는 sh.
+- 세션 파일 전체 Read — scan.md awk 추출만.
+- 본문(4절) 쓰기 — 이 스킬의 쓰기는 frontmatter 3줄이 전부.

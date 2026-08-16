@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.0 — 2026-08-15
+
+🔴 **백지 재설계.** 근거 사슬: `전서.md`(0.2.5 실측) → `전서_토론후.md`(4자 회담 + 사용자 확정) → `전서_0.3.0.md`(정본). 볼트 백지 리셋 전제 · 훅·스크립트·스킬·canon 전부 신규 작성(기존 코드 재사용 없음). 원칙 5: ①선별 주입(상한) ②PM 직접 쓰기 ③단일 원본 ④fail-visible(0도 0이라 말한다) ⑤명시 선언(경로·이름에서 자동 파생 금지).
+
+### Changed
+- **볼트 2층 평탄** — `sessions/`(git 밖, 휘발층) + `memory/`(전 지식 단일 트리 + `_index.md` 1파일). 폐지: `projects/NNN_slug/` · `p_memory/` · `neocortex/` · 공통층(`org/`·`000_common/`) · `999_tools/` · `.brain-paths` · 번호 밴드.
+- **구분축 = frontmatter 2키** — `scope`(프로젝트 식별자 목록 · `org` = 회사 지식 · 2+ = 교차 지식) · `kind`(fact | policy). 폴더·경로 파생 금지. memory 노트 = 4키 + 2절(Insight·Why) — Trigger 절 폐지, 트리거는 `summary`가 겸한다.
+- **scribe 폐지** — 볼트 쓰기는 PM 직접 Write/Edit. 승격 ①(sc)·세션 노트 전 절이 PM 손으로 간다. force-delegate류 쓰기 차단 훅은 존재 이유 소멸로 미탑재.
+- **recall 하드 상한 8KiB** — 초과분 절단 + 파일 수·바이트·잘린 수 상시 보고. sr 주입 = Goal + 미완 To-Do + 최신 Progress 엔트리 1개만 — 그 외 절대 미주입.
+- **dreaming 분리** — sc는 실행하지 않고 `dreaming 권장 — 미통합 N건` 1줄 제안만. 연산 2종(Refine · scope 승격)으로 축소, Link 연산·`related` 키 폐지. 락 + 증분 커서 + 1 run 1 commit — worktree 격리 폐지.
+- **canon 3종 재편** — `memory.md` · `project-docs.md` · `git-convention.md` + 별첨 `security-audit.md`(verifier 보안 브리프 전용). vault-tree.md 등 구 canon 소멸. 전 문서 첫 줄에 소비자 명시.
+- **AGENTS.md + CLAUDE.md 동시 작성** — 공용 마커 블록 두 파일 바이트 동일, 갱신은 스킬이 항상 동시 수행. 프로젝트 식별자 2키 분리: `project:`(소문자) · `ticket-prefix:`(대문자) — 각각 명시 선언.
+- **onboard grill식 재설계** — 5문 일괄 배터리 폐지. 1문 1답 + 추천답 · 코드로 답 가능하면 실측 · 답이 굳는 즉시 레포 `docs/` lazy 생성 · ADR 3중 게이트 · 미결은 plane 티켓.
+- **에이전트 4종 정합** — KERNEL "scribe 위임" 어휘 → "볼트 쓰기는 PM만"(4파일 동시). worker scribe 절·tools 층(`<BRAIN_TOOLS>`) 참조 삭제. coder에 Orca workspace worktree 세션 isolation off 조항.
+
+### Added
+- **검사기 신규 3종** — `brain-check.sh`(AGENTS.md↔CLAUDE.md 마커 블록·agents 4종 KERNEL 바이트 대조, 0스캔 = finding) · `brain-validate.sh`(볼트 모드 + 레포 모드 스키마 린터 — 레포 모드는 docs 이전과 같은 컷) · `brain-recall`(on-demand 질의 — 타 에이전트의 볼트 소비 경로). 공통: bash 3.2 + POSIX · 의존성 0 · selftest 동반.
+- **훅 2이벤트 최소** — SessionStart(canon 심링크 + `brain-check.sh --quiet`) · PostToolUse(대상이 AGENTS.md/CLAUDE.md/agents/*.md일 때만).
+- **`docs-samples/` 이동** — 가상 프로젝트(vidnote) 레포 docs/ 시안 스냅샷을 플러그인 안(`brain/docs-samples/`)으로. canon 아님 — §1.5 트리 참고용.
+
+### Removed
+- `ROADMAP.md` — 소멸 조건(컷과 함께 CHANGELOG로 흡수)이 다섯 릴리스 지연된 채 충족돼 있었다. 0.3.0 설계에 흡수되지 않은 잔여 항목은 티켓으로 이관(컷 보고 참조).
+
 ## 0.2.5 — 2026-08-13
 
 🔴 **0.2.2 · 0.2.3 · 0.2.4 는 레포의 버전 문자열이었을 뿐 설치된 적이 없다** — 실측 2026-08-13: 설치 캐시 최대치가 `0.2.1` 이다(`~/.claude/plugins/cache/kj-plugins/brain/`). 그 세 절의 내용은 전부 이 컷으로 처음 나간다. **버전 문자열 대조가 무의미한 이유가 이것이다** — 재설치 검증은 byte 대조여야 한다(0.1.5→0.1.6, 0.1.6→0.1.7, 0.1.8 에 이어 네 번째 확인).

@@ -1,17 +1,17 @@
 {
-  "description": "SessionStart: keeps ~/.claude/brain-docs pointed at this plugin's docs, so CLAUDE.local.md Router paths survive version bumps and repo moves, and reports KERNEL drift in this plugin's own agent definitions. PostToolUse: reports KERNEL drift in whichever agents/ directory was just edited. Both drift checks are silent on pass — see hooks/kernel-check-hook.sh for why these two events and not CI or pre-commit.",
+  "description": "brain 0.3.0 훅 — 전서 §6.1, 2이벤트 최소. SessionStart: ①canon 심링크(~/.claude/brain-docs → 플러그인 docs/ — 포인터 안정 경로) ②brain-check.sh --quiet — findings 만 stdout, 통과 무음 (SessionStart 는 차단 불가·stdout 이 컨텍스트 주입 채널). PostToolUse(Edit|Write|NotebookEdit): 대상이 AGENTS.md·CLAUDE.md·agents/*.md 일 때만 brain-check.sh 가 findings stderr + exit 2 로 사후 피드백('지금 복구하라'). 파일 게이팅·채널 선택은 brain-check.sh 내장 어댑터(hook_event_name 분기)가 처리 — 별도 어댑터 파일 없음. 이스케이프 해치: BRAIN_CHECK_OFF=1.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "ln -sfn \"${CLAUDE_PLUGIN_ROOT}/docs\" \"$HOME/.claude/brain-docs\"",
+            "command": "if [ -d \"$HOME/.claude/brain-docs\" ] && [ ! -L \"$HOME/.claude/brain-docs\" ]; then echo 'brain: ~/.claude/brain-docs 가 실디렉토리라 심링크 갱신을 건너뜀 — 수동 정리 필요'; else ln -sfn \"${CLAUDE_PLUGIN_ROOT}/docs\" \"$HOME/.claude/brain-docs\"; fi",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/kernel-check-hook.sh\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/brain-check.sh\" --quiet",
             "timeout": 10
           }
         ]
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/kernel-check-hook.sh\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/brain-check.sh\"",
             "timeout": 10
           }
         ]

@@ -1,0 +1,109 @@
+#!/bin/bash
+# brain-recall — memory 볼트 on-demand 질의 (read-only)
+#
+# Usage: brain-recall <query> [--scope <id>] [-n N]
+#   <query>        <vault>/memory/*.md 의 frontmatter `summary:` 에 대한
+#                  대소문자 무시 고정 문자열 매칭 (트리거는 summary가 겸한다 — memory.md)
+#   --scope <id>   frontmatter `scope:` 목록에 <id> 가 있는 노트만
+#   -n N           매칭 top-N 본문 출력 (기본 5) — `updated` 내림차순(최신 우선)
+#
+# 볼트 해석: $BRAIN_VAULT_ROOT env 우선. 없으면 cwd에서 상향 탐색으로
+# `vault-root: <path>` 키를 가진 CLAUDE.local.md 를 찾아 파싱.
+#
+# 출력: 계수 라인("matched=M shown=S ...") 1줄 + 노트 본문("== <path>" 구분).
+#       fail-visible — 0건도 matched=0 으로 보고.
+# Exit: 0 = 실행 완료(매칭 0건 포함) · 2 = usage · 볼트 해석 실패
+#
+# 이식성: macOS 재고 bash 3.2 + POSIX 도구만(awk find grep sort head wc). 의존성 0.
+# read-only — mktemp 밖에는 아무것도 쓰지 않는다.
+
+set -u
+LC_ALL=C; export LC_ALL
+TAB=$(printf '\t')
+
+usage() {
+  echo "usage: brain-recall <query> [--scope <id>] [-n N]" >&2
+  exit 2
+}
+
+QUERY=""; SCOPE=""; N=5
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --scope) [ $# -ge 2 ] || usage; SCOPE=$2; shift 2 ;;
+    -n)      [ $# -ge 2 ] || usage; N=$2; shift 2 ;;
+    -*)      usage ;;
+    *)       [ -n "$QUERY" ] && usage; QUERY=$1; shift ;;
+  esac
+done
+[ -n "$QUERY" ] || usage
+case "$N" in '' | *[!0-9]*) usage ;; esac
+[ "$N" -ge 1 ] || usage
+
+# ---------------------------------------------------------------- 볼트 해석
+VAULT=""
+if [ -n "${BRAIN_VAULT_ROOT:-}" ]; then
+  VAULT=$BRAIN_VAULT_ROOT
+else
+  d=$(pwd)
+  while :; do
+    if [ -f "$d/CLAUDE.local.md" ]; then
+      v=$(awk '/^[ \t]*vault-root:/ {
+              sub(/^[ \t]*vault-root:[ \t]*/, ""); sub(/[ \t]*$/, ""); print; exit
+            }' "$d/CLAUDE.local.md")
+      if [ -n "$v" ]; then VAULT=$v; break; fi
+    fi
+    [ "$d" = "/" ] && break
+    d=$(dirname "$d")
+  done
+fi
+[ -n "$VAULT" ] || { echo "brain-recall: vault not resolvable (set BRAIN_VAULT_ROOT or add vault-root: to CLAUDE.local.md)" >&2; exit 2; }
+MDIR="$VAULT/memory"
+[ -d "$MDIR" ] || { echo "brain-recall: no memory/ under vault: $VAULT" >&2; exit 2; }
+
+TMP=$(mktemp -d "${TMPDIR:-/tmp}/brain-recall.XXXXXX") || exit 2
+trap 'rm -rf "$TMP"' EXIT
+
+# ---------------------------------------------------------------- 매칭
+find "$MDIR" -maxdepth 1 -type f -name '*.md' ! -name '_index.md' \
+  | LC_ALL=C sort > "$TMP/list"
+
+: > "$TMP/hits"
+while IFS= read -r f; do
+  awk -v q="$QUERY" -v want="$SCOPE" '
+    NR == 1 && /^---[ \t]*$/ { fm = 1; next }
+    fm == 1 && /^---[ \t]*$/ { exit }
+    fm == 1 {
+      if ($0 ~ /^summary:/) { s = $0; sub(/^summary:[ \t]*/, "", s) }
+      if ($0 ~ /^scope:/)   { sc = $0; sub(/^scope:[ \t]*/, "", sc) }
+      if ($0 ~ /^updated:/) { u = $0; sub(/^updated:[ \t]*/, "", u); sub(/[ \t]*$/, "", u) }
+    }
+    END {
+      if (s == "") exit
+      if (index(tolower(s), tolower(q)) == 0) exit
+      if (want != "") {
+        t = sc
+        gsub(/[][ \t]/, "", t)
+        n = split(t, a, ",")
+        ok = 0
+        for (i = 1; i <= n; i++) if (a[i] == want) ok = 1
+        if (!ok) exit
+      }
+      if (u == "") u = "0000-00-00"
+      print u "\t" FILENAME
+    }
+  ' "$f" >> "$TMP/hits"
+done < "$TMP/list"
+
+LC_ALL=C sort -r "$TMP/hits" > "$TMP/sorted"
+M=$(wc -l < "$TMP/sorted" | tr -d ' ')
+S=$M; [ "$S" -gt "$N" ] && S=$N
+echo "brain-recall: matched=$M shown=$S query=\"$QUERY\"${SCOPE:+ scope=$SCOPE}"
+[ "$M" -eq 0 ] && exit 0
+
+head -n "$N" "$TMP/sorted" | while IFS= read -r line; do
+  f=${line#*"$TAB"}
+  echo ""
+  echo "== $f"
+  cat "$f"
+done
+exit 0

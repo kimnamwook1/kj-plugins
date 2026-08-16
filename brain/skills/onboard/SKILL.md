@@ -1,55 +1,46 @@
 ---
 name: onboard
-description: Project content interview — asks 5 questions (ticket system, goal, stack, regulation, deployment), fills stub documents to draft only as far as answers were given, and runs the step 6 environment check (live measurement — machine facts always; the machine-global tool inventory is opt-in, one extra question). Use when the user says "onboard", "project interview", "fill in the docs", "프로젝트 인터뷰", "문서 채우기". Prerequisite is a completed init — structure setup is init.
+description: grill식 프로젝트 인터뷰 — 1문 1답+추천답 제시, 코드로 답 가능하면 질문 대신 실측, 답이 굳는 즉시 레포 docs/ 해당 문서를 lazy 생성/갱신(project-docs.md 트리). ADR은 3중 게이트, 미결은 티켓 차팅, 환경 실측은 볼트 memory 노트(scope: [org]). "onboard", "프로젝트 인터뷰", "문서 채우기", "온보딩"에 사용. 전제 = init 완료 — 구조 설치는 init.
+argument-hint: ""
 ---
 
-# onboard — Project Interview (content filling)
+# onboard — grill식 프로젝트 인터뷰 (내용 채우기)
 
-Fills **content** into the structure init laid down — get answers through an interview, then fill **only what was answered** via worker briefs, stub→draft. Canonical document selection & owner labels = `${CLAUDE_SKILL_DIR}/../../docs/doc-catalog.md` · canonical vault-write governance = `${CLAUDE_SKILL_DIR}/../../docs/memory-control-convention.md`.
+- 산출의 집 = **레포 `docs/`** (트리·파일명·frontmatter 정본 = `${CLAUDE_SKILL_DIR}/../../docs/project-docs.md`). 환경 실측만 볼트 `memory/`.
+- 전제: AGENTS.md/CLAUDE.md brain config + CLAUDE.local.md `vault-root:` — 없으면 `/brain:init` 먼저, 임의 경로에 쓰지 않는다.
+- 실행 주체 = PM 직접 Write/Edit.
 
-## Prerequisite
+## grill 규율
 
-The brain config must be present across the two config files: `CLAUDE.md` `## brain config` (org, project, prefix, ticket-system) + `CLAUDE.local.md` (vault-root, Router). Pre-split projects may still hold everything in `CLAUDE.local.md` — both files load merged, so read both. **If missing, stop and point the user to `/brain:init` first** — do not write to arbitrary paths.
+- **1문 1답** — 일괄 배터리 금지. 한 질문이 굳은 뒤 다음 질문.
+- **추천답 제시** — 질문마다 추천 답을 옵션으로 함께 제시(AskUserQuestion — 추천에 (권장) 표기). 사용자는 고르거나 고쳐 쓴다.
+- **실측 우선** — 코드·설정으로 답할 수 있으면 질문하지 않는다: 스택 = 매니페스트(package.json 등) · 배포 = CI 설정·Dockerfile · 기존 docs/ 내용. 실측 결과는 "이렇게 읽었다 — 맞나"로 확인만.
+- **답이 굳는 즉시 lazy 생성/갱신** — 해당 문서를 그 자리에서 쓴다. 스텁 사전 생성 금지("pre-created ≠ evidence") — 답 있는 문서만 존재한다. frontmatter 2키(`status: draft` · `updated: YYYY-MM-DD`) — 신키 금지.
+- **문서별 종료 조건 명시** — 문서를 만들 때 "draft 최소 = <무엇이 채워지면 draft인가>"를 선언하고, 보고에서 도달 여부를 말한다.
+- **미결 → 티켓 차팅** — 굳지 않은 질문·후속 조사는 brain config `ticket:` 시스템(plane 등)에 티켓으로 남긴다. `ticket: none`이면 세션 To-Do로.
+- **오염 금지** — placeholder·빈 스켈레톤·`[Image #N]`·HTML 주석 금지(project-docs.md §오염 금지).
 
-## Steps
+## 인터뷰 축 → 문서 매핑 (한 축씩 grill, 답 굳는 대로 기록)
 
-**Steps 1–5 = 5 questions — ask them all at once** (use AskUserQuestion). Ask in the user's language:
+- 목표·BM → `docs/business/PRD.md`
+- 스택·구조 → `docs/develop/ARCHITECTURE.md` · `CODE_CONVENTION.md`
+- 규제·민감 데이터 → `docs/business/COMPLIANCE.md`(**§Legal Sources 표 필수 — 열 고정·확인일 없는 행 인용 금지·1차 출처 korean-law MCP** — project-docs.md) · `docs/develop/THREAT_MODEL.md`
+- 배포·운영 → `docs/develop/RUNBOOK.md`
+- 답이 다른 문서(GTM·MILESTONE·DESIGN·INFORMATION_ARCHITECTURE)에 닿으면 project-docs.md 트리로 라우팅 — 닿을 때만 생성.
+- 정책이 굳으면 → `docs/develop/policy/POL-0000N-<slug>.md` · 기능이 굳으면 → `docs/develop/feature/FEAT-0000N-<slug>.md`(§FRD·§TDC — 도메인 유일 명칭, 범용 동작어 금지).
+- **ADR 3중 게이트** — 전부 통과할 때만 `docs/adr/ADR-0000N-<slug>.md`: ①되돌리기 어려움 ②맥락 없이는 의아함 ③진짜 트레이드오프의 결과. 대부분 0건이 정상 — 빈 ADR·사전 생성 금지. 연번 = 폴더 내 최고 ID + 1 스캔.
 
-1. **Do you use an external ticket system?** — e.g. Plane · Jira · Linear · GitHub Issues · Huly · none. 🔴 **The list is illustrative, not a menu to pick from** — take whatever the user names. `ticket-system` records a free identifier, nothing validates it against a vendor list, so this line never needs a sweep when a vendor appears or dies.
-2. **What is the goal?** — what you are building and why
-3. **Is the tech stack decided?** Plus three sub-questions — two delivery-classification ones (they decide `RUNBOOK` §Delivery) and one design-tooling one:
-   - **Q1 — Who controls deployment?** *I control* (server · web · GitOps · self-host) or *someone else controls* (store review · shipped binary — mobile app, browser extension, other **client artifacts**).
-   - **Q2 — Real-user SaaS?** *SaaS* or *personal / internal*. **Only applies to the "I control (server)" bucket** (Axis 2 of the vault's delivery classification note).
-   - **Q3 — Do you use a design tool?** (tool-neutral — never suggest a specific tool) *Yes, <name>* → that link becomes `DESIGN` §SSOT · *No* → repo code-first (the repo component source is the SSOT). Only relevant for UI products — skip for headless projects.
-4. **Any regulation or sensitive data?** — personal data, payments, AI disclosure
-5. **Any deployment target?**
+## 환경 실측 → 볼트 memory
 
-6. **Environment check — measurement, not interview.** **The tools-layer half is opt-in** — ask **one** extra question first (AskUserQuestion, separate from the 5 above — their structure stays intact): *create/refresh the machine-global tool inventory on this machine?* (needed only on machines you actually work from). *Yes* → include the tools-layer investigation below · *No* → skip that half (the Router line already reads the layer as opt-in — absent folder = skip). The machine-configuration half runs regardless. Then delegate as **one** `worker` brief — investigate via commands and create/update the notes below (canonical tree vault-tree.md · tree axes from the vault's `.brain-paths` manifest, resolver `${CLAUDE_SKILL_DIR}/../../scripts/vault-paths.sh` — `BRAIN_COMMON` · `BRAIN_TOOLS` below; never hardcode the layout). **Idempotent** — refresh existing notes with live measurements and stamp `verified: <date>`.
-   - Investigation → note mapping, **two destinations by scope**:
-     - **machine *configuration* → the common layer's machines sub-axis** — OS, hostname, main tools → `<machines-dir>/<hostname>.md`, filename = lowercase hostname. Which boxes this vault's work runs on is a vault fact.
-       - 🔴 **Resolve `<machines-dir>`, never hardcode it.** The common layer's sub-axes are **the vault's own** (canon `vault-tree.md` §The common layer — only `*policies*` names are normative), so: if a `machines` directory already exists anywhere under `<BRAIN_COMMON>`, write there; otherwise use the default layout's `<BRAIN_COMMON>/machines/`, which is what `/brain:init` scaffolds a `_index.md` into (`init/SKILL.md` step 4).
-       - 🔴 **`init` and this step must land in the same folder.** Measured 2026-08-05 (KJP-84 — ⚠ a **pre-migration Huly number**; today's Plane KJP-84 is the unrelated feature-document merge, so cite this incident by its date, not its ID): this step named `<BRAIN_COMMON>/facts/machines/` while `init` scaffolded `<BRAIN_COMMON>/machines/`, so the notes fell into a folder with no TOC and the scaffolded TOC stayed empty. recall injects `_index.md` and nothing else — a note outside every index is invisible forever, and no check saw it.
-       - 🔴 **Resolving the folder is not resolving the note — look for an existing description of this machine before writing, and do not assume it is named `<hostname>.md`.** The filename rule is canon (`vault-tree.md` §Naming Conventions — `<hostname>.md`, lowercase-kebab) but canon describes the target shape, not what a given vault already holds, and an exact-path check answers "does this filename exist", not "is this machine already described". Measured 2026-08-12 on the techtainment vault: machine notes live at `<BRAIN_COMMON>/machines/{clients,servers}/<host>/{HARDWARE_SPEC,SOFTWARE_SPEC}.md` — a role-split two-level layout in which **no path equals `<hostname>.md`**, so the filename check reports "absent" for four machines that are fully documented. **Search the resolved folder recursively for the hostname** (path segment or note body) before concluding anything is missing.
-       - 🔴 **On a find, `Edit` in place — never `Write` over it, and never add a second note for the same machine.** Canon is `skills/_session-shared/vault-io.md` §1 and the reason is compare-and-swap: `Write` on an existing file silently discards whatever landed there since you last read it. **This step is the one most likely to get that wrong** — its payload is a measurement dump, so "just regenerate the note" reads as the natural implementation. Refresh the measured values in place and stamp `verified:`.
-       - 🔴 **If what you find does not match the canonical shape, report it and stop — do not migrate, do not duplicate.** Restructuring existing machine notes is a vault migration; it is neither this step's scope nor something an interview may do silently. Name the notes found, name the path canon expects, and let the user decide. **Creating `<hostname>.md` beside them is the one forbidden outcome** — it is the 2026-08-05 failure recorded in the bullet above, wearing a new face. There the note landed in a folder no index reached; here it lands *next to* the note it was supposed to update, so one machine ends up with two descriptions and nothing marks which is current. That is the same drift the bullet below prices at 31KB vs 3KB, arriving inside a single vault instead of across two.
-       - **Update that folder's `_index.md` in the same brief** — the writer of a note updates the index in the same commit; there is no after-the-fact regeneration (`vault-tree.md`).
-     - **tool *surface* (only when opted in) → the tools layer `<BRAIN_TOOLS>`** (manifest `tools_root`, default `999_tools` — vault-tree.md §The tools root) — MCP inventory (`claude mcp list` and the like) → `tool-mcp.md` · skill list → `tool-skill.md` · installed CLIs (batched `command -v`) → `tool-cli.md` · plugin list → `tool-plugin.md`. These describe `~/.claude/**`, which is machine-global and belongs to no vault.
-   - 🔴 **Do not write tool inventories into `<BRAIN_COMMON>` at all.** That is vault scope; two vaults on one machine then keep two copies of one truth and they drift (measured 2026-07-25: 31KB vs 3KB for the same `tool-mcp.md`). **This step owns the layer's creation** — `/brain:init` does not scaffold it (opt-in layer). On a *yes*, have the brief create `<BRAIN_TOOLS>` if absent **and** add the vault `.gitignore` entry (the manifest's `tools_root` value, idempotent — `grep -qxF '<tools_root>/' || echo`; create the ignore file if the vault is a git repo and has none) **before** writing — gitignoring a path after it has been committed does not remove it, and the notes are machine-local and must never reach the shared surface (`git-convention.md` §Share scope).
-   - `organization.md` comes **from interview answers**, not measurement (org info around question ②).
-   - Rationale: **tools go unused not because the inventory is missing but because it is not recalled** — creation is measurement (this step), recall is the router (the tool-inventory line `/brain:init` put into CLAUDE.local.md), checking is worker discipline (worker).
+- 머신·환경 사실(OS·주요 도구·MCP 등)은 질문이 아니라 실측 — 결과는 `memory/<topic>.md`:
+  - 양식 = `${CLAUDE_SKILL_DIR}/../../docs/memory.md` Read 후 그대로(4키 · summary "언제+주장" · `scope: [org]` · `kind: fact` · Insight/Why bullet만). 본 문서에 양식 사본 없음.
+  - `_index.md` 행 append — 노트와 **같은 커밋**(볼트 커밋 = PM · push 금지).
+  - 같은 주제 기존 노트가 있으면 Edit 갱신(CAS) — 한 주제 두 노트 금지.
 
-7. **Answer → application mapping**:
-   - **① Ticket system** → update `ticket-system` in `CLAUDE.md` (brain config; pre-split projects: wherever the key currently lives). **Identifier only** — real credentials go in neither CLAUDE file (separate env named for the system in use, e.g. `~/.config/claude/<system>.env`). If there is a system, confirm the project identifier and MCP availability, and record the session `related_ticket` mapping (which system's issue IDs get written) in the brain config. If none, `ticket-system: none` — manage via session To-Dos only.
-   - **② Goal** → `PRD` (planning brief). If a revenue model is mentioned, that goes in **`PRD` §BM** — the only original for pricing · tiers · unit economics (`docs/project-docs-convention.md` §Value Axes). GTM/channel content is **`MARKETING.md`**, which is situational and created on trigger, not here.
-   - **③ Stack** → `CODE_CONVENTION` · `ARCHITECTURE` (architecture brief) · **`RUNBOOK` §Delivery** (devops label). Classify from Q1/Q2 and record the bucket in `RUNBOOK` §Delivery:
-     - Q1 *I control* + Q2 *SaaS* → **server-SaaS** · Q1 *I control* + Q2 *personal/internal* → **server-personal** · Q1 *someone else controls* → **client** (Q2 skipped).
-     - Recording the bucket gives the stub real content — the same write flips `RUNBOOK` `status: created → draft` (pre-created rule, `docs/project-docs-convention.md`; the init-seeded §Delivery pointer alone does not clear it — the bucket does).
-     - 🔴 **Never hardcode a git-flow value.** The flow is decided by **the vault's delivery classification note** — a classification table mapping project type → flow (org is only where documents live; there is no single org-default flow). The note's path differs per vault (binding: the common layer's **normative tier**, e.g. `DELIVERY_STRATEGY.md` · stabilizing: a non-binding reference in any descriptive topic folder, moved in when stable) — resolve it in this vault and make `RUNBOOK` §Delivery **point**; never restate the flow or the bucket rules (restate → drift). 🔴 **Resolve the normative tier as a directory segment *containing* `policies`** (glob `*/*policies*/*` — `vault-tree.md` §The common layer; the same resolve-don't-hardcode rule step 6 applies to `<machines-dir>`), never as an exact folder name: `policies` and `org_policies` have both been measured on this vault and neither is canon.
-     - **Q3 (design tool)** → recorded when `DESIGN` gets created (UI products — `DESIGN` stays situational): tool named → that link seeds `DESIGN` §SSOT · none → the repo component source is the SSOT (code-first; git history = change history). Body canon: `docs/doc-templates.md`.
-   - **④ Regulation** → decides the priority of `COMPLIANCE` · `THREAT_MODEL`.
-   - **⑤ Deployment** → `RUNBOOK`.
+## 보고
 
-8. **Fill only what was answered** — delegate the corresponding stub→draft filling as worker briefs. Include the **verbatim answers** in the brief, and follow the doc-catalog.md **owner column** for per-document labels. Once filled, change frontmatter to `status: draft` immediately (stub rule), **stamp `updated:` with the write datetime** (`YYYY-MM-DDTHH:MM:SS`, the scribe machine stamp — format canon sessions-note-convention.md), **and append one `history:` entry** — `- { at: <datetime>, change: <one line>, ticket: "…" }`, ticket optional (frontmatter v2 standard, project-docs-convention.md).
-   - **If unknown, mark "TBD" — keep the stub. Never force-fill** (stub = no-information rule, project-docs-convention.md).
+- 생성/갱신 문서 목록 + 각 종료 조건 도달 여부(draft/미달) · 차팅한 티켓 목록 · memory 노트 경로 · 남은 미답 축 — 전부 0건도 0건이라 말한다(fail-visible).
 
-9. **Report** — list of filled documents + remaining stubs + paths of the notes created/updated by the environment check (the resolved machines sub-axis under `<BRAIN_COMMON>` always — plus that folder's `_index.md`; `<BRAIN_TOOLS>` only when the tool inventory was opted in). **Say per machine whether the note was created or refreshed**, and surface any shape mismatch step 6 declined to migrate — an unreported skip is indistinguishable from a machine that was never measured.
+## 금지
+
+- 일괄 질문 배터리 · 답 없는 문서 생성(스텁·placeholder) · 게이트 미통과 ADR · 티켓 시스템 크레덴셜 기록 · 볼트에 문서 산출(문서의 집은 레포 docs/).

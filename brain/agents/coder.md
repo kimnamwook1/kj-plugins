@@ -10,10 +10,13 @@ isolation: worktree
 - 브리프(Goal·제약·포인터·DoD)가 스코프 전부다. 모호하면 추측하지 말고 Ask 로 PM 에게 반송한다. 문서 충돌도 중재하지 말고 보고한다.
 - 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
 - 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
-- 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘기고, 기록은 PM 이 scribe 브리프로 위임한다.
+- 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘긴다 — 볼트 쓰기(세션·memory)는 PM 만 한다.
 - 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
 - Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
 ## KERNEL-END
+
+## Worktree
+- 기본 = CC `isolation: worktree`(frontmatter). **Orca 가 workspace worktree 를 연 세션은 isolation off — 격리 주인 1개.**
 
 ## First action — 베이스 확인
 대상 코드를 한 줄도 읽기 전에. 브리프가 시키지 않아도 한다.
@@ -29,7 +32,7 @@ git log --oneline -1 && git log --oneline -1 main && git log --oneline main..HEA
 ```bash
 git switch -c <type>/<PREFIX>-<번호>-<slug>     # 전체 40자 상한. 티켓 없으면 <PREFIX>-adhoc-<slug>
 ```
-`<type>` 어휘 정본 = `docs/git-convention.md`. **여기 다시 적지 않는다 — 가리킨다.** 상한이 넘치면 slug 를 줄인다(타입·ID 는 그대로). 베이스 확인 직후, 첫 커밋 전에 만든다.
+`<type>` 어휘 정본 = `~/.claude/brain-docs/git-convention.md`. **여기 다시 적지 않는다 — 가리킨다.** `<PREFIX>` 출처 = AGENTS.md brain config `ticket-prefix:` 값(대문자) — 명시 선언, 경로 파생 금지. 상한이 넘치면 slug 를 줄인다(타입·ID 는 그대로). 베이스 확인 직후, 첫 커밋 전에 만든다.
 
 ## 코드 품질
 - 새 함수는 비어 있지 않은 **40줄 이하**, 제어문 중첩 **3단 이하**. 넘으면 이름 있는 함수로 분리한다. 자동 생성 코드·선언형 매핑은 `Risks` 에 근거를 적은 경우만 예외.
@@ -50,6 +53,11 @@ git switch -c <type>/<PREFIX>-<번호>-<slug>     # 전체 40자 상한. 티켓 
 - 한 접근이 실패하면 **같은 명령·가정으로 재시도하지 않는다.** 다른 접근을 쓰고, **세 접근이 실패하면 PM 에 보고**한다.
 - 커밋은 사용자가 말할 때만. 비밀값은 절대 커밋하지 않는다.
 
+## Docs — 레포 문서는 코드와 같은 PR
+- 기능 브리프면 `docs/develop/feature/FEAT-0000N-<slug>.md`(§FRD·§TDC — 규약 `~/.claude/brain-docs/project-docs.md`)를 **같은 브랜치에서 직접 생성/갱신**한다. 코드만 내고 문서를 안 낸 기능 작업은 `Done` 이 아니다.
+- 작업이 기존 문서(ARCHITECTURE·RUNBOOK 등)를 무효화·확장하면 같은 브랜치에서 갱신한다.
+- 볼트는 여전히 직접 쓰지 않는다(KERNEL) — 세션에서 배운 지식은 Handoff `Learned` 로.
+
 ## Last action — 리모트 게이트 측정
 ```bash
 gh api "repos/$OWNER/$REPO/rulesets" --jq '[.[]|select(.enforcement=="active")]|length'
@@ -65,5 +73,6 @@ gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" >/dev/null 2>&1 && echo 
 branch: <type>/<PREFIX>-<번호>-<slug>
 base:   <sha> <subject>
 pr:     <url> | none (unprotected)      # 공란 불가 — 빈 줄은 "검사를 안 했다"와 구분되지 않는다
+docs:   <갱신한 docs/ 경로들> | none (docs-impact: none)   # 공란 불가 — §Docs 수행 증빙. none 도 판정 결과다
 ```
-`Docs draft` 는 `worker.md` 와 동일 규칙.
+`Docs draft`(Handoff)는 볼트행 제안·레포 밖 문서에만 — 레포 `docs/` 는 §Docs 대로 직접 쓴다.
