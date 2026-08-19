@@ -94,8 +94,11 @@ argument-hint: "[카드 번호들 또는 라운드 목표]"
 - gitignore 된 로컬 설정 파일(`CLAUDE.local.md` 등)이 **워크트리에 안 따라간다** → 본체로 심볼릭 링크.
 
 ```bash
-brain/skills/round/scripts/spawn-track.sh <repo-selector> <TICKET-slug> <type> <브리프경로>
+brain/skills/round/scripts/spawn-track.sh <repo-selector> <TICKET-slug> <type> <브리프경로> [본체경로] [agent]
 ```
+
+- `agent` 는 선택 인자, 기본 `claude`. `codex` 등 다른 TUI 에이전트를 넣을 수 있다.
+- brain 프로필을 붙이려면 `claude:coder` 처럼 `<agent>:<프로필>` 로 준다 — 스크립트가 `--agent claude` + `--prompt` 앞에 프로필 지정을 얹는다.
 
 프로젝트의 워크트리 도구가 다르면 스크립트 대신 같은 3개 보정을 손으로 한다 — 보정 자체가 요점이지 도구가 요점이 아니다.
 
@@ -104,6 +107,7 @@ brain/skills/round/scripts/spawn-track.sh <repo-selector> <TICKET-slug> <type> <
 ## 6. 회수
 
 - 워커가 보고를 보내오면 그 자리에서 처리한다. **판정 요청은 미루지 마라** — 워커는 대기 상태로 멈춰 있다.
+- 회수 채널은 `SendMessage`/`ListAgents` **하나만** — 다른 메일박스와 병용하면 유실 판정이 불가능해진다.
 - 워커가 조용하면 `ListAgents` 로 주소를 확인하고 `SendMessage` 로 상태를 물어라. 동시에 워크트리의 `git log`·`git status` 로 실제 진행을 직접 잰다 — 보고와 실물이 다를 수 있다.
 - **보고를 그대로 믿지 않는다.** 머지 전에 PM 이 직접 확인할 것:
   - `git show --stat` 으로 닿은 파일이 브리프 범위 안인지
@@ -127,6 +131,23 @@ brain/skills/round/scripts/spawn-track.sh <repo-selector> <TICKET-slug> <type> <
 - 후속으로 분리된 것은 새 카드로 만든다 — 분리 판정이 대화에만 남으면 다음 라운드에서 사라진다.
 - 라운드에서 배운 것(교집합 오판 지점, 새 함정)은 세션 노트 `learned` 에 남긴다. 다음 라운드의 §2 가 그걸 읽는다.
 
+## 9. 정리 — 머지 확인 후에만
+
+라운드가 끝나도 워크트리·터미널·브랜치는 남는다. 남기면 다음 라운드의 §2 교집합 실측이 유령 브랜치에 걸린다.
+
+- **게이트** — 트랙 브랜치가 실제로 머지됐는지 먼저 잰다. 실패하면 정리하지 않는다.
+  ```bash
+  git merge-base --is-ancestor <type>/<TICKET>-<slug> origin/main && echo MERGED
+  ```
+- **순서** — 뒤집으면 실패한다.
+  1. 배포 결과물을 직접 읽어 반영 확인(§7).
+  2. `orca terminal stop --worktree <selector>` — 세션이 붙어 있으면 다음 단계가 실패하거나 파일이 잠긴다.
+  3. `orca worktree rm --worktree <selector>`.
+  4. 브랜치 삭제 — `git branch -d <branch>`(`-d` 는 미머지면 거부한다. `-D` 쓰지 마라).
+- `locked` 워크트리에 `--force` 를 쓰지 않는다. 잠긴 이유를 보고한다 — 대개 다른 세션이 아직 붙어 있다.
+- 미머지 트랙은 그대로 둔다. 정리 대상은 머지된 것뿐이다.
+- 정리 후 `ListAgents` 로 유령 peer 세션이 남았는지 확인한다.
+
 ## 금지
 
 - 카드 개수에 맞춰 트랙 수를 정하는 것 — 트랙 수는 §2 가 정한다.
@@ -134,3 +155,4 @@ brain/skills/round/scripts/spawn-track.sh <repo-selector> <TICKET-slug> <type> <
 - 워커에 push 권한 위임 — 순차 머지가 무너진다.
 - 워커 보고만 읽고 머지 — §6 검증 없이는 머지하지 않는다.
 - 라이브 DB·운영 환경에 워커가 직접 쓰기 — 작성은 워커, 실행은 PM.
+- 미머지 브랜치 정리 — §9 게이트를 통과한 것만 지운다. `git branch -D`·`worktree rm --force` 는 사용자 지시 없이 쓰지 않는다.
