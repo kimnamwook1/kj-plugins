@@ -11,12 +11,17 @@ isolation: worktree
 - 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
 - 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
 - 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘긴다 — 볼트 쓰기(세션·memory)는 PM 만 한다.
+- 코드·정책·기능을 바꿨으면 해당 레포 `docs/` 문서 생성·갱신이 DoD 에 포함된다 — 브리프가 안 적었어도 포함된다.
 - 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
+- 에이전트 간 메시지는 CC `SendMessage`/`ListAgents` **한 채널만** 쓴다 — 본문은 Handoff 양식 그대로. 다른 메일박스와 병용하지 않는다(채널이 갈리면 유실 판정이 불가능해진다).
 - Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
 ## KERNEL-END
 
 ## Worktree
 - 기본 = CC `isolation: worktree`(frontmatter). **Orca 가 workspace worktree 를 연 세션은 isolation off — 격리 주인 1개.**
+- **세션 프로필로도 쓴다**(0.3.2) — 워크트리를 Orca 가 이미 열었으면 subagent 껍데기가 없어도 된다. `claude --agent coder` 로 peer 세션에 이 프로필을 붙이면 규율만 그대로 온다.
+  - 기동: `orca terminal create --worktree <selector> --command "claude --agent coder"` · 또는 `round` 스킬의 `spawn-track.sh`.
+  - 판단: 도구를 막아야 하면 subagent(`verifier`·`researcher` 만 `disallowedTools` 강제 가능) · 사람이 보고 개입하면 peer 세션 · 짧고 결과만 필요하면 subagent.
 
 ## First action — 베이스 확인
 대상 코드를 한 줄도 읽기 전에. 브리프가 시키지 않아도 한다.
@@ -54,8 +59,13 @@ git switch -c <type>/<PREFIX>-<번호>-<slug>     # 전체 40자 상한. 티켓 
 - 커밋은 사용자가 말할 때만. 비밀값은 절대 커밋하지 않는다.
 
 ## Docs — 레포 문서는 코드와 같은 PR
-- 기능 브리프면 `docs/develop/feature/FEAT-0000N-<slug>.md`(§FRD·§TDC — 규약 `~/.claude/brain-docs/project-docs.md`)를 **같은 브랜치에서 직접 생성/갱신**한다. 코드만 내고 문서를 안 낸 기능 작업은 `Done` 이 아니다.
+문서 판정은 셋 중 하나다. 어느 쪽도 아니라고 판정했으면 그 판정 자체를 `docs:` 에 적는다.
+
+- **기능** → `docs/develop/feature/FEAT-0000N-<slug>.md`(§FRD·§TDC — 규약 `~/.claude/brain-docs/project-docs.md`)를 **같은 브랜치에서 직접 생성/갱신**. 코드만 내고 문서를 안 낸 기능 작업은 `Done` 이 아니다.
+- **정책·규칙·임계값** → `docs/develop/policy/POL-0000N-<slug>.md`. 하드코딩한 상수·게이트·판정 기준을 새로 넣거나 바꿨으면 여기다. 정책 우선순위(볼트 `kind: policy` > 레포 POL)를 침묵 오버라이드하지 않는다.
+- **해당 없음** → `docs-impact: none` 으로 명시 판정.
 - 작업이 기존 문서(ARCHITECTURE·RUNBOOK 등)를 무효화·확장하면 같은 브랜치에서 갱신한다.
+- ADR 은 여기서 만들지 않는다 — 3중 게이트라 PM(`onboard`·`sc`) 의 몫이다. 결정이 있었으면 `Risks` 에 이름만 적어 올린다.
 - 볼트는 여전히 직접 쓰지 않는다(KERNEL) — 세션에서 배운 지식은 Handoff `Learned` 로.
 
 ## Last action — 리모트 게이트 측정
@@ -73,6 +83,6 @@ gh api "repos/$OWNER/$REPO/branches/$BRANCH/protection" >/dev/null 2>&1 && echo 
 branch: <type>/<PREFIX>-<번호>-<slug>
 base:   <sha> <subject>
 pr:     <url> | none (unprotected)      # 공란 불가 — 빈 줄은 "검사를 안 했다"와 구분되지 않는다
-docs:   <갱신한 docs/ 경로들> | none (docs-impact: none)   # 공란 불가 — §Docs 수행 증빙. none 도 판정 결과다
+docs:   <FEAT/POL/기타 갱신 경로들> | none (docs-impact: none)   # 공란 불가 — §Docs 수행 증빙. none 도 판정 결과다
 ```
 `Docs draft`(Handoff)는 볼트행 제안·레포 밖 문서에만 — 레포 `docs/` 는 §Docs 대로 직접 쓴다.
