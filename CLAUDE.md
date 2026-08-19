@@ -12,7 +12,7 @@ ticket: plane        # 식별자만 — 크레덴셜 금지
 - 정책 우선순위: 볼트 memory 노트(kind: policy, scope: [org]) > 레포 docs/develop/policy/POL-* — 하위가 상위를 침묵 오버라이드 금지
 
 ## 포인터
-- 볼트 구조·노트 양식: ~/.claude/brain-docs/memory.md
+- 볼트 구조·노트 양식: ~/.claude/brain-docs/memory.md (절만 필요하면 brain-canon)
 - 레포 문서 규약: ~/.claude/brain-docs/project-docs.md
 - git 규약: ~/.claude/brain-docs/git-convention.md
 <!-- brain:end -->

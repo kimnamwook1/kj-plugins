@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.2 — 2026-08-20
+
+🔴 **작동 한계 수리 + 업스트림과 역할 정리.** 0.3.0 이 구조를 세웠고 0.3.2 는 그 구조를 멈추고 쓰게 만든다. 새 설계 추가 없음 — 지금 손해가 나고 있는 것만 고친다. 근거는 전부 2026-08-20 실측.
+
+### Fixed
+- **summary 100자 상한 + YAML 안전 규칙** (KJP-111·109) — 상한이 없어 median 359B 까지 부풀었고 `youtube-stts` scope 주입량이 **8,696B > 8,192B** 로 recall 상한을 넘겨 절단이 시작돼 있었다. 트리거는 1개만, `·` 나열 금지. YAML 은 정확한 규칙으로: 감싸지 않은 값에만 선두 indicator·`: `·` #` 금지, **따옴표로 감싼 값은 정상**(열었으면 닫을 것). `brain-validate.sh` 가 문자 수(바이트 아님)와 파손 3형태를 잡는다. 실측 볼트 2곳에서 실제 YAML 파손 2건 검출·오탐 0·누락 0.
+- **`sessions/` git 추적 전환** (KJP-119) — `.gitignore` 결정에 **기록된 사유가 없었고** 뒷감당만 셋이었다(ss 유일성 로직·2026-08-16 볼트 리셋 시 세션 영구 소실·링크 불가). **gitignore ≠ 휘발성** — 휘발성은 주입 정책(§recall)이 정하지 git 위치가 아니다. `init` 은 더 이상 `sessions/` 를 등록하지 않고, 기존 볼트에 있으면 제거 후 보고한다. `sc` 는 승격 커밋과 세션 커밋을 **분리**한다(dreaming 계수·`git revert` 단위 보존).
+- **볼트 동시 쓰기 락 `.vault.lock`** (KJP-113) — peer 세션 13개가 동시에 돌고 한 볼트에 uncommitted 노트 20건이 쌓인 채 발견됐다. `sc` 승격 구간을 mkdir 원자 락으로 감싼다. 획득 실패 = **대기·재시도 없이 skip 후 보고**(fail-visible). 남의 락을 강제 해제하지 않는다.
+
+### Changed
+- **스킬이 canon 을 통째로 읽지 않는다** (KJP-112) — 세션 시작 고정비가 ~23,000자였고 그 절반이 `memory.md` 통째 Read 였다. 신규 `scripts/brain-canon <key>[,<key>...]` 가 필요한 절만 출력한다(통째 13,561자 → ss 4,996 · sh 3,411 · sc 7,856). 사본을 스킬에 두지 않으므로 단일 원본은 그대로. `brain-recall` 기본값 `-n 5` → **`-n 3`**(본문 통째 반환이라 기본값이 곧 토큰 비용).
+- **문서 = DoD** (KJP-116) — KERNEL 에 1줄 추가(4 에이전트 바이트 동일): 코드·정책·기능을 바꿨으면 해당 레포 `docs/` 갱신이 DoD 에 포함된다, 브리프가 안 적었어도. `coder` §Docs 를 3분기로(기능 → `FEAT-*` · 정책·규칙·임계값 → **`POL-*`** · 해당 없으면 `docs-impact: none` 명시). `worker` §Docs 는 "문서 브리프일 때만" 조건부를 **무조건 판정**으로. 이전에는 POL·ADR 언급이 agents 전체에 0건이었다.
+- **에이전트 통신 채널 단일화** (KJP-115) — KERNEL 1줄: 에이전트 간 메시지는 CC `SendMessage`/`ListAgents` 한 채널만, 본문은 Handoff 양식. 채널이 갈리면 유실 판정이 불가능하다. `round` §6 도 같은 문구.
+- **`coder`·`worker` 를 세션 프로필로도 쓴다** (KJP-114) — `coder` 의 `isolation: worktree` 는 Orca 워크트리와 이미 중복이었다(문서가 자인). `claude --agent coder` 로 peer 세션에 규율만 붙인다. 형태 선택 규칙 명문화: 도구를 막아야 하면 subagent(`disallowedTools` 는 subagent 만 강제 가능) · 사람이 개입하면 peer · 짧고 결과만 필요하면 subagent. 파일 삭제 없음 — 호출 경로만 늘었다.
+- **`scope: [org]` 정의 개정** (KJP-118) — "회사 공식 지식" → **"회사 맥락의 내 관측"**. 실측: beafter 볼트 org scope 15건 전수에 PRD·FRD·정책 0건. 볼트는 팀 공통 지식베이스가 아니다 — 하네스를 배포하고 팀원은 각자 볼트를 갖는다. 회사 정본의 집은 레포 `docs/`. 값 이름 `org` 는 유지(마이그레이션 0).
+- **볼트↔레포 조회 통합** (KJP-111 DoD-2) — memory 노트 `## Why` 에 레포 문서 경로를 평문으로 적는다. 저장은 분리(볼트=관측 · 레포=정본), 조회는 단일(볼트에서 찾고 레포에서 읽는다). `sessions/` 위키링크도 허용 — 단 §Why 는 링크 없이 완결일 것.
+
+### Added
+- **볼트 효능 측정** (KJP-111 DoD-3) — Progress `learned` 하위 접두 어휘 2종: `볼트-적중 [[stem]]` · `볼트-공백 <주제>`. 세션 6건 전수에 주입 계수는 있으나 "그 노트가 도움됐다" 기록이 **0건**이었다 — 측정 없이는 볼트의 값을 판정할 수 없고, 그 상태로 죽은 선례가 있다(CC 내장 메모리 209건/34디렉터리, 2026-06 이후 0건). 집계는 `grep -c`, 코드 0줄. 자동 소비자 없음 — 강제하지 않고 기록만 한다.
+- **`scripts/brain-canon`** — canon 절 추출기. 코드펜스 안의 `## Goal` 을 절 경계로 오독하지 않는다(펜스 토글).
+- **`round` §9 정리** (KJP-120) — 라운드가 끝나도 워크트리·터미널·브랜치가 남아 다음 라운드의 §2 교집합 실측이 유령 브랜치에 걸린다. 실측 잔존: youtube-stts 워크트리 7개(1개 locked) · kj-plugins 머지 완료 브랜치 5개. 게이트(`git merge-base --is-ancestor`) 통과분만, 순서는 terminal stop → worktree rm → `git branch -d`. `--force`·`-D` 는 사용자 지시 없이 금지.
+- **테스트 확장** (KJP-117) — selftest assert **72 → 108**. 신규 커버리지: summary 길이·YAML 안전 규칙 7픽스처 · `brain-canon` 전 경로(펜스 오독 회귀 포함) · `brain-check.sh` 블록 드리프트/무마커 skip · agents KERNEL 바이트 동일성 · `spawn-track.sh` 인자 가드. 이전에는 `brain-validate.sh`·`brain-recall` 2개만 검사됐다.
+
+### Fixed (round 0.3.1 후속)
+- **`spawn-track.sh`** (KJP-120) — ①`agent` 선택 인자 추가(기본 `claude`, `codex` 등 가능, `claude:coder` 형태로 CC 세션 프로필 부착). 에이전트 기동을 `orca terminal create --command` 로 옮겨 CLI 인자를 넘길 수 있게 했다 — `worktree create --agent` 로는 못 넘긴다. ②워크트리 경로 조회에 폴링 추가(최대 20초) — 생성이 비동기면 즉시 조회가 빈손으로 실패했다. ③정리용 셀렉터를 `path:` 로 안내 — 브랜치를 리네임하므로 `branch:` 는 리네임 전후가 갈린다.
+
 ## 0.3.1 — 2026-08-20
 
 ### Added

@@ -34,7 +34,7 @@ argument-hint: ""
    - 정책 우선순위: 볼트 memory 노트(kind: policy, scope: [org]) > 레포 docs/develop/policy/POL-* — 하위가 상위를 침묵 오버라이드 금지
 
    ## 포인터
-   - 볼트 구조·노트 양식: ~/.claude/brain-docs/memory.md
+   - 볼트 구조·노트 양식: ~/.claude/brain-docs/memory.md (절만 필요하면 brain-canon)
    - 레포 문서 규약: ~/.claude/brain-docs/project-docs.md
    - git 규약: ~/.claude/brain-docs/git-convention.md
    <!-- brain:end -->
@@ -51,7 +51,8 @@ argument-hint: ""
    - 폐지 구조 스캐폴드 금지 — `projects/NNN_slug/`·`p_memory/`·`neocortex/`·공통층·`999_tools/`·`.brain-paths`·docs 스텁(문서는 트리거 시 — onboard·기능 착수).
 5. **.gitignore 2곳 — idempotent** (`grep -qxF '<줄>' <파일> || echo '<줄>' >> <파일>` · git repo가 아니면 조용히 skip):
    - 프로젝트 레포 `.gitignore` ← `CLAUDE.local.md` (머신 로컬 경로 — 커밋 금지). **CLAUDE.md는 절대 gitignore 금지** — 공유가 목적.
-   - 볼트 `.gitignore` ← `sessions/` (휘발층 — git 밖) · `.dreaming.lock` (dreaming 원자 락 — 휘발). 첫 세션이 커밋되기 전에 등록.
+   - 볼트 `.gitignore` ← `.dreaming.lock` · `.vault.lock` (원자 락 2종 — 휘발). 🔴 **`sessions/` 는 등록하지 않는다**(0.3.2 전환) — 세션도 git 추적한다. 휘발성은 주입 정책이 정하지 git 위치가 아니다.
+   - 기존 볼트에 `sessions/` 줄이 이미 있으면 **제거하고 사용자에게 1줄 보고** — 남겨두면 세션이 리셋·재클론에서 영구 소실된다(2026-08-16 실측 사고).
 6. **보고** — 생성/갱신 경로 목록(파일별 생성/블록 교체/skip 구분) + 바이트 동일 검증 결과 + "내용 인터뷰는 `/brain:onboard`".
 
 ## 금지
