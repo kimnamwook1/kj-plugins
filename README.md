@@ -52,7 +52,7 @@ brain/                            # the plugin
   docs/                           # the canon: memory.md · project-docs.md · git-convention.md
                                   #   (+ security-audit.md, annex)
   docs-samples/                   # sample repo docs/ tree (fictional project vidnote) — not canon
-  scripts/                        # brain-check.sh · brain-validate.sh · brain-recall
+  scripts/                        # brain-validate.sh · brain-recall · brain-canon
   hooks/                          # SessionStart · PostToolUse (config/agent files only)
 ```
 
@@ -65,6 +65,7 @@ brain/scripts/brain-check.sh                       # marker-block / KERNEL byte 
 brain/scripts/brain-validate.sh <vault-root>       # vault mode — session/memory schema lint
 brain/scripts/brain-validate.sh <repo-root> --repo # repo mode — docs frontmatter · ADR IDs ·
                                                    #   COMPLIANCE §Legal Sources
+brain/scripts/brain-canon <key>[,<key>...]         # print only the canon sections a skill needs
 ```
 
 Details in [`brain/README.md`](./brain/README.md).

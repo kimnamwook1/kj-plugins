@@ -88,7 +88,7 @@ Handoff — vault writes are the PM's), reports flow upward only.
 
 ## Hooks & scripts
 
-Two hook events, three scripts — bash 3.2 + POSIX, zero dependencies, `file:line: message`
+Two hook events, four scripts — bash 3.2 + POSIX, zero dependencies, `file:line: message`
 output, scan counters always printed, each with a fixture-based selftest.
 
 | Piece | Does |
@@ -97,7 +97,8 @@ output, scan counters always printed, each with a fixture-based selftest.
 | `PostToolUse` hook (Edit\|Write\|NotebookEdit) | runs `brain-check.sh` only when the target is AGENTS.md / CLAUDE.md / `agents/*.md` — findings to stderr + exit 2 |
 | `hooks/brain-check.sh` | block-comparison checker — AGENTS.md ↔ CLAUDE.md marker blocks byte-identical; the 4 agents' KERNEL blocks byte-identical; zero files scanned = a finding |
 | `scripts/brain-validate.sh` | schema linter — vault mode (session/memory keys, status and kind vocabularies, Progress heading and category grammar, index integrity, contamination patterns) + repo mode (docs frontmatter, ADR IDs, COMPLIANCE §Legal Sources, value-axis drift) |
-| `scripts/brain-recall` | on-demand query — `brain-recall <query> [--scope <id>] [-n N]`, grep over `summary` lines, top-N note bodies; read-only. The consumption path for non-Claude agents (codex, grok) |
+| `scripts/brain-recall` | on-demand query — `brain-recall <query> [--scope <id>] [-n N]`, grep over `summary` lines, top-N note bodies (default 3); read-only. The consumption path for non-Claude agents (codex, grok) |
+| `scripts/brain-canon` | canon section extractor — `brain-canon <key>[,<key>...]` prints only the `memory.md` sections a skill needs. Skills stopped reading the canon whole: 13.5 KB → 3.4–7.9 KB per session, single source preserved |
 
 There are no write-blocking hooks — the PM writing directly is the design, so nothing needs to
 force delegation.
