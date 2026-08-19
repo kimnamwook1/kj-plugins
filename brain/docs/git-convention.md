@@ -55,7 +55,9 @@
 - 커밋 주체 = PM — 커밋은 레포 전체를 삼키므로 전체를 보는 자만 안전하게 한다.
 - 자동 커밋 금지 — 쓰기마다 훅 커밋은 히스토리를 툴콜 단위 노이즈로 만들고 revert 지점을 지운다.
 - push는 사용자가 명시적으로 말할 때만 — 통합 브랜치 규율(좁은 예외는 §Pull / merge requests).
-- 볼트 git: `sessions/`는 git 밖(볼트 .gitignore) — 커밋 표면은 `memory/`. dreaming = 1 run 1 commit(정본: `memory.md`).
+- 볼트 git(0.3.2): `sessions/`도 **git 추적**한다 — `.gitignore` 대상은 `.dreaming.lock`·`.vault.lock` 뿐. 휘발성은 주입 정책이 정하지 git 위치가 아니다(정본: `memory.md`).
+- 🔴 볼트 커밋은 **2개로 분리** — ①승격(노트 + `memory/_index.md`) ②세션(`sessions/<파일>`). 합치면 dreaming 계수(`-- memory/`)와 `git revert` 단위가 흐려진다.
+- dreaming = 1 run 1 commit(정본: `memory.md`). 승격 구간은 `.vault.lock` 안에서 — 획득 실패 시 대기 없이 skip 후 보고.
 
 ## Worktree integration order (PM)
 
