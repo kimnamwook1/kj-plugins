@@ -495,6 +495,132 @@ assert_exit "$rc" 2 "recall bad -n: exit 2"
 BRAIN_VAULT_ROOT="$T/does-not-exist" "$RECALL" q > "$OUT" 2>&1; rc=$?
 assert_exit "$rc" 2 "recall bad vault: exit 2"
 
+# ================================================================ 0.3.2 신규 규칙 — summary 길이·YAML 안전
+S32="$T/vault32"
+mkdir -p "$S32/sessions" "$S32/memory"
+: > "$S32/memory/_index.md"
+
+mknote() { # $1=stem $2=summary-line-raw
+  cat > "$S32/memory/$1.md" <<EOF
+---
+summary: $2
+scope: [kjp]
+kind: fact
+updated: 2026-08-20
+---
+## Insight
+- 한 줄.
+
+## Why
+- 근거 한 줄.
+EOF
+  printf -- '- [[%s]] (kjp) — %s\n' "$1" "$2" >> "$S32/memory/_index.md"
+}
+
+mknote ok-short "짧은 요약을 쓸 때 — 100자 안에 들어가면 통과한다"
+mknote too-long "$(printf 'ㄱ%.0s' $(seq 1 120))"
+mknote lead-backtick '`adb shell input text`가 이상하면 — IME 를 끈다'
+mknote unclosed-quote '"이 데이터가 오긴 하나"를 판정할 때 — 로그가 먼저다'
+mknote quoted-ok '"콜론: 스페이스가 들어가도 감싸면 안전하다 — 닫는 따옴표가 있으면 통과"'
+mknote colon-space '앞말: 뒷말 형태로 쓰면 — plain scalar 가 깨진다'
+mknote hash-space '샵을 쓸 때 #주석 처럼 보이면 — 값이 잘린다'
+
+"$VALIDATE" "$S32" > "$OUT" 2>&1; rc=$?
+assert_exit "$rc" 0 "0.3.2 vault: exit 0 (non-strict)"
+assert_not "$OUT" "ok-short.md:2" "summary 100자 이내: finding 없음"
+assert_not "$OUT" "quoted-ok.md:2" "따옴표로 감싼 summary: finding 없음 (정상 인용)"
+assert_has "$OUT" "too-long.md:2: memory: summary too long: 120 chars (max 100)" "summary 길이 초과: 문자 수로 잰다(바이트 아님)"
+assert_has "$OUT" "lead-backtick.md:2: memory: summary starts with YAML indicator" "선두 백틱: 검출"
+assert_has "$OUT" "unclosed-quote.md:2: memory: summary opens with" "여는 따옴표만 있고 닫지 않음: 검출"
+assert_has "$OUT" "colon-space.md:2: memory: summary contains" "콜론+공백: 검출"
+assert_has "$OUT" "hash-space.md:2: memory: summary contains" "공백+해시: 검출"
+
+# ================================================================ brain-canon — 절 추출
+CANON_SH="$SCRIPT_DIR/brain-canon"
+if [ -x "$CANON_SH" ]; then
+  "$CANON_SH" session-format > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 0 "brain-canon session-format: exit 0"
+  assert_has "$OUT" "## 세션 4절 작성 양식" "brain-canon: 요청한 절 헤딩 포함"
+  assert_has "$OUT" "### Progress 규칙" "brain-canon: 하위 h3 절도 따라온다"
+  assert_not "$OUT" "## 승격" "brain-canon: 다음 h2 절은 안 딸려온다"
+  # 코드펜스 안의 '## Goal' 을 절 경계로 오독하면 여기서 깨진다
+  assert_has "$OUT" "- 카테고리 소비자: done=sr 맥락" "brain-canon: 펜스 내부 '## ' 로 조기 종료하지 않는다"
+
+  "$CANON_SH" note-schema,promote > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 0 "brain-canon 복수 키: exit 0"
+  assert_has "$OUT" "## memory 노트 스키마" "brain-canon 복수 키: 첫 절"
+  assert_has "$OUT" "## 승격" "brain-canon 복수 키: 둘째 절"
+
+  "$CANON_SH" > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 2 "brain-canon 인자 없음: exit 2"
+  "$CANON_SH" no-such-key > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 2 "brain-canon 알 수 없는 키: exit 2"
+  BRAIN_CANON="$T/nope.md" "$CANON_SH" recall > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 2 "brain-canon canon 부재: exit 2"
+
+  # 절 추출이 통째보다 실제로 작아야 존재 이유가 성립한다
+  full=$(wc -c < "$SCRIPT_DIR/../docs/memory.md")
+  part=$("$CANON_SH" session-format | wc -c)
+  if [ "$part" -lt "$full" ]; then ok; else bad "brain-canon: 절 추출이 통째보다 작지 않다 ($part >= $full)"; fi
+else
+  bad "brain-canon: 실행 파일 없음 ($CANON_SH)"
+fi
+
+# ================================================================ brain-check.sh — 블록 대조
+CHECK_SH="$SCRIPT_DIR/../hooks/brain-check.sh"
+if [ -x "$CHECK_SH" ]; then
+  R="$T/checkrepo"; mkdir -p "$R"
+  printf 'x\n<!-- brain:begin -->\nsame\n<!-- brain:end -->\n' > "$R/AGENTS.md"
+  printf 'y\n<!-- brain:begin -->\nsame\n<!-- brain:end -->\n' > "$R/CLAUDE.md"
+  (cd "$R" && "$CHECK_SH" --quiet < /dev/null) > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 0 "brain-check 동일 블록: exit 0"
+  assert_not "$OUT" "brain:begin" "brain-check 동일 블록: 통과 시 무음"
+
+  printf 'y\n<!-- brain:begin -->\nDIFFERENT\n<!-- brain:end -->\n' > "$R/CLAUDE.md"
+  (cd "$R" && "$CHECK_SH" --quiet < /dev/null) > "$OUT" 2>&1; rc=$?
+  if grep -q . "$OUT"; then ok; else bad "brain-check 블록 드리프트: finding 이 나와야 한다"; fi
+
+  R2="$T/checkrepo2"; mkdir -p "$R2"
+  printf 'no markers here\n' > "$R2/AGENTS.md"
+  printf 'no markers here\n' > "$R2/CLAUDE.md"
+  (cd "$R2" && "$CHECK_SH" --quiet < /dev/null) > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 0 "brain-check 마커 없음(init 전): exit 0"
+  assert_not "$OUT" "brain:" "brain-check 마커 없음: finding 없음 (skip)"
+else
+  bad "brain-check.sh: 실행 파일 없음 ($CHECK_SH)"
+fi
+
+# ================================================================ agents KERNEL 바이트 동일성
+AG="$SCRIPT_DIR/../agents"
+if [ -d "$AG" ]; then
+  : > "$T/kernels"
+  for f in "$AG"/*.md; do
+    awk '/^## KERNEL-BEGIN/{on=1} on{print} /^## KERNEL-END/{if(on) exit}' "$f" > "$T/k.one"
+    if [ ! -s "$T/k.one" ]; then bad "KERNEL 블록 없음: $f"; continue; fi
+    if [ ! -s "$T/kernels" ]; then cp "$T/k.one" "$T/kernels"; ok; continue; fi
+    if cmp -s "$T/k.one" "$T/kernels"; then ok; else bad "KERNEL 블록 불일치: $f"; fi
+  done
+  assert_has "$T/kernels" "docs/" "KERNEL: 문서 DoD 조항 존재 (0.3.2)"
+  assert_has "$T/kernels" "SendMessage" "KERNEL: 단일 통신 채널 조항 존재 (0.3.2)"
+else
+  bad "agents 디렉토리 없음: $AG"
+fi
+
+# ================================================================ round/spawn-track.sh — 인자 가드
+SPAWN="$SCRIPT_DIR/../skills/round/scripts/spawn-track.sh"
+if [ -x "$SPAWN" ]; then
+  bash -n "$SPAWN" > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 0 "spawn-track.sh: 문법 검사 통과"
+  "$SPAWN" > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 2 "spawn-track.sh 인자 부족: exit 2"
+  "$SPAWN" name:x TK-1-y feat "$T/no-such-brief.md" > "$OUT" 2>&1; rc=$?
+  assert_exit "$rc" 1 "spawn-track.sh 브리프 부재: exit 1"
+  assert_has "$OUT" "브리프 없음" "spawn-track.sh 브리프 부재: 사유 출력"
+  assert_has "$SPAWN" "agent" "spawn-track.sh: agent 인자 지원 (0.3.2)"
+else
+  bad "spawn-track.sh: 실행 파일 없음 ($SPAWN)"
+fi
+
 # ================================================================ 결과
 echo "asserts: $PASS passed / $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1
