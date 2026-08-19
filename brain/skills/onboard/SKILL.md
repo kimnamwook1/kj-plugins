@@ -33,7 +33,7 @@ argument-hint: ""
 ## 환경 실측 → 볼트 memory
 
 - 머신·환경 사실(OS·주요 도구·MCP 등)은 질문이 아니라 실측 — 결과는 `memory/<topic>.md`:
-  - 양식 = `${CLAUDE_SKILL_DIR}/../../docs/memory.md` Read 후 그대로(4키 · summary "언제+주장" · `scope: [org]` · `kind: fact` · Insight/Why bullet만). 본 문서에 양식 사본 없음.
+  - 양식 = `"${CLAUDE_PLUGIN_ROOT}/scripts/brain-canon" note-schema` 출력 그대로(4키 · summary "언제+주장" 100자 이내 · `scope: [org]` · `kind: fact` · Insight/Why bullet만). 통째 Read 금지 · 본 문서에 양식 사본 없음.
   - `_index.md` 행 append — 노트와 **같은 커밋**(볼트 커밋 = PM · push 금지).
   - 같은 주제 기존 노트가 있으면 Edit 갱신(CAS) — 한 주제 두 노트 금지.
 

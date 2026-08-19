@@ -1,0 +1,83 @@
+#!/bin/bash
+# brain-canon — canon 문서에서 필요한 절만 뽑아 출력 (read-only)
+#
+# Usage: brain-canon <key>[,<key>...]
+#   키 → `docs/memory.md` 의 절. 여러 키는 쉼표로. 출력 순서 = 인자 순서.
+#
+# 존재 이유: 스킬이 memory.md 를 통째 Read 하면 세션당 6,347자를 무는데
+#   실제로 필요한 건 한두 절(~1,500자)이다. 사본을 스킬에 두면 드리프트하므로
+#   정본에서 절만 잘라 온다 — 단일 원본 유지 + 토큰 절감.
+#
+# 키:
+#   vault-tree     볼트 구조 — 2층 평탄
+#   note-schema    memory 노트 스키마 (+ _index.md 하위절)
+#   session-schema 세션 노트 스키마
+#   session-format 세션 4절 작성 양식 (+ Progress 규칙 하위절)
+#   ids            프로젝트 식별자 — 2키 분리
+#   promote        승격 — 2게이트
+#   recall         recall — ss/sr 주입
+#   recall-cli     brain-recall — on-demand 질의
+#   dreaming       dreaming — 배치 통합
+#
+# canon 해석: $BRAIN_CANON 우선. 없으면 스크립트 기준 ../docs/memory.md.
+# Exit: 0 = 출력 · 2 = usage · 알 수 없는 키 · canon 부재
+#
+# 이식성: macOS 재고 bash 3.2 + POSIX(awk). 의존성 0. 아무것도 쓰지 않는다.
+
+set -u
+LC_ALL=C; export LC_ALL
+
+usage() {
+  echo "usage: brain-canon <key>[,<key>...]" >&2
+  echo "keys: vault-tree note-schema session-schema session-format ids promote recall recall-cli dreaming" >&2
+  exit 2
+}
+
+[ $# -eq 1 ] || usage
+
+if [ -n "${BRAIN_CANON:-}" ]; then
+  CANON=$BRAIN_CANON
+else
+  SD=$(cd "$(dirname "$0")" && pwd) || exit 2
+  CANON="$SD/../docs/memory.md"
+fi
+[ -f "$CANON" ] || { echo "brain-canon: canon 없음: $CANON" >&2; exit 2; }
+
+header_for() {
+  case "$1" in
+    vault-tree)     echo '## 볼트 구조' ;;
+    note-schema)    echo '## memory 노트 스키마' ;;
+    session-schema) echo '## 세션 노트 스키마' ;;
+    session-format) echo '## 세션 4절 작성 양식' ;;
+    ids)            echo '## 프로젝트 식별자' ;;
+    promote)        echo '## 승격' ;;
+    recall)         echo '## recall' ;;
+    recall-cli)     echo '## brain-recall' ;;
+    dreaming)       echo '## dreaming' ;;
+    *)              return 1 ;;
+  esac
+}
+
+# 쉼표 분해 — bash 3.2 이므로 IFS 로 자른다
+OLDIFS=$IFS; IFS=','; set -- $1; IFS=$OLDIFS
+[ $# -ge 1 ] || usage
+
+FOUND=0
+for k in "$@"; do
+  h=$(header_for "$k") || { echo "brain-canon: 알 수 없는 키: $k" >&2; usage; }
+  # 코드펜스 안의 `## Goal` 같은 줄을 절 경계로 오독하지 않는다 — 펜스 토글로 배제
+  out=$(awk -v h="$h" '
+    index($0, h) == 1 { on = 1; print; next }
+    on && /^```/ { fence = !fence; print; next }
+    on && !fence && /^## / { exit }
+    on { print }
+  ' "$CANON")
+  if [ -z "$out" ]; then
+    echo "brain-canon: 절을 못 찾았다 (canon 헤딩 변경?): $k -> $h" >&2
+    exit 2
+  fi
+  [ "$FOUND" -eq 1 ] && echo ""
+  printf '%s\n' "$out"
+  FOUND=1
+done
+exit 0

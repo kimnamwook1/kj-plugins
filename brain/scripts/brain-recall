@@ -5,7 +5,7 @@
 #   <query>        <vault>/memory/*.md 의 frontmatter `summary:` 에 대한
 #                  대소문자 무시 고정 문자열 매칭 (트리거는 summary가 겸한다 — memory.md)
 #   --scope <id>   frontmatter `scope:` 목록에 <id> 가 있는 노트만
-#   -n N           매칭 top-N 본문 출력 (기본 5) — `updated` 내림차순(최신 우선)
+#   -n N           매칭 top-N 본문 출력 (기본 3) — `updated` 내림차순(최신 우선)
 #
 # 볼트 해석: $BRAIN_VAULT_ROOT env 우선. 없으면 cwd에서 상향 탐색으로
 # `vault-root: <path>` 키를 가진 CLAUDE.local.md 를 찾아 파싱.
@@ -26,7 +26,7 @@ usage() {
   exit 2
 }
 
-QUERY=""; SCOPE=""; N=5
+QUERY=""; SCOPE=""; N=3
 while [ $# -gt 0 ]; do
   case "$1" in
     --scope) [ $# -ge 2 ] || usage; SCOPE=$2; shift 2 ;;

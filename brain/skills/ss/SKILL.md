@@ -12,7 +12,11 @@ argument-hint: "[goal...]"
 
 ## 공통 규율
 
-- 양식 정본 = `${CLAUDE_SKILL_DIR}/../../docs/memory.md` — 작성 전 §세션 노트 스키마·§세션 4절 작성 양식을 Read하고 그대로 따른다. 본 문서에 양식 사본 없음(포인터만).
+- 양식 정본 = `docs/memory.md`. **통째 Read 금지** — 필요한 절만 뽑는다:
+  ```bash
+  "${CLAUDE_PLUGIN_ROOT}/scripts/brain-canon" session-schema,session-format
+  ```
+  본 문서에 양식 사본 없음(포인터만). 통째 13,561자 → 절 추출 4,996자.
 - 볼트 쓰기 = Write/Edit만 · Edit old_string = CAS · `obsidian create` 등 CLI 쓰기 금지.
 - `VAULT` = CLAUDE.local.md `vault-root:` 1키 — 없으면 사용자에 질문 + `/brain:init` 안내. vault-root 밖 쓰기 금지.
 - `project`·`ticket-prefix` = AGENTS.md(=CLAUDE.md) brain config 명시 선언 — 경로·이름 파생 금지. 없으면 질문.
@@ -21,13 +25,13 @@ argument-hint: "[goal...]"
 ## 절차
 
 1. **해석** — `VAULT`·`project`·`ticket-prefix` 확정. `$VAULT/sessions/` 또는 `$VAULT/memory/_index.md` 부재 시 `/brain:init` 안내 후 중단 — 폴더를 여기서 만들지 않는다.
-2. **양식 Read** — `memory.md`의 세션 스키마·4절 양식 절.
+2. **양식 확보** — `brain-canon session-schema,session-format` 출력을 그대로 따른다.
 3. **Goal 확정** — 인자 텍스트 또는 사용자 진술 1줄. `related_ticket`은 대화에서 확정(`<ticket-prefix>-N` 표기) — 없으면 빈 값.
 4. **파일명 mint + 유일성 검사** — `<project>_$(date +%Y%m%d)_<slug>.md` (slug = Goal의 소문자 kebab 축약):
    ```bash
    [ -e "$VAULT/sessions/$name.md" ] && echo "COLLISION" || echo OK
    ```
-   - 충돌 시 **자동 접미사 금지** — 사용자에게 구분 slug를 질문한다. sessions는 git 밖 — 덮어쓰기 = 복구 불가.
+   - 충돌 시 **자동 접미사 금지** — 사용자에게 구분 slug를 질문한다. 파일명이 곧 식별자다 — 같은 이름 두 세션은 이력이 섞인다.
 5. **recall 수행(read)** — `$VAULT/memory/_index.md`에서 현재 프로젝트 scope 행만:
    ```bash
    grep '^- \[\[' "$VAULT/memory/_index.md" | grep -E "\([^)]*\b${PROJECT}\b[^)]*\)"
@@ -46,4 +50,4 @@ argument-hint: "[goal...]"
 - 열린 세션 스캔·고지·재개 — `sr`/`sl`의 몫.
 - 충돌 시 자동 접미사 — 사용자 질문이 유일한 해소.
 - `active` 외 status 값 — `parked`는 sh · `done`은 sc.
-- 세션 폴더 생성 — 세션 = 1파일. 볼트 git 커밋 — sessions는 git 밖.
+- 세션 폴더 생성 — 세션 = 1파일. 볼트 git 커밋 — 커밋은 `sc` 단독(`sessions/`가 git 추적이어도 마찬가지).
