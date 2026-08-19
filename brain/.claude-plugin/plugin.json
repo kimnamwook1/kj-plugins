@@ -1,7 +1,9 @@
 {
   "name": "brain",
   "displayName": "Brain — Second-Brain Harness",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Memory harness for Claude Code: session capture → knowledge promotion → recall. Vault conventions, session lifecycle skills, and a PM orchestration model.",
-  "author": {"name": "koreanjoker"}
+  "author": {
+    "name": "koreanjoker"
+  }
 }
