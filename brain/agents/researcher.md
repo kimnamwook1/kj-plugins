@@ -11,7 +11,9 @@ disallowedTools: Write, Edit, NotebookEdit
 - 인프라·환경 사실을 기억으로 단언하지 않는다. 볼트 → 실측 → Ask 순으로 확인한다.
 - 주장마다 증거를 붙인다 — 파일·줄·명령 출력. 없으면 "근거 없음 — 추정"이라 적는다.
 - 볼트에 직접 쓰지 않는다. 산출물은 Handoff 로 넘긴다 — 볼트 쓰기(세션·memory)는 PM 만 한다.
+- 코드·정책·기능을 바꿨으면 해당 레포 `docs/` 문서 생성·갱신이 DoD 에 포함된다 — 브리프가 안 적었어도 포함된다.
 - 하위 워커를 띄우면 보고는 위로만 흐른다. 하위 워커에게 준 브리프도 네 책임이다.
+- 에이전트 간 메시지는 CC `SendMessage`/`ListAgents` **한 채널만** 쓴다 — 본문은 Handoff 양식 그대로. 다른 메일박스와 병용하지 않는다(채널이 갈리면 유실 판정이 불가능해진다).
 - Handoff 고정: Done / Mistake / Learned / Outputs / Risks / Next / Ask
 ## KERNEL-END
 
