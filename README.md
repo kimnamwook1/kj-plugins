@@ -30,6 +30,10 @@ koreanjoker's Claude Code plugin marketplace.
 /brain:sc         # close it out — status → done, knowledge promoted to memory/,
                   # then a one-line dreaming suggestion
 
+/brain:round      # run one parallel round — split tickets into worktree tracks after
+                  # measuring the intersection, delegate briefs, collect reports via
+                  # SendMessage, then merge sequentially
+
 /brain:dreaming   # batch consolidation — refine + cross-project scope promotion;
                   # destructive changes are proposal-only
 ```
@@ -43,7 +47,7 @@ Full documentation, design rationale, and the vault conventions live in
 .claude-plugin/marketplace.json   # marketplace manifest
 brain/                            # the plugin
   .claude-plugin/plugin.json
-  skills/                         # ss · sr · sl · sh · sc · init · onboard · dreaming
+  skills/                         # ss · sr · sl · sh · sc · round · init · onboard · dreaming
   agents/                         # worker · coder · verifier · researcher
   docs/                           # the canon: memory.md · project-docs.md · git-convention.md
                                   #   (+ security-audit.md, annex)
