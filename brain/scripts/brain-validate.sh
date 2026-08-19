@@ -11,7 +11,7 @@
 #                   · Progress 헤딩 "### YYYY-MM-DD HH:MM (started|resumed|parked|completed)"
 #                   · Progress 카테고리 "- done" "- learned" "- next"만 · next 하위 1줄만
 #   memory/*.md     frontmatter 4키(summary scope kind updated) · kind 어휘 fact|policy
-#                   · 신키 · summary 비어있음 · "## Insight"/"## Why" 절 부재
+#                   · 신키 · summary 비어있음/100자 초과/백틱·따옴표 · "## Insight"/"## Why" 절 부재
 #   memory/_index.md  줄 형식 "- [[stem]] (scope) — summary" · dangling stem · 커버리지
 #   전 스캔 .md     오염: "[Image #N]" · "<!--" (코드펜스 내부는 스킵)
 #
@@ -144,6 +144,25 @@ check_memory() {
         if (key == "summary") {
           v = val; sub(/[ \t]*$/, "", v)
           if (v == "") print FILENAME ":" NR ": memory: empty summary"
+          # 문자 수 = 바이트에서 UTF-8 연속바이트(0x80-0xBF) 제거 후 길이. LC_ALL=C 전제.
+          c = v; gsub(/[\200-\277]/, "", c)
+          if (length(c) > 100)
+            print FILENAME ":" NR ": memory: summary too long: " length(c) " chars (max 100)"
+          # YAML 파손 검사 (memory.md §memory 노트 스키마).
+          # 따옴표로 감싼 값은 정상 — 여는 따옴표가 있으면 닫는 따옴표를 요구하고,
+          # 감싸지 않은 plain scalar 에만 indicator·": "·" #" 를 금지한다.
+          q = substr(v, 1, 1)
+          if (q == "\"" || q == "\047") {
+            if (length(v) < 2 || substr(v, length(v), 1) != q)
+              print FILENAME ":" NR ": memory: summary opens with " q " but does not close it (broken YAML scalar)"
+          } else {
+            if (v ~ /^[`[{&*!|>%@]/)
+              print FILENAME ":" NR ": memory: summary starts with YAML indicator (breaks plain scalar): " q
+            if (v ~ /: /)
+              print FILENAME ":" NR ": memory: summary contains \": \" unquoted (breaks plain scalar)"
+            if (v ~ / #/)
+              print FILENAME ":" NR ": memory: summary contains \" #\" unquoted (parsed as YAML comment)"
+          }
         }
       }
       next
