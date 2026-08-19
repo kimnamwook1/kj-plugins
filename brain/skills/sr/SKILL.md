@@ -12,7 +12,7 @@ argument-hint: ""
 
 ## 공통 규율
 
-- 양식 정본 = `${CLAUDE_SKILL_DIR}/../../docs/memory.md` — 쓰기 전 Read. 본 문서에 양식 사본 없음(포인터만).
+- 양식 정본 = `docs/memory.md`. **통째 Read 금지** — 절만 뽑는다: `"${CLAUDE_PLUGIN_ROOT}/scripts/brain-canon" session-schema,recall`. 본 문서에 양식 사본 없음(포인터만).
 - 볼트 쓰기 = Write/Edit만 · Edit old_string = CAS · CLI 쓰기 금지.
 - `VAULT` = CLAUDE.local.md `vault-root:` — 없으면 질문 + `/brain:init` 안내. vault-root 밖 쓰기 금지.
 - `project` = AGENTS.md brain config 명시 선언 — 경로 파생 금지.

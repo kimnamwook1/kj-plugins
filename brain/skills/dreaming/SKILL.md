@@ -9,7 +9,7 @@ argument-hint: ""
 - 입력 = `<VAULT>/memory/`만 — `sessions/`는 읽기·쓰기 모두 금지.
 - 실행 주체 = PM 직접 Write/Edit(old_string = CAS) · 커밋도 PM · `git push` 금지. **worktree 격리 없음** — 락 + CAS + 1 run 1 commit(revert 가능)이 대체.
 - 트리거 = 사용자 승인 또는 `/brain:dreaming` 명시 호출 — `sc`는 "미통합 N건" 1줄 제안만 한다. 큐·cron 없음.
-- 노트 양식 정본 = `${CLAUDE_SKILL_DIR}/../../docs/memory.md` — 판단·편집 전 Read. 본 문서에 양식 사본 없음(포인터만).
+- 노트 양식 정본 = `docs/memory.md`. **통째 Read 금지** — 절만 뽑는다: `"${CLAUDE_PLUGIN_ROOT}/scripts/brain-canon" note-schema,dreaming`. 본 문서에 양식 사본 없음(포인터만).
 - `VAULT` = CLAUDE.local.md `vault-root:` — 밖은 접촉 금지.
 
 ## 2연산

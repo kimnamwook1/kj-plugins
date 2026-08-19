@@ -13,7 +13,7 @@ argument-hint: ""
 
 ## 공통 규율
 
-- 양식 정본 = `${CLAUDE_SKILL_DIR}/../../docs/memory.md` — 작성 전 §세션 4절 작성 양식·§Progress 규칙을 Read하고 그대로. 본 문서에 양식 사본 없음(포인터만).
+- 양식 정본 = `docs/memory.md`. **통째 Read 금지** — 절만 뽑는다: `"${CLAUDE_PLUGIN_ROOT}/scripts/brain-canon" session-format` (Progress 규칙 하위절 포함). 본 문서에 양식 사본 없음(포인터만).
 - 볼트 쓰기 = Write/Edit만 · Edit old_string = CAS · CLI 쓰기 금지.
 - `VAULT` = CLAUDE.local.md `vault-root:` — 없으면 질문 + `/brain:init` 안내. vault-root 밖 쓰기 금지.
 - 볼트 기록은 개조식 bullet만 · fail-visible — 계수 상시 보고.
@@ -21,7 +21,7 @@ argument-hint: ""
 ## 절차
 
 1. **대상 확정** — 이 대화에서 작업 중인 세션(`$VAULT/sessions/<file>.md`). 사용자가 지목했으면 그것. 불명이면 질문 — 추측 금지.
-2. **양식 Read** — memory.md의 4절 양식·Progress 규칙 절.
+2. **양식 확보** — `brain-canon session-format` 출력을 그대로 따른다.
 3. **Progress 엔트리 — PM 직접 Edit**, `## Progress` 맨 위 삽입(기존 엔트리 보존·최신이 맨 위):
    - 헤딩 = `### YYYY-MM-DD HH:MM (parked)` — **시각 필수**(하루 다중 파킹·재개의 순서 보장).
    - 중첩 카테고리 3종, 순서 고정 done → learned → next. 카테고리 줄은 `- done` 고정 표기(콜론·부가 텍스트 금지 — 파서 앵커), 사실은 하위 bullet.
@@ -39,4 +39,4 @@ argument-hint: ""
 - 승격 — `memory/`·`_index.md` 쓰기 없음. `sc`의 몫.
 - `done` 전이 — `parked`가 이 스킬이 쓰는 유일한 status 값.
 - 세션 파일 전체 Read — 필요한 절만.
-- 볼트 git 커밋 — sessions는 git 밖, 커밋 대상이 없다.
+- 볼트 git 커밋 — 파킹은 종료가 아니다. `sessions/`가 git 추적이 됐어도(0.3.2) 커밋은 `sc` 가 한다. 파킹마다 커밋하면 히스토리가 중단 단위로 쪼개진다.
