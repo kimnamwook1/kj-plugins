@@ -1,4 +1,4 @@
-> 소비자: `sr`(재개 후보) · `sl`(목록) · `sc`(대상 불명 시 후보 제시). `ss`는 사용하지 않는다 — 스캔 자체를 안 한다(생성 전용).
+> 소비자: `sr`(재개 후보) · `sc`(대상 불명 시 후보 제시). `ss`는 사용하지 않는다 — 스캔 자체를 안 한다(생성 전용).
 > 단독 실행 문서 아님. 스킬 본문에 스니펫 사본 금지 — 포인터만(사본 = 드리프트).
 > 전제: `VAULT`(CLAUDE.local.md `vault-root:`) · `PROJECT`(AGENTS.md brain config `project:`) 확정 후 실행.
 
@@ -10,7 +10,7 @@
 - 두 값 모두, 항상. `parked`만 스캔하면 결함 — `sh` 없이 끊긴 세션(크래시·터미널 종료)은 `active`로 남고, `sr`의 유일한 복구 경로가 막힌다.
 
 ```bash
-PROJ_RE="${PROJ_RE:-$PROJECT}"   # `sl all` = PROJ_RE='.*'
+PROJ_RE="${PROJ_RE:-$PROJECT}"   # 전 프로젝트 = PROJ_RE='.*'
 find "$VAULT/sessions" -maxdepth 1 -name "*.md" 2>/dev/null | while read -r f; do
   st=$(sed -n 's/^status:[[:space:]]*//p' "$f" | head -1 | tr -d '"'\''[:space:]')
   case "$st" in active|parked) ;; *) continue ;; esac
@@ -36,14 +36,13 @@ awk '/^## /{s=$0;n=0}
 - frontmatter 스칼라(`updated`·`related_ticket`)는 1줄 grep — `grep -m1 '^updated:' "$f"`. 또 다른 Read 금지.
 - 식별자 = 파일명 — `basename "$f" .md`. uid 키 없음.
 
-## 3. 렌더 — 후보당 1줄
+## 3. 제시 — AskUserQuestion 1문
 
-```
-1. [parked] <Goal 한 줄> (<파일명>, updated <updated>) — <최신 Progress 한 줄 요약>
-2. [active] <Goal 한 줄> (<파일명>, updated <updated>) — <최신 Progress 한 줄 요약>
-```
-
-- `[parked]`/`[active]` 마커 필수 — §1 스캔의 status 열 값. Progress 헤딩 접미(`(parked)` 등)는 이력이지 상태가 아니다 — 접미에서 추론 금지.
-- 정렬 = `updated:` 내림차순, 1부터 번호 — `sl`에서 고른 번호가 `sr`에서 같은 세션을 가리키도록 두 스킬이 같은 정렬을 쓴다.
-- `PROJ_RE='.*'`일 때는 각 줄 앞에 `project:` 값 접두 — 아니면 목록이 모호.
-- 0건도 0건이라 보고(fail-visible).
+- 목록 텍스트를 찍지 않는다. 후보를 `AskUserQuestion` 옵션으로 올린다 — 선택이 곧 채택 신호다.
+- 질문 1개 · `header: "세션"` · `multiSelect: false`.
+- 후보당 옵션 1개, `updated:` 내림차순:
+  - `label` = `[parked] <Goal 축약>` / `[active] <Goal 축약>` — 상태 마커 필수(§1 스캔의 status 열 값. Progress 헤딩 접미는 이력이지 상태가 아니다 — 접미에서 추론 금지).
+  - `description` = `<파일명> · updated <updated> · <최신 Progress 한 줄 요약>`.
+- 옵션 상한 4개(도구 제약) — 후보가 5건 이상이면 상위 4건만 올리고 "N건 중 상위 4건 — 나머지 M건" 을 1줄 보고(fail-visible).
+- `PROJ_RE='.*'` 일 때는 `label` 앞에 `project:` 값 접두 — 아니면 모호.
+- 0건이면 질문을 띄우지 않는다 — 0건이라 보고하고 중단.

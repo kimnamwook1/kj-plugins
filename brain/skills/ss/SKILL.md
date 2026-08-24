@@ -1,6 +1,6 @@
 ---
 name: ss
-description: 새 볼트 세션 시작 — 파일명 유일성 검사 후 세션 노트 1파일을 `status: active`로 생성하고, memory/_index.md의 현재 프로젝트 scope 행을 ## Recall에 주입(8KiB 상한·계수 보고). 생성 전용 — 열린 세션을 스캔하지도 고지하지도 않는다. "ss", "session start", "세션 시작", "새 세션", "작업 시작"에 사용. 재개는 sr, 목록은 sl.
+description: 새 볼트 세션 시작 — 파일명 유일성 검사 후 세션 노트 1파일을 `status: active`로 생성하고, memory/_index.md의 현재 프로젝트 scope 행을 ## Recall에 주입(8KiB 상한·계수 보고). 생성 전용 — 열린 세션을 스캔하지도 고지하지도 않는다. "ss", "session start", "세션 시작", "새 세션", "작업 시작"에 사용. 재개는 sr.
 argument-hint: "[goal...]"
 ---
 
@@ -47,7 +47,7 @@ argument-hint: "[goal...]"
 
 ## 금지
 
-- 열린 세션 스캔·고지·재개 — `sr`/`sl`의 몫.
+- 열린 세션 스캔·고지·재개 — `sr`의 몫.
 - 충돌 시 자동 접미사 — 사용자 질문이 유일한 해소.
 - `active` 외 status 값 — `parked`는 sh · `done`은 sc.
 - 세션 폴더 생성 — 세션 = 1파일. 볼트 git 커밋 — 커밋은 `sc` 단독(`sessions/`가 git 추적이어도 마찬가지).

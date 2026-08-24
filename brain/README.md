@@ -60,7 +60,7 @@ deferred to a batch job (Dreaming), exactly as the brain defers consolidation to
 - Vault prose is bullet-only — one line, one fact. Writes go through `Write`/`Edit` only
   (`Edit`'s old_string is a compare-and-swap).
 
-## Skills (8)
+## Skills (7)
 
 | Skill | Does | Never does |
 |---|---|---|
@@ -68,7 +68,6 @@ deferred to a batch job (Dreaming), exactly as the brain defers consolidation to
 | `/brain:onboard` | Grill-style content interview — one question at a time with a recommended answer, measured answers over asked ones, documents created lazily in repo `docs/` as answers firm up, ADRs behind a triple gate, open questions become tickets | batch questionnaires, stub pre-creation |
 | `/brain:ss` | Start a NEW session — uniqueness check before create (collision → asks for a slug), recall injection (≤ 8 KiB) into `## Recall` | resuming, scanning for parked sessions |
 | `/brain:sr` | Resume a parked session — pick, adopt, status → active; re-injects Goal + open To-Dos + the latest Progress entry only | creating |
-| `/brain:sl` | List open sessions — read-only, one line each | writing, adopting |
 | `/brain:sh` | Park a session — Progress entry (`parked`, with a `next` line), status → parked | promoting knowledge (that is `sc`'s alone) |
 | `/brain:sc` | Close a session — status → done, promotion gate ① into `memory/`, doc routing to repo `docs/`, then a one-line Dreaming suggestion (`미통합 N건`) | running Dreaming itself |
 | `/brain:dreaming` | Batch consolidation — Refine (facts unchanged) + promotion gate ② (scope widening); vault lock, incremental cursor, 1 run = 1 commit; destructive changes are proposal-only | touching sessions, auto-applying merges/deletes |
@@ -136,4 +135,4 @@ A worked sample of the repo `docs/` tree (fictional project *vidnote*) lives in
 ```
 
 Then `/brain:init` once per project, `/brain:onboard` for the content interview, and the daily
-loop is `ss` / `sr` / `sl` / `sh` / `sc` with `/brain:dreaming` when `sc` suggests it.
+loop is `ss` / `sr` / `sh` / `sc` with `/brain:dreaming` when `sc` suggests it.

@@ -30,7 +30,7 @@ argument-hint: "[session-file?]"
    mkdir "$VAULT/.vault.lock" 2>/dev/null || { echo 'sc: 다른 세션이 승격 중 — skip'; }
    ```
    - 획득 성공 → §4~§8 수행 후 `rmdir "$VAULT/.vault.lock"`.
-   - 획득 실패 → **대기·재시도 금지.** 승격을 건너뛰고 종료 엔트리·frontmatter(§9·§10)만 수행한 뒤 `승격 skip — 볼트 락 점유 중` 을 보고에 명시(fail-visible). 사용자가 나중에 다시 부른다.
+   - 획득 실패 → **대기·재시도 금지.** 승격을 건너뛰고 종료 엔트리·frontmatter(§6·§7)만 수행한 뒤 `승격 skip — 볼트 락 점유 중` 을 보고에 명시(fail-visible). 사용자가 나중에 다시 부른다.
    - 근거: peer 세션 다중 실행 시 `_index.md` append 충돌은 조용한 유실이다(2026-08-20 실측 — uncommitted 20건).
 4. **승격 ① — PM 직접, 노트와 인덱스는 같은 커밋**:
    - 수확 대상: 이 세션 Progress의 **learned 하위** + 대화 — 사용자 정정 · AI 자인 실수 · 재사용 가치 사실.
@@ -59,7 +59,16 @@ argument-hint: "[session-file?]"
                  || N=$(git -C "$VAULT" rev-list --count HEAD -- memory/)
    ```
    - 출력: `dreaming 권장 — 미통합 N건` 1줄만. 커서 정의는 `${CLAUDE_SKILL_DIR}/../dreaming/SKILL.md` §운영. 실행은 사용자 승인 또는 `/brain:dreaming` — 여기서 돌리지 않는다.
-10. **보고** — `세션 종료: <경로> (status: done)` · 승격 N건(노트 경로) · 문서 라우팅 M건 · 커밋 2건 여부 · 락 skip 여부 · dreaming 제안 1줄.
+10. **다음 시작 프롬프트 — 화면 출력만**(볼트 쓰기 없음):
+    - 소스 = 종료 엔트리 done 하위의 미검증 항목 + 남은 To-Do + 문서 라우팅 미결. 셋 다 없으면 `후속 없음` 1줄로 대체 — 프롬프트를 지어내지 않는다.
+    - 형식 = 복붙 가능한 fenced block 1개, 3줄 이내:
+      ```
+      ss <다음 목표 한 줄>
+      배경: <직전 세션 산출 경로>
+      먼저: <첫 행동 1줄>
+      ```
+    - 첫 줄은 `ss` 고정 — 닫힌 세션은 재개하지 않는다.
+11. **보고** — `세션 종료: <경로> (status: done)` · 승격 N건(노트 경로) · 문서 라우팅 M건 · 커밋 2건 여부 · 락 skip 여부 · dreaming 제안 1줄.
 
 ## 금지
 

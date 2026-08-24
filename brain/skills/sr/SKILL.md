@@ -1,12 +1,12 @@
 ---
 name: sr
-description: 파킹된 세션 재개 — 현재 프로젝트의 열린 세션(status parked|active)을 스캔해 요약을 제시하고, 사용자가 고른 세션을 채택. 쓰기는 frontmatter 3줄만 PM 직접 Edit(status→active·updated·cc_session_ids), 주입은 Goal+미완 To-Do+최신 Progress 1개. 세션 신규 생성 금지. "sr", "재개", "resume", "이어서", "하던 거 계속"에 사용. 새 세션은 ss, 목록만은 sl.
+description: 파킹된 세션 재개 — 현재 프로젝트의 열린 세션(status parked|active)을 스캔해 AskUserQuestion 1문으로 제시하고, 사용자가 고른 세션을 채택. 쓰기는 frontmatter 3줄만 PM 직접 Edit(status→active·updated·cc_session_ids), 주입은 Goal+미완 To-Do+최신 Progress 1개. 세션 신규 생성 금지. "sr", "재개", "resume", "이어서", "하던 거 계속"에 사용. 새 세션은 ss.
 argument-hint: ""
 ---
 
 # sr — 세션 재개
 
-- 하는 일: 스캔 → 요약 제시 → 사용자 채택 → frontmatter 3줄 Edit + recall 화면 출력.
+- 하는 일: 스캔 → AskUserQuestion 제시 → 사용자 채택 → frontmatter 3줄 Edit + recall 화면 출력.
 - 세션 파일 신규 생성 절대 금지 — 새 세션을 원하면 `ss` 안내 후 중단.
 - 실행 주체 = PM 직접 — 위임 없음.
 
@@ -23,9 +23,11 @@ argument-hint: ""
 1. **해석** — `VAULT`·`project` 확정.
 2. **스캔** — `${CLAUDE_SKILL_DIR}/../_shared/scan.md` §1 실행(`PROJ_RE=<project>`). 스니펫 사본 금지 — `|| :` 종결자·첫 `status:` 줄만 읽기 등 검증 기법은 그 문서가 정본.
    - 0건 → "열린 세션 0건 — 새 세션은 `ss`" 1줄 보고 후 중단. 생성으로 빠지지 않는다.
-3. **후보 제시** — scan.md §2 awk 추출 · §3 렌더(상태 마커 필수 · `updated` 내림차순 · 번호는 `sl`과 동일 규칙).
-   - `[active]` 후보도 목록에 유지 — `sh` 없이 끊긴 세션의 유일한 복구 경로가 여기다.
-   - 정확히 1건이어도 제시 후 예/아니오 확인. 사용자가 번호로 채택 → 4단계. 거절 → 중단.
+3. **후보 제시 — `AskUserQuestion` 1문** — scan.md §2 awk 추출 · §3 제시 규칙(상태 마커 필수 · `updated` 내림차순 · 옵션 상한 4).
+   - 후보를 텍스트 목록으로 먼저 찍지 않는다 — 질문 옵션이 유일한 제시 경로다.
+   - `[active]` 후보도 옵션에 유지 — `sh` 없이 끊긴 세션의 유일한 복구 경로가 여기다.
+   - 정확히 1건이어도 질문한다 — 자동 채택 금지.
+   - 사용자가 옵션 선택 → 4단계. 거절·취소 → 중단(추측 채택 금지).
 4. **채택 — frontmatter 3줄만 PM 직접 Edit** (old_string = CAS):
    - `status:` → `active` — frontmatter **첫** `status:` 줄만(본문 Progress에도 `status:` 문자열 존재 가능). 이미 `active`면 값 유지.
    - `updated:` → 오늘(`YYYY-MM-DD`).

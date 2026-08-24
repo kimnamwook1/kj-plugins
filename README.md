@@ -25,7 +25,6 @@ koreanjoker's Claude Code plugin marketplace.
 
 /brain:ss         # start a NEW session (creates only — never resumes, never scans)
 /brain:sr         # resume a parked session — the only path back into one; status → active
-/brain:sl         # list open sessions (parked + active) — read-only
 /brain:sh         # park it — Progress entry, status → parked (no promotion; that is sc's)
 /brain:sc         # close it out — status → done, knowledge promoted to memory/,
                   # then a one-line dreaming suggestion
@@ -47,7 +46,7 @@ Full documentation, design rationale, and the vault conventions live in
 .claude-plugin/marketplace.json   # marketplace manifest
 brain/                            # the plugin
   .claude-plugin/plugin.json
-  skills/                         # ss · sr · sl · sh · sc · round · init · onboard · dreaming
+  skills/                         # ss · sr · sh · sc · round · init · onboard · dreaming
   agents/                         # worker · coder · verifier · researcher
   docs/                           # the canon: memory.md · project-docs.md · git-convention.md
                                   #   (+ security-audit.md, annex)

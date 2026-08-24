@@ -1,4 +1,4 @@
-> 소비자: `ss`·`sr`·`sl`·`sh`·`sc`·`dreaming` — 볼트를 읽고 쓰는 모든 스킬이 실행 전 Read. `ss`·`sh`·`sr`·`sc`는 세션 노트 작성 전 §세션 4절 작성 양식을 Read하고 그대로 따른다. `init` — 볼트 스캐폴드 기준. `brain-validate.sh`(볼트 모드)·`brain-recall` — 검사·질의 어휘의 기준.
+> 소비자: `ss`·`sr`·`sh`·`sc`·`dreaming` — 볼트를 읽고 쓰는 모든 스킬이 실행 전 Read. `ss`·`sh`·`sr`·`sc`는 세션 노트 작성 전 §세션 4절 작성 양식을 Read하고 그대로 따른다. `init` — 볼트 스캐폴드 기준. `brain-validate.sh`(볼트 모드)·`brain-recall` — 검사·질의 어휘의 기준.
 
 # memory — 볼트 구조 · 노트 스키마 · 승격 · recall · dreaming
 
